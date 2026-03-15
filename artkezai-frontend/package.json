@@ -1,0 +1,44 @@
+{
+  "name": "artkezai-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/playfair-display": "^5.2.8",
+    "@gsap/react": "^2.1.0",
+    "@stripe/react-stripe-js": "2.4.0",
+    "@stripe/stripe-js": "1.46.0",
+    "@studio-freight/lenis": "1.0.42",
+    "@tanstack/react-query": "5.28.0",
+    "autoprefixer": "10.4.16",
+    "axios": "1.6.2",
+    "clsx": "2.0.0",
+    "framer-motion": "^10.16.4",
+    "gsap": "^3.12.5",
+    "lenis": "^1.1.6",
+    "lucide-react": "0.294.0",
+    "next": "14.0.4",
+    "postcss": "8.4.32",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-hot-toast": "^2.4.1",
+    "sonner": "1.3.0",
+    "tailwind-merge": "2.2.0",
+    "zustand": "4.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.10.5",
+    "@types/react": "18.2.45",
+    "@types/react-dom": "18.2.18",
+    "eslint": "8.55.0",
+    "eslint-config-next": "14.0.4",
+    "tailwindcss": "3.3.6",
+    "typescript": "5.3.3"
+  }
+}

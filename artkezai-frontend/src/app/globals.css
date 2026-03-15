@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: #0F0F0F;
+  color: #F5F0E8;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection { background-color: #C9A84C; color: #0F0F0F; }
+::placeholder { color: #5A5548; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #0F0F0F; }
+::-webkit-scrollbar-thumb { background: #2E2A22; }
+::-webkit-scrollbar-thumb:hover { background: #C9A84C; }
+
+.gold-line { height: 1px; background-color: #C9A84C; }
+
+.card-surface {
+  background-color: #1A1710;
+  border: 1px solid #2E2A22;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #C9A84C, #D4B55A);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes kenBurns {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1A1710 0%, #2E2A22 50%, #1A1710 100%);
+  background-size: 600px 100%;
+  animation: shimmer 1.8s infinite;
+}
+
+.animate-ken-burns { animation: kenBurns 14s ease-in-out infinite; }
+.animate-marquee { animation: marquee 30s linear infinite; }
+
+input, textarea, select, button { border-radius: 0; }
+
+/* ── Orbital Hero Card Animation ── */
+
+/* Phase 1: Burst outward from center to orbital position */
+@keyframes orbital-burst {
+  0% {
+    opacity: 0;
+    filter: blur(22px);
+    transform: translate(var(--offset-x), var(--offset-y)) scale(0.08) rotate(0deg);
+  }
+  30% {
+    opacity: 1;
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translate(0, 0) scale(1) rotate(var(--card-rot));
+  }
+}
+
+/* Phase 2: Gentle elliptical float after settling */
+@keyframes orbital-drift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1) rotate(var(--card-rot));
+  }
+  25% {
+    transform: translate(calc(var(--drift-x) * 0.6), calc(var(--drift-y) * -1)) scale(1) rotate(var(--card-rot));
+  }
+  50% {
+    transform: translate(var(--drift-x), 0px) scale(1) rotate(var(--card-rot));
+  }
+  75% {
+    transform: translate(calc(var(--drift-x) * 0.6), var(--drift-y)) scale(1) rotate(var(--card-rot));
+  }
+}
+
+.orbital-card {
+  opacity: 0;
+  filter: blur(22px);
+  transform: translate(var(--offset-x), var(--offset-y)) scale(0.08) rotate(0deg);
+  will-change: transform, opacity, filter;
+}
+
+.orbital-card.burst {
+  animation: orbital-burst 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--stagger);
+}
+
+.orbital-card.drift {
+  opacity: 1;
+  filter: blur(0px);
+  transform: translate(0, 0) scale(1) rotate(var(--card-rot));
+  animation: orbital-drift var(--drift-dur) ease-in-out infinite;
+  animation-delay: var(--drift-delay);
+}
+
+.orbital-card:hover {
+  z-index: 40 !important;
+  transform: scale(1.08) rotate(0deg) !important;
+  box-shadow: 0 32px 80px rgba(201, 168, 76, 0.22) !important;
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out !important;
+}
+
+/* Vignette transition - starts bright, fades to dark */
+@keyframes vignette-reveal {
+  0% {
+    background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(8,8,8,0) 0%, rgba(8,8,8,0) 100%);
+  }
+  100% {
+    background: radial-gradient(ellipse 55% 60% at 50% 50%,
+      rgba(8,8,8,0.92) 0%,
+      rgba(8,8,8,0.70) 20%,
+      rgba(8,8,8,0.28) 42%,
+      rgba(8,8,8,0.08) 58%,
+      rgba(8,8,8,0.55) 75%,
+      rgba(8,8,8,0.90) 100%);
+  }
+}
