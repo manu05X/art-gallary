@@ -43,10 +43,12 @@ export default function MyOrdersPage() {
 
   const getPaymentStatusBadge = (status: PaymentStatus) => {
     const config: Record<PaymentStatus, string> = {
-      [PaymentStatus.PENDING]: 'badge-warning',
-      [PaymentStatus.COMPLETED]: 'badge-success',
+      [PaymentStatus.INITIATED]: 'badge-warning',
+      [PaymentStatus.INSTRUCTIONS_SENT]: 'badge-primary',
+      [PaymentStatus.AWAITING_TRANSFER]: 'badge-primary',
+      [PaymentStatus.SUCCEEDED]: 'badge-success',
+      [PaymentStatus.CONFIRMED]: 'badge-success',
       [PaymentStatus.FAILED]: 'badge-error',
-      [PaymentStatus.REFUNDED]: 'badge-gray',
     };
     return config[status];
   };
@@ -55,10 +57,11 @@ export default function MyOrdersPage() {
     const config: Record<OrderStatus, string> = {
       [OrderStatus.PENDING_PAYMENT]: 'badge-warning',
       [OrderStatus.PAID]: 'badge-primary',
-      [OrderStatus.PROCESSING]: 'badge-primary',
+      [OrderStatus.SHIPPING_IN_PROGRESS]: 'badge-primary',
       [OrderStatus.SHIPPED]: 'badge-primary',
       [OrderStatus.DELIVERED]: 'badge-success',
-      [OrderStatus.CANCELLED]: 'badge-error',
+      [OrderStatus.CLOSED]: 'badge-gray',
+      [OrderStatus.REFUNDED]: 'badge-gray',
     };
     return config[status];
   };
@@ -73,11 +76,11 @@ export default function MyOrdersPage() {
         {orders.map((order) => (
           <div key={order.id} className="p-6">
             <div className="flex gap-6">
-              {order.painting.primaryImage && (
+              {order.paintingThumbnailUrl && (
                 <div className="flex-shrink-0 w-20 h-20 relative rounded-lg overflow-hidden bg-gray-100">
                   <Image
-                    src={order.painting.primaryImage.url}
-                    alt={order.painting.title}
+                    src={order.paintingThumbnailUrl}
+                    alt={order.paintingTitle}
                     fill
                     className="object-cover"
                   />
@@ -86,18 +89,18 @@ export default function MyOrdersPage() {
 
               <div className="flex-1">
                 <Link
-                  href={`/painting/${order.painting.slug}`}
+                  href={`/gallery`}
                   className="text-lg font-semibold text-brand hover:text-accent transition"
                 >
-                  {order.painting.title}
+                  {order.paintingTitle}
                 </Link>
 
                 <div className="flex flex-wrap items-center gap-3 mt-2">
                   <span className={`badge ${getPaymentStatusBadge(order.paymentStatus)}`}>
                     {order.paymentStatus}
                   </span>
-                  <span className={`badge ${getOrderStatusBadge(order.orderStatus)}`}>
-                    {order.orderStatus}
+                  <span className={`badge ${getOrderStatusBadge(order.status)}`}>
+                    {order.status}
                   </span>
                 </div>
 

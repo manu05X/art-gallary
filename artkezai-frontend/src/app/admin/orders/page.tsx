@@ -45,11 +45,11 @@ export default function AdminOrdersPage() {
           {orders.map((order) => (
             <div key={order.id} className="p-6 hover:bg-gray-50 transition">
               <div className="flex gap-6">
-                {order.painting.primaryImage && (
+                {order.paintingThumbnailUrl && (
                   <div className="flex-shrink-0 w-20 h-20 relative rounded-lg overflow-hidden bg-gray-100">
                     <Image
-                      src={order.painting.primaryImage.url}
-                      alt={order.painting.title}
+                      src={order.paintingThumbnailUrl}
+                      alt={order.paintingTitle}
                       fill
                       className="object-cover"
                     />
@@ -58,10 +58,10 @@ export default function AdminOrdersPage() {
 
                 <div className="flex-1">
                   <Link
-                    href={`/painting/${order.painting.slug}`}
+                    href="/gallery"
                     className="text-lg font-semibold text-brand hover:text-accent transition"
                   >
-                    {order.painting.title}
+                    {order.paintingTitle}
                   </Link>
 
                   <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
@@ -73,7 +73,7 @@ export default function AdminOrdersPage() {
                     </div>
                     <div>
                       <p className="text-gray-600">Status</p>
-                      <p className="font-semibold text-gray-800">{order.orderStatus}</p>
+                      <p className="font-semibold text-gray-800">{order.status}</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Payment</p>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -14,6 +15,10 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import AnimatedSection from '@/components/ui/AnimatedSection';
+import { useAuthStore } from '@/lib/store/authStore';
+import { useBuyNowCheckout } from '@/lib/hooks/useCheckout';
+import { PaymentMethod } from '@/types';
+import toast from 'react-hot-toast';
 
 /* ── Static painting data (mirrors gallery page) ── */
 const paintings = [
@@ -218,8 +223,80 @@ const paintings = [
 ];
 
 export default function PaintingPage({ params }: { params: { slug: string } }) {
+  const router = useRouter();
+  const { isAuthenticated, user } = useAuthStore();
+  const buyNowMutation = useBuyNowCheckout();
   const painting = paintings.find((p) => p.slug === params.slug) ?? null;
   const [showOffer, setShowOffer] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutData, setCheckoutData] = useState({
+    shippingName: user?.displayName || '',
+    shippingEmail: user?.email || '',
+    shippingPhone: '',
+    shippingAddress1: '',
+    shippingAddress2: '',
+    shippingCity: '',
+    shippingState: '',
+    shippingZip: '',
+    shippingCountry: '',
+    paymentMethod: PaymentMethod.ONLINE,
+  });
+
+  const handleOpenCheckout = () => {
+    if (!isAuthenticated) {
+      toast.error('Please sign in as buyer to continue.');
+      router.push('/auth/login');
+      return;
+    }
+
+    if (user?.role !== 'buyer') {
+      toast.error('Only buyer accounts can purchase artworks.');
+      return;
+    }
+
+    setCheckoutData((prev) => ({
+      ...prev,
+      shippingName: prev.shippingName || user?.displayName || '',
+      shippingEmail: prev.shippingEmail || user?.email || '',
+    }));
+    setShowCheckout(true);
+  };
+
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!painting) return;
+
+    try {
+      const result = await buyNowMutation.mutateAsync({
+        paintingId: Number(painting.id),
+        shippingName: checkoutData.shippingName,
+        shippingEmail: checkoutData.shippingEmail,
+        shippingPhone: checkoutData.shippingPhone || undefined,
+        shippingAddress1: checkoutData.shippingAddress1,
+        shippingAddress2: checkoutData.shippingAddress2 || undefined,
+        shippingCity: checkoutData.shippingCity,
+        shippingState: checkoutData.shippingState || undefined,
+        shippingZip: checkoutData.shippingZip,
+        shippingCountry: checkoutData.shippingCountry,
+        paymentMethod: checkoutData.paymentMethod,
+      });
+
+      if (checkoutData.paymentMethod === PaymentMethod.ONLINE) {
+        toast.success('Order created. Payment intent is ready.');
+        if (result.paymentIntent?.clientSecret) {
+          toast.success(`Client secret generated: ${result.paymentIntent.clientSecret.slice(0, 14)}...`);
+        }
+      } else {
+        toast.success('Order created. Bank transfer instructions will be shared by gallery.');
+      }
+
+      setShowCheckout(false);
+      router.push('/dashboard/orders');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to start checkout. Please try again.');
+    }
+  };
 
   if (!painting) {
     return (
@@ -350,7 +427,10 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
 
               {/* CTA Buttons */}
               <div className="space-y-3">
-                <button className="w-full ios-button-primary font-playfair uppercase tracking-widest text-sm py-4 flex items-center justify-center gap-2">
+                <button
+                  onClick={handleOpenCheckout}
+                  className="w-full ios-button-primary font-playfair uppercase tracking-widest text-sm py-4 flex items-center justify-center gap-2"
+                >
                   <ShoppingCart size={18} />
                   Buy Now
                 </button>
@@ -497,6 +577,135 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
               </button>
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {/* Buy Now Checkout Modal */}
+      {showCheckout && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <motion.form
+            onSubmit={handleCheckoutSubmit}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--ios-radius-xl)] p-8 w-full max-w-2xl"
+          >
+            <h3 className="font-playfair text-2xl text-[var(--color-cream)] mb-2">Checkout</h3>
+            <p className="font-inter text-sm text-[var(--color-muted)] mb-6">
+              Complete your purchase for{' '}
+              <span className="text-[var(--color-gold)]">{painting.title}</span>
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <input
+                required
+                placeholder="Full Name"
+                value={checkoutData.shippingName}
+                onChange={(e) => setCheckoutData((prev) => ({ ...prev, shippingName: e.target.value }))}
+                className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] px-4 py-3 rounded-[14px]"
+              />
+              <input
+                required
+                type="email"
+                placeholder="Email"
+                value={checkoutData.shippingEmail}
+                onChange={(e) => setCheckoutData((prev) => ({ ...prev, shippingEmail: e.target.value }))}
+                className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] px-4 py-3 rounded-[14px]"
+              />
+              <input
+                placeholder="Phone (optional)"
+                value={checkoutData.shippingPhone}
+                onChange={(e) => setCheckoutData((prev) => ({ ...prev, shippingPhone: e.target.value }))}
+                className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] px-4 py-3 rounded-[14px]"
+              />
+              <input
+                required
+                placeholder="Address Line 1"
+                value={checkoutData.shippingAddress1}
+                onChange={(e) => setCheckoutData((prev) => ({ ...prev, shippingAddress1: e.target.value }))}
+                className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] px-4 py-3 rounded-[14px]"
+              />
+              <input
+                placeholder="Address Line 2 (optional)"
+                value={checkoutData.shippingAddress2}
+                onChange={(e) => setCheckoutData((prev) => ({ ...prev, shippingAddress2: e.target.value }))}
+                className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] px-4 py-3 rounded-[14px]"
+              />
+              <input
+                required
+                placeholder="City"
+                value={checkoutData.shippingCity}
+                onChange={(e) => setCheckoutData((prev) => ({ ...prev, shippingCity: e.target.value }))}
+                className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] px-4 py-3 rounded-[14px]"
+              />
+              <input
+                placeholder="State (optional)"
+                value={checkoutData.shippingState}
+                onChange={(e) => setCheckoutData((prev) => ({ ...prev, shippingState: e.target.value }))}
+                className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] px-4 py-3 rounded-[14px]"
+              />
+              <input
+                required
+                placeholder="ZIP / Postal Code"
+                value={checkoutData.shippingZip}
+                onChange={(e) => setCheckoutData((prev) => ({ ...prev, shippingZip: e.target.value }))}
+                className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] px-4 py-3 rounded-[14px]"
+              />
+              <input
+                required
+                placeholder="Country"
+                value={checkoutData.shippingCountry}
+                onChange={(e) => setCheckoutData((prev) => ({ ...prev, shippingCountry: e.target.value }))}
+                className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] px-4 py-3 rounded-[14px]"
+              />
+            </div>
+
+            <div className="mb-6">
+              <p className="font-inter text-[11px] uppercase tracking-widest text-[var(--color-subtle)] mb-2">
+                Payment Method
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCheckoutData((prev) => ({ ...prev, paymentMethod: PaymentMethod.ONLINE }))}
+                  className={`border px-4 py-3 rounded-full text-sm ${
+                    checkoutData.paymentMethod === PaymentMethod.ONLINE
+                      ? 'border-[var(--color-gold)] text-[var(--color-gold)]'
+                      : 'border-[var(--color-border)] text-[var(--color-muted)]'
+                  }`}
+                >
+                  Online
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCheckoutData((prev) => ({ ...prev, paymentMethod: PaymentMethod.BANK_TRANSFER }))}
+                  className={`border px-4 py-3 rounded-full text-sm ${
+                    checkoutData.paymentMethod === PaymentMethod.BANK_TRANSFER
+                      ? 'border-[var(--color-gold)] text-[var(--color-gold)]'
+                      : 'border-[var(--color-border)] text-[var(--color-muted)]'
+                  }`}
+                >
+                  Bank Transfer
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={buyNowMutation.isPending}
+                className="flex-1 ios-button-primary font-playfair uppercase tracking-widest text-sm py-3 disabled:opacity-60"
+              >
+                {buyNowMutation.isPending ? 'Processing...' : 'Place Order'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCheckout(false)}
+                className="flex-1 border border-[var(--color-border)] text-[var(--color-muted)] font-inter text-xs uppercase tracking-widest py-3 hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] transition-colors rounded-full"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.form>
         </div>
       )}
     </div>

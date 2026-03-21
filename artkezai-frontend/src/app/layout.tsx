@@ -27,6 +27,11 @@ export const metadata: Metadata = {
   },
   description:
     'A curated marketplace for original paintings from independent artists worldwide.',
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    shortcut: ['/favicon.svg'],
+    apple: [{ url: '/favicon.svg' }],
+  },
 };
 
 export default function RootLayout({
