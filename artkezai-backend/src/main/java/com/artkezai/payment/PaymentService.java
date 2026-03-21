@@ -8,6 +8,7 @@ import com.artkezai.payment.dto.CreatePaymentIntentRequest;
 import com.artkezai.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,9 @@ public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final OrderRepository orderRepository;
+
+	@Value("${stripe.publishable-key:pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY}")
+	private String stripePublishableKey;
 
 	public Map<String, Object> createPaymentIntent(CreatePaymentIntentRequest request, User buyer) {
 		Order order = orderRepository.findById(request.getOrderId())
@@ -47,7 +51,7 @@ public class PaymentService {
 
 		Map<String, Object> response = new HashMap<>();
 		response.put("clientSecret", clientSecret);
-		response.put("publishableKey", "pk_test_your_key");
+		response.put("publishableKey", stripePublishableKey);
 
 		log.info("Payment intent created for order: {}", order.getId());
 		return response;

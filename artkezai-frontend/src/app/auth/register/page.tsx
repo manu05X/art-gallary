@@ -20,6 +20,7 @@ export default function RegisterPage() {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [role, setRole] = useState<UserRole>(UserRole.BUYER);
   const [focused, setFocused] = useState<string | null>(null);
   const [formData, setFormData] = useState<RegisterRequest>({
@@ -38,6 +39,9 @@ export default function RegisterPage() {
   }, [isAuthenticated, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors((prev) => ({ ...prev, [e.target.name]: '' }));
+    }
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -52,6 +56,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldErrors({});
     setIsLoading(true);
     try {
       const response = await authApi.register(formData);
@@ -69,7 +74,16 @@ export default function RegisterPage() {
       toast.success('Welcome to Artkezai.');
       router.push(role === UserRole.ARTIST ? '/artist' : '/dashboard');
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Registration failed. Please try again.');
+      const apiMessage = error.response?.data?.message;
+      const backendFieldErrors = error.response?.data?.errors;
+      if (backendFieldErrors && typeof backendFieldErrors === 'object') {
+        setFieldErrors(backendFieldErrors);
+      }
+      const validationMessage =
+        backendFieldErrors && typeof backendFieldErrors === 'object'
+          ? Object.values(backendFieldErrors)[0]
+          : undefined;
+      toast.error((validationMessage as string) || apiMessage || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -199,6 +213,9 @@ export default function RegisterPage() {
                     disabled={isLoading}
                     className="w-full px-4 py-3 font-inter text-sm border border-[var(--color-border)] rounded-[14px] bg-[color-mix(in_srgb,var(--color-surface)_82%,white_18%)] focus:outline-none disabled:opacity-50"
                   />
+                  {fieldErrors[field] && (
+                    <p className="font-inter text-[10px] text-red-400 mt-2">{fieldErrors[field]}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -222,6 +239,9 @@ export default function RegisterPage() {
                 disabled={isLoading}
                 className="w-full px-4 py-3 font-inter text-sm border border-[var(--color-border)] rounded-[14px] bg-[color-mix(in_srgb,var(--color-surface)_82%,white_18%)] focus:outline-none disabled:opacity-50"
               />
+              {fieldErrors.email && (
+                <p className="font-inter text-[10px] text-red-400 mt-2">{fieldErrors.email}</p>
+              )}
             </div>
 
             {/* Password */}
@@ -241,7 +261,7 @@ export default function RegisterPage() {
                   onFocus={() => setFocused('password')}
                   onBlur={() => setFocused(null)}
                   required
-                  minLength={6}
+                  minLength={8}
                   disabled={isLoading}
                   className="w-full pl-4 pr-10 py-3 font-inter text-sm border border-[var(--color-border)] rounded-[14px] bg-[color-mix(in_srgb,var(--color-surface)_82%,white_18%)] focus:outline-none disabled:opacity-50"
                 />
@@ -254,7 +274,10 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
-              <p className="font-inter text-[10px] text-[var(--color-subtle)] mt-2">Minimum 6 characters</p>
+              <p className="font-inter text-[10px] text-[var(--color-subtle)] mt-2">Minimum 8 characters</p>
+              {fieldErrors.password && (
+                <p className="font-inter text-[10px] text-red-400 mt-2">{fieldErrors.password}</p>
+              )}
             </div>
 
             {/* Submit */}

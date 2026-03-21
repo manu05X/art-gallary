@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Artkezai icon">
+    <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#101726" />
+            <stop offset="100%" stop-color="#1d2d4d" />
+        </linearGradient>
+        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f6dc8f" />
+            <stop offset="100%" stop-color="#c79a2b" />
+        </linearGradient>
+    </defs>
+
+    <rect width="64" height="64" rx="16" fill="url(#bg)" />
+
+    <path d="M32 11L50 53H42.2L37.9 42.6H26.1L21.8 53H14L32 11ZM35 35.8L32 28.3L29 35.8H35Z"
+        fill="url(#gold)" />
+    <circle cx="32" cy="53" r="2.4" fill="#d7b25a" />
+</svg>

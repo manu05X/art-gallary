@@ -198,62 +198,72 @@ export interface RespondOfferRequest {
 export enum OrderStatus {
   PENDING_PAYMENT = 'PENDING_PAYMENT',
   PAID = 'PAID',
-  PROCESSING = 'PROCESSING',
+  SHIPPING_IN_PROGRESS = 'SHIPPING_IN_PROGRESS',
   SHIPPED = 'SHIPPED',
   DELIVERED = 'DELIVERED',
-  CANCELLED = 'CANCELLED',
-}
-
-export enum PaymentMethod {
-  STRIPE = 'STRIPE',
-  WIRE_TRANSFER = 'WIRE_TRANSFER',
-}
-
-export enum PaymentStatus {
-  PENDING = 'PENDING',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
+  CLOSED = 'CLOSED',
   REFUNDED = 'REFUNDED',
 }
 
+export enum PaymentMethod {
+  ONLINE = 'ONLINE',
+  BANK_TRANSFER = 'BANK_TRANSFER',
+}
+
+export enum PaymentStatus {
+  INITIATED = 'INITIATED',
+  INSTRUCTIONS_SENT = 'INSTRUCTIONS_SENT',
+  AWAITING_TRANSFER = 'AWAITING_TRANSFER',
+  SUCCEEDED = 'SUCCEEDED',
+  CONFIRMED = 'CONFIRMED',
+  FAILED = 'FAILED',
+}
+
 export interface OrderDto {
-  id: string;
-  paintingId: string;
-  buyerId: string;
-  artistId: string;
+  id: number;
+  paintingId: number;
+  paintingTitle: string;
+  paintingThumbnailUrl?: string;
+  buyerId: number;
+  buyerName: string;
   totalPrice: number;
   currency: string;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
-  orderStatus: OrderStatus;
+  status: OrderStatus;
+  shippingName: string;
+  shippingAddress1: string;
+  shippingCity: string;
+  shippingCountry: string;
   trackingNumber?: string;
   trackingUrl?: string;
-  shippingAddress: {
-    street: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-  };
   createdAt: string;
-  updatedAt: string;
-  painting: {
-    slug: string;
-    title: string;
-    primaryImage: PaintingImageDto;
-  };
+  shippedAt?: string;
+  deliveredAt?: string;
 }
 
 export interface CreateOrderRequest {
-  paintingId: string;
+  paintingId: number;
+  offerId?: number;
+  shippingName: string;
+  shippingEmail: string;
+  shippingPhone?: string;
+  shippingAddress1: string;
+  shippingAddress2?: string;
+  shippingCity: string;
+  shippingState?: string;
+  shippingZip: string;
+  shippingCountry: string;
   paymentMethod: PaymentMethod;
-  shippingAddress: {
-    street: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-  };
+}
+
+export interface CreatePaymentIntentRequest {
+  orderId: number;
+}
+
+export interface PaymentIntentResponse {
+  clientSecret: string;
+  publishableKey: string;
 }
 
 export interface UpdateShippingRequest {

@@ -20,6 +20,7 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<LoginRequest>({ email: '', password: '' });
   const [focused, setFocused] = useState<string | null>(null);
 
@@ -31,6 +32,9 @@ export default function LoginPage() {
   }, [isAuthenticated, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors((prev) => ({ ...prev, [e.target.name]: '' }));
+    }
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -40,6 +44,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldErrors({});
     setIsLoading(true);
     try {
       const response = await authApi.login(formData);
@@ -63,7 +68,16 @@ export default function LoginPage() {
           : '/dashboard';
       router.push(redirect);
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Login failed. Please try again.');
+      const apiMessage = error.response?.data?.message;
+      const backendFieldErrors = error.response?.data?.errors;
+      if (backendFieldErrors && typeof backendFieldErrors === 'object') {
+        setFieldErrors(backendFieldErrors);
+      }
+      const validationMessage =
+        backendFieldErrors && typeof backendFieldErrors === 'object'
+          ? Object.values(backendFieldErrors)[0]
+          : undefined;
+      toast.error((validationMessage as string) || apiMessage || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -166,6 +180,9 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className="w-full px-4 py-3 font-inter text-sm border border-[var(--color-border)] rounded-[14px] bg-[color-mix(in_srgb,var(--color-surface)_82%,white_18%)] focus:outline-none disabled:opacity-50"
               />
+              {fieldErrors.email && (
+                <p className="font-inter text-[10px] text-red-400 mt-2">{fieldErrors.email}</p>
+              )}
             </div>
 
             {/* Password field */}
@@ -197,6 +214,9 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p className="font-inter text-[10px] text-red-400 mt-2">{fieldErrors.password}</p>
+              )}
             </div>
 
             {/* Forgot password */}
