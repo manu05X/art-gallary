@@ -47,7 +47,7 @@ function CustomCursor() {
     <>
       {/* Dot */}
       <div
-        className="fixed z-[9999] pointer-events-none rounded-full bg-[#C9A84C] transition-transform duration-100"
+        className="fixed z-[9999] pointer-events-none rounded-full bg-[var(--color-gold)] transition-transform duration-100"
         style={{
           left: pos.x - 4,
           top: pos.y - 4,
@@ -58,7 +58,7 @@ function CustomCursor() {
       />
       {/* Ring */}
       <div
-        className="fixed z-[9998] pointer-events-none rounded-full border border-[#C9A84C] transition-all duration-200"
+        className="fixed z-[9998] pointer-events-none rounded-full border border-[var(--color-gold)] transition-all duration-200"
         style={{
           left: ring.x - (hovered ? 24 : 16),
           top: ring.y - (hovered ? 24 : 16),
@@ -119,6 +119,7 @@ function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [phase, setPhase] = useState<'init' | 'burst' | 'drift'>('init');
   const [offsets, setOffsets] = useState<{ x: string; y: string }[]>([]);
+  const currentYear = new Date().getFullYear();
 
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end start'] });
   const textY       = useTransform(scrollYProgress, [0, 1], [0, 160]);
@@ -160,22 +161,22 @@ function HeroSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-screen bg-[#080808]"
+      className="relative min-h-screen bg-[var(--color-dark)]"
       style={{ cursor: 'none', overflow: 'clip' }}
     >
       {/* ── LAYER 1: Orbital painting cards ── */}
       {CARDS.map((c, i) => (
         <div
           key={i}
-          className={`orbital-card absolute overflow-hidden cursor-pointer ${phase}`}
+          className={`orbital-card absolute overflow-hidden cursor-pointer rounded-[var(--ios-radius-xl)] ${phase}`}
           style={{
             left:           `${c.lp}%`,
             top:            `${c.tp}%`,
             width:          c.w,
             height:         c.h,
             zIndex:         1,
-            boxShadow:      '0 24px 64px rgba(0,0,0,0.75)',
-            border:         '1px solid rgba(255,255,255,0.06)',
+            boxShadow:      'var(--ios-shadow-lg)',
+            border:         '1px solid var(--ios-glass-border)',
             '--offset-x':   offsets[i]?.x || '0px',
             '--offset-y':   offsets[i]?.y || '0px',
             '--card-rot':   `${c.rot}deg`,
@@ -197,25 +198,9 @@ function HeroSection() {
         </div>
       ))}
 
-      {/* ── LAYER 2: Cosmos-style vignette ── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          zIndex: 2,
-          background:
-            'radial-gradient(ellipse 55% 60% at 50% 50%,' +
-            'rgba(8,8,8,0.92) 0%,'  +
-            'rgba(8,8,8,0.70) 20%,' +
-            'rgba(8,8,8,0.28) 42%,' +
-            'rgba(8,8,8,0.08) 58%,' +
-            'rgba(8,8,8,0.55) 75%,' +
-            'rgba(8,8,8,0.90) 100%)',
-        }}
-      />
-
-      {/* ── LAYER 3: Top/bottom fades ── */}
-      <div className="absolute inset-x-0 top-0 h-24 pointer-events-none bg-gradient-to-b from-[#080808] to-transparent" style={{ zIndex: 3 }} />
-      <div className="absolute inset-x-0 bottom-0 h-24 pointer-events-none bg-gradient-to-t from-[#080808] to-transparent" style={{ zIndex: 3 }} />
+      {/* ── LAYER 2: Top/bottom fades ── */}
+      <div className="absolute inset-x-0 top-0 h-24 pointer-events-none bg-gradient-to-b from-[var(--color-dark)] to-transparent" style={{ zIndex: 3 }} />
+      <div className="absolute inset-x-0 bottom-0 h-24 pointer-events-none bg-gradient-to-t from-[var(--color-dark)] to-transparent" style={{ zIndex: 3 }} />
 
       {/* ── LAYER 10: Center text ── */}
       <motion.div
@@ -228,14 +213,14 @@ function HeroSection() {
           transition={{ duration: 0.9, delay: TEXT_START }}
           className="flex items-center gap-4 mb-10"
         >
-          <div className="w-10 h-px bg-[#C9A84C]/50" />
-          <span className="font-inter text-[10px] uppercase tracking-[0.45em] text-[#C9A84C]">
-            Original Paintings · Est. 2024
+          <div className="w-10 h-px bg-[var(--color-gold)]/50" />
+          <span className="font-inter text-[10px] uppercase tracking-[0.18em] text-[var(--color-gold)] font-semibold">
+            Original Paintings · Est. {currentYear}
           </span>
-          <div className="w-10 h-px bg-[#C9A84C]/50" />
+          <div className="w-10 h-px bg-[var(--color-gold)]/50" />
         </motion.div>
 
-        <h1 className="font-playfair leading-[1.06] pointer-events-none select-none">
+        <h1 className="font-playfair leading-[0.98] pointer-events-none select-none">
           {lines.map((line, i) => (
             <motion.div
               key={i}
@@ -244,8 +229,8 @@ function HeroSection() {
               transition={{ duration: 1.1, delay: TEXT_START + 0.2 + i * 0.22, ease: [0.22, 1, 0.36, 1] }}
               className={`block ${
                 line.gold
-                  ? 'italic text-[#C9A84C] text-[clamp(48px,7.5vw,106px)]'
-                  : 'text-[#F5F0E8] text-[clamp(48px,7.5vw,106px)]'
+                  ? 'text-[var(--color-gold)] text-[clamp(48px,7.5vw,106px)] font-semibold'
+                  : 'text-[var(--color-cream)] text-[clamp(48px,7.5vw,106px)] font-semibold'
               }`}
             >
               {line.text}
@@ -257,7 +242,7 @@ function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: TEXT_START + 0.9 }}
-          className="font-inter text-[15px] text-[#8A8070] leading-relaxed max-w-sm mt-8 mb-12 pointer-events-none"
+          className="font-inter text-[15px] text-[var(--color-muted)] leading-relaxed max-w-sm mt-8 mb-12 pointer-events-none"
         >
           Discover, offer, and own original paintings from independent artists in 38 countries.
         </motion.p>
@@ -270,14 +255,14 @@ function HeroSection() {
         >
           <Link
             href="/gallery"
-            className="group flex items-center justify-center gap-2 bg-[#C9A84C] text-[#0F0F0F] font-inter text-[11px] uppercase tracking-[0.3em] px-9 py-4 hover:bg-[#d4b55a] transition-colors duration-300"
+            className="group ios-button-primary flex items-center justify-center gap-2 font-inter text-[11px] uppercase tracking-[0.08em] px-9 py-4"
           >
             Enter the Gallery
             <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
           </Link>
           <Link
             href="/auth/register"
-            className="flex items-center justify-center border border-[#2E2A22] text-[#8A8070] font-inter text-[11px] uppercase tracking-[0.3em] px-9 py-4 hover:border-[#C9A84C]/50 hover:text-[#C9A84C] transition-all duration-300"
+            className="ios-button-secondary flex items-center justify-center font-inter text-[11px] uppercase tracking-[0.08em] px-9 py-4"
           >
             Join Free
           </Link>
@@ -292,11 +277,11 @@ function HeroSection() {
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none"
         style={{ zIndex: 10 }}
       >
-        <span className="font-inter text-[9px] uppercase tracking-[0.4em] text-[#5A5548]">Scroll</span>
+        <span className="font-inter text-[9px] uppercase tracking-[0.16em] text-[var(--color-subtle)]">Scroll</span>
         <motion.div
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-px h-10 bg-gradient-to-b from-[#C9A84C]/50 to-transparent"
+          className="w-px h-10 bg-gradient-to-b from-[var(--color-gold)]/50 to-transparent"
         />
       </motion.div>
     </section>
@@ -309,14 +294,14 @@ function HeroSection() {
 function MarqueeStrip() {
   const text = 'ORIGINAL PAINTINGS \u00A0·\u00A0 CERTIFICATE OF AUTHENTICITY \u00A0·\u00A0 WORLDWIDE ARTISTS \u00A0·\u00A0 CURATED SELECTION \u00A0·\u00A0 SECURE PAYMENTS \u00A0·\u00A0 ';
   return (
-    <section className="bg-[#C9A84C] py-3.5 overflow-hidden">
+    <section className="bg-[var(--color-gold)] py-3.5 overflow-hidden">
       <motion.div
         animate={{ x: ['0%', '-50%'] }}
         transition={{ duration: 24, repeat: Infinity, ease: 'linear' }}
         className="flex whitespace-nowrap"
       >
         {[...Array(6)].map((_, i) => (
-          <span key={i} className="font-inter text-[11px] uppercase tracking-[0.2em] text-[#0F0F0F] font-medium">
+          <span key={i} className="font-inter text-[11px] uppercase tracking-[0.2em] text-[var(--color-dark)] font-medium">
             {text}
           </span>
         ))}
@@ -331,9 +316,10 @@ function MarqueeStrip() {
 function EditorialSection() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-100px' });
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   return (
-    <section ref={ref} className="py-32 px-6 border-b border-[#2E2A22] overflow-hidden">
+    <section ref={ref} className="py-32 px-6 border-b border-[var(--color-border)] overflow-hidden">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         {/* Left — pull quote */}
         <motion.div
@@ -341,14 +327,14 @@ function EditorialSection() {
           animate={inView ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <div className="font-playfair text-[80px] lg:text-[110px] leading-none text-[#C9A84C]/10 font-bold select-none mb-4">
+          <div className="font-playfair text-[80px] lg:text-[110px] leading-none text-[var(--color-gold)]/10 font-bold select-none mb-4">
             "
           </div>
-          <blockquote className="font-playfair italic text-3xl lg:text-4xl text-[#F5F0E8] leading-[1.4] -mt-12">
+          <blockquote className="font-playfair italic text-3xl lg:text-4xl text-[var(--color-cream)] leading-[1.4] -mt-12">
             Art should not live behind gallery walls that only a few can enter.
           </blockquote>
-          <div className="w-12 h-px bg-[#C9A84C] mt-8 mb-4" />
-          <p className="font-inter text-[11px] uppercase tracking-widest text-[#8A8070]">
+          <div className="w-12 h-px bg-[var(--color-gold)] mt-8 mb-4" />
+          <p className="font-inter text-[11px] uppercase tracking-widest text-[var(--color-muted)]">
             — The Artkezai Manifesto
           </p>
         </motion.div>
@@ -358,24 +344,55 @@ function EditorialSection() {
           initial={{ opacity: 0, x: 60 }}
           animate={inView ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="relative h-[480px]"
+          className="relative h-[520px]"
+          style={{ perspective: '1800px', transformStyle: 'preserve-3d' }}
         >
+          <div
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none"
+            style={{
+              width: '390px',
+              height: '74px',
+              background:
+                'radial-gradient(ellipse at center, rgba(8, 12, 24, 0.45) 0%, rgba(8, 12, 24, 0.28) 50%, transparent 82%)',
+              filter: 'blur(2.5px)',
+              zIndex: 0,
+            }}
+          />
+
           {[
-            { src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&q=80', rotate: -4, z: 0, x: 0, y: 20 },
-            { src: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=600&q=80', rotate: 2, z: 10, x: 30, y: 0 },
-            { src: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=600&q=80', rotate: -1, z: 20, x: 60, y: 10 },
+            { src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&q=80', rotate: -7, x: 0, y: 28 },
+            { src: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=600&q=80', rotate: 1.5, x: 26, y: 8 },
+            { src: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=600&q=80', rotate: -2.5, x: 54, y: 18 },
           ].map((p, i) => (
-            <div
-              key={i}
-              className="absolute w-64 h-80 overflow-hidden border border-[#2E2A22] shadow-2xl"
-              style={{ transform: `rotate(${p.rotate}deg) translateX(${p.x}px) translateY(${p.y}px)`, zIndex: p.z, left: i * 60 }}
-            >
-              <Image src={p.src} alt="Painting" fill className="object-cover" sizes="256px" />
-            </div>
+            (() => {
+              const isActive = hoveredCard === i;
+
+              return (
+                <div
+                  key={i}
+                  className="absolute w-64 h-80 overflow-hidden border border-[var(--ios-glass-border)] rounded-[var(--ios-radius-xl)] transition-all duration-500 ease-out"
+                  onMouseEnter={() => setHoveredCard(i)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  style={{
+                    transform: isActive
+                      ? `rotate(${p.rotate}deg) translateX(${p.x}px) translateY(${p.y - 20}px) translateZ(92px) scale(1.06)`
+                      : `rotate(${p.rotate}deg) translateX(${p.x}px) translateY(${p.y}px) translateZ(0px) scale(1)`,
+                    zIndex: isActive ? 90 : 20 + i,
+                    left: i * 54,
+                    boxShadow: isActive
+                      ? '0 42px 90px rgba(8, 12, 24, 0.52), var(--ios-shadow-lg)'
+                      : '0 26px 52px rgba(8, 12, 24, 0.36), var(--ios-shadow-sm)',
+                    filter: isActive ? 'saturate(1.08)' : 'saturate(0.94)',
+                  }}
+                >
+                  <Image src={p.src} alt="Painting" fill className="object-cover" sizes="256px" />
+                </div>
+              );
+            })()
           ))}
-          <div className="absolute bottom-0 right-0 bg-[#1A1710] border border-[#2E2A22] px-6 py-4 z-30">
-            <p className="font-playfair text-2xl text-[#C9A84C]">2,400+</p>
-            <p className="font-inter text-[10px] uppercase tracking-widest text-[#8A8070] mt-0.5">Original works</p>
+          <div className="absolute bottom-0 right-0 bg-[var(--color-surface)] border border-[var(--ios-glass-border)] rounded-[18px] px-6 py-4 z-40 ios-glass pointer-events-none">
+            <p className="font-playfair text-2xl text-[var(--color-gold)]">2,400+</p>
+            <p className="font-inter text-[10px] uppercase tracking-widest text-[var(--color-muted)] mt-0.5">Original works</p>
           </div>
         </motion.div>
       </div>
@@ -409,51 +426,54 @@ function PaintingCard({ painting, delay = 0 }: { painting: typeof paintings[numb
     >
       <Link href={`/painting/${painting.slug}`}>
         <div
-          className="group relative overflow-hidden bg-[#1A1710] border border-[#2E2A22] cursor-pointer"
+          className="group relative overflow-hidden bg-[var(--color-surface)] border border-[var(--ios-glass-border)] rounded-[var(--ios-radius-xl)] cursor-pointer shadow-[var(--ios-shadow-sm)] hover:shadow-[var(--ios-shadow-lg)] transition-shadow duration-300"
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
-          <div className={`relative overflow-hidden ${painting.tall ? 'aspect-[3/4]' : 'aspect-square'}`}>
-            <Image
-              src={painting.image}
-              alt={painting.title}
-              fill
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
-            {/* Warm glow on hover */}
-            <div
-              className="absolute inset-0 transition-opacity duration-500"
-              style={{
-                background: 'radial-gradient(ellipse at 50% 80%, rgba(201,168,76,0.12) 0%, transparent 70%)',
-                opacity: hovered ? 1 : 0,
-              }}
-            />
-            {/* Hover info overlay */}
-            <div
-              className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0F0F0F]/95 to-transparent p-5 transition-all duration-500"
-              style={{ opacity: hovered ? 1 : 0, transform: hovered ? 'translateY(0)' : 'translateY(8px)' }}
-            >
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="font-inter text-[10px] uppercase tracking-widest text-[#8A8070]">{painting.medium}</p>
-                  <p className="font-playfair text-lg text-[#F5F0E8] mt-0.5">{painting.title}</p>
-                </div>
-                <div className="flex items-center gap-1 text-[#C9A84C]">
-                  <span className="font-inter text-xs uppercase tracking-widest">View</span>
-                  <ArrowUpRight size={14} />
+          <div className="relative aspect-[4/5] p-3 pb-5 border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]">
+            <div className="relative h-full overflow-hidden rounded-[14px] border border-[var(--color-border)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.42),0_8px_20px_rgba(17,22,36,0.16)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_10px_22px_rgba(0,0,0,0.42)]">
+              <Image
+                src={painting.image}
+                alt={painting.title}
+                fill
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              />
+              {/* Warm glow on hover */}
+              <div
+                className="absolute inset-0 transition-opacity duration-500"
+                style={{
+                  background: 'radial-gradient(ellipse at 50% 80%, rgba(201,168,76,0.12) 0%, transparent 70%)',
+                  opacity: hovered ? 1 : 0,
+                }}
+              />
+              {/* Hover info overlay */}
+              <div
+                className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--color-dark)]/95 to-transparent p-5 transition-all duration-500"
+                style={{ opacity: hovered ? 1 : 0, transform: hovered ? 'translateY(0)' : 'translateY(8px)' }}
+              >
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="font-inter text-[10px] uppercase tracking-widest text-[var(--color-muted)]">{painting.medium}</p>
+                    <p className="font-playfair text-lg text-[var(--color-cream)] mt-0.5">{painting.title}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-[var(--color-gold)]">
+                    <span className="font-inter text-xs uppercase tracking-widest">View</span>
+                    <ArrowUpRight size={14} />
+                  </div>
                 </div>
               </div>
             </div>
+            <div className="absolute left-1/2 bottom-2 -translate-x-1/2 w-16 h-[3px] rounded-full bg-[var(--color-border)]" />
           </div>
 
           {/* Card footer */}
           <div className="p-4 flex items-start justify-between">
             <div>
-              <h3 className="font-playfair text-[15px] text-[#F5F0E8] leading-snug">{painting.title}</h3>
-              <p className="font-inter text-[10px] uppercase tracking-[0.2em] text-[#8A8070] mt-1">{painting.artist}</p>
+              <h3 className="font-playfair text-[15px] text-[var(--color-cream)] leading-snug">{painting.title}</h3>
+              <p className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-muted)] mt-1">{painting.artist}</p>
             </div>
-            <p className="font-inter text-sm text-[#C9A84C] font-medium whitespace-nowrap">${painting.price.toLocaleString()}</p>
+            <p className="font-inter text-sm text-[var(--color-gold)] font-medium whitespace-nowrap">${painting.price.toLocaleString()}</p>
           </div>
         </div>
       </Link>
@@ -476,10 +496,10 @@ function FeaturedGallery() {
             transition={{ duration: 0.7 }}
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-px bg-[#C9A84C]" />
-              <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[#C9A84C]">The Collection</span>
+              <div className="w-8 h-px bg-[var(--color-gold)]" />
+              <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[var(--color-gold)]">The Collection</span>
             </div>
-            <h2 className="font-playfair text-5xl lg:text-6xl text-[#F5F0E8] leading-tight">
+            <h2 className="font-playfair text-5xl lg:text-6xl text-[var(--color-cream)] leading-tight">
               Discover<br />Original Works
             </h2>
           </motion.div>
@@ -490,7 +510,7 @@ function FeaturedGallery() {
           >
             <Link
               href="/gallery"
-              className="group flex items-center gap-2 font-inter text-[11px] uppercase tracking-widest text-[#C9A84C] hover:text-[#d4b55a] transition-colors"
+              className="group flex items-center gap-2 font-inter text-[11px] uppercase tracking-widest text-[var(--color-gold)] hover:text-[#d4b55a] transition-colors"
             >
               View all paintings
               <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
@@ -520,21 +540,21 @@ function HowItWorks() {
   ];
 
   return (
-    <section className="py-32 px-6 border-t border-[#2E2A22] bg-[#0A0A0A]">
+    <section className="py-32 px-6 border-t border-[var(--color-border)] bg-[var(--color-dark)]">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-24">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-px bg-[#C9A84C]" />
-            <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[#C9A84C]">The Process</span>
+            <div className="w-8 h-px bg-[var(--color-gold)]" />
+            <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[var(--color-gold)]">The Process</span>
           </div>
-          <h2 className="font-playfair text-5xl lg:text-7xl text-[#F5F0E8] leading-tight max-w-xl">
+          <h2 className="font-playfair text-5xl lg:text-7xl text-[var(--color-cream)] leading-tight max-w-xl">
             Three steps to owning original art.
           </h2>
         </div>
 
         {/* Steps */}
-        <div className="space-y-0 divide-y divide-[#2E2A22]">
+        <div className="space-y-0 divide-y divide-[var(--color-border)]">
           {steps.map((step, i) => {
             const ref = useRef(null);
             const inView = useInView(ref, { once: true, margin: '-80px' });
@@ -545,21 +565,21 @@ function HowItWorks() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.8, delay: i * 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="group grid grid-cols-[80px_1fr_auto] lg:grid-cols-[120px_1fr_200px] items-center gap-8 lg:gap-16 py-10 hover:bg-[#1A1710]/40 transition-colors duration-300 cursor-default px-4"
+                className="group grid grid-cols-[80px_1fr_auto] lg:grid-cols-[120px_1fr_200px] items-center gap-8 lg:gap-16 py-10 hover:bg-[var(--color-surface)]/40 transition-colors duration-300 cursor-default px-4"
               >
                 {/* Number */}
-                <span className="font-playfair text-5xl lg:text-6xl font-bold text-[#2E2A22] group-hover:text-[#C9A84C]/30 transition-colors duration-500 leading-none">
+                <span className="font-playfair text-5xl lg:text-6xl font-bold text-[var(--color-border)] group-hover:text-[var(--color-gold)]/30 transition-colors duration-500 leading-none">
                   {step.num}
                 </span>
                 {/* Title + desc */}
                 <div>
-                  <h3 className="font-playfair text-2xl lg:text-3xl text-[#F5F0E8] mb-2">{step.title}</h3>
-                  <p className="font-inter text-[14px] text-[#8A8070] leading-relaxed max-w-lg">{step.desc}</p>
+                  <h3 className="font-playfair text-2xl lg:text-3xl text-[var(--color-cream)] mb-2">{step.title}</h3>
+                  <p className="font-inter text-[14px] text-[var(--color-muted)] leading-relaxed max-w-lg">{step.desc}</p>
                 </div>
                 {/* Arrow */}
                 <ArrowUpRight
                   size={24}
-                  className="text-[#2E2A22] group-hover:text-[#C9A84C] transition-colors duration-300 opacity-0 group-hover:opacity-100 hidden lg:block"
+                  className="text-[var(--color-border)] group-hover:text-[var(--color-gold)] transition-colors duration-300 opacity-0 group-hover:opacity-100 hidden lg:block"
                 />
               </motion.div>
             );
@@ -569,7 +589,7 @@ function HowItWorks() {
         <div className="mt-16 flex gap-4">
           <Link
             href="/how-it-works"
-            className="font-inter text-[11px] uppercase tracking-widest text-[#C9A84C] hover:text-[#d4b55a] transition-colors"
+            className="font-inter text-[11px] uppercase tracking-widest text-[var(--color-gold)] hover:text-[#d4b55a] transition-colors"
           >
             Learn more about the process →
           </Link>
@@ -595,7 +615,7 @@ function ArtistSpotlight() {
   const inView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section className="py-32 border-t border-[#2E2A22] overflow-hidden">
+    <section className="py-32 border-t border-[var(--color-border)] overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         <div ref={ref} className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
           <motion.div
@@ -604,10 +624,10 @@ function ArtistSpotlight() {
             transition={{ duration: 0.7 }}
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-px bg-[#C9A84C]" />
-              <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[#C9A84C]">The Artists</span>
+              <div className="w-8 h-px bg-[var(--color-gold)]" />
+              <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[var(--color-gold)]">The Artists</span>
             </div>
-            <h2 className="font-playfair text-5xl lg:text-6xl text-[#F5F0E8] leading-tight">
+            <h2 className="font-playfair text-5xl lg:text-6xl text-[var(--color-cream)] leading-tight">
               The hands<br />behind the work.
             </h2>
           </motion.div>
@@ -618,7 +638,7 @@ function ArtistSpotlight() {
           >
             <Link
               href="/artists"
-              className="group flex items-center gap-2 font-inter text-[11px] uppercase tracking-widest text-[#C9A84C] hover:text-[#d4b55a] transition-colors"
+              className="group flex items-center gap-2 font-inter text-[11px] uppercase tracking-widest text-[var(--color-gold)] hover:text-[#d4b55a] transition-colors"
             >
               Meet all artists
               <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
@@ -635,7 +655,7 @@ function ArtistSpotlight() {
             initial={{ opacity: 0, x: 40 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.7, delay: i * 0.1 }}
-            className="group flex-shrink-0 w-64 bg-[#1A1710] border border-[#2E2A22] overflow-hidden cursor-pointer hover:border-[#C9A84C]/30 transition-colors duration-300"
+            className="group flex-shrink-0 w-64 bg-[var(--color-surface)] border border-[var(--ios-glass-border)] rounded-[var(--ios-radius-xl)] overflow-hidden cursor-pointer hover:border-[var(--color-gold)]/30 shadow-[var(--ios-shadow-sm)] hover:shadow-[var(--ios-shadow-lg)] transition-all duration-300"
           >
             <div className="relative h-72 overflow-hidden">
               <Image
@@ -645,15 +665,15 @@ function ArtistSpotlight() {
                 className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
                 sizes="256px"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A1710]/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-surface)]/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </div>
             <div className="p-5">
-              <h3 className="font-playfair text-xl text-[#F5F0E8]">{a.name}</h3>
-              <p className="font-inter text-[10px] uppercase tracking-widest text-[#8A8070] mt-1.5">{a.country}</p>
-              <p className="font-inter text-[11px] text-[#C9A84C] mt-3">{a.specialty}</p>
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#2E2A22]">
-                <span className="font-inter text-[11px] text-[#5A5548]">{a.paintings} paintings</span>
-                <ArrowUpRight size={14} className="text-[#2E2A22] group-hover:text-[#C9A84C] transition-colors" />
+              <h3 className="font-playfair text-xl text-[var(--color-cream)]">{a.name}</h3>
+              <p className="font-inter text-[10px] uppercase tracking-widest text-[var(--color-muted)] mt-1.5">{a.country}</p>
+              <p className="font-inter text-[11px] text-[var(--color-gold)] mt-3">{a.specialty}</p>
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-[var(--color-border)]">
+                <span className="font-inter text-[11px] text-[var(--color-subtle)]">{a.paintings} paintings</span>
+                <ArrowUpRight size={14} className="text-[var(--color-border)] group-hover:text-[var(--color-gold)] transition-colors" />
               </div>
             </div>
           </motion.div>
@@ -677,35 +697,35 @@ function Testimonials() {
   const inView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section ref={ref} className="py-32 px-6 bg-[#1A1710] border-y border-[#2E2A22]">
+    <section ref={ref} className="py-32 px-6 bg-[var(--color-surface)] border-y border-[var(--color-border)]">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-8 h-px bg-[#C9A84C]" />
-            <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[#C9A84C]">Voices</span>
-            <div className="w-8 h-px bg-[#C9A84C]" />
+            <div className="w-8 h-px bg-[var(--color-gold)]" />
+            <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[var(--color-gold)]">Voices</span>
+            <div className="w-8 h-px bg-[var(--color-gold)]" />
           </div>
-          <h2 className="font-playfair text-5xl text-[#F5F0E8]">What collectors say.</h2>
+          <h2 className="font-playfair text-5xl text-[var(--color-cream)]">What collectors say.</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#2E2A22]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--color-border)]">
           {quotes.map((q, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 40 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.7, delay: i * 0.15 }}
-              className="bg-[#1A1710] p-10 group hover:bg-[#1E1B14] transition-colors duration-300"
+              className="bg-[var(--color-surface)] p-10 group hover:bg-[var(--color-surface)]/80 transition-colors duration-300"
             >
-              <div className="font-playfair text-5xl text-[#C9A84C]/20 leading-none mb-6 group-hover:text-[#C9A84C]/40 transition-colors duration-300">"</div>
-              <p className="font-inter text-[15px] text-[#8A8070] leading-8 mb-8 italic">"{q.quote}"</p>
-              <div className="flex items-center gap-4 pt-6 border-t border-[#2E2A22]">
-                <div className="w-10 h-10 bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center">
-                  <span className="font-playfair text-xs text-[#C9A84C]">{q.initials}</span>
+              <div className="font-playfair text-5xl text-[var(--color-gold)]/20 leading-none mb-6 group-hover:text-[var(--color-gold)]/40 transition-colors duration-300">"</div>
+              <p className="font-inter text-[15px] text-[var(--color-muted)] leading-8 mb-8 italic">"{q.quote}"</p>
+              <div className="flex items-center gap-4 pt-6 border-t border-[var(--color-border)]">
+                <div className="w-10 h-10 bg-[var(--color-gold)]/10 border border-[var(--color-gold)]/20 flex items-center justify-center">
+                  <span className="font-playfair text-xs text-[var(--color-gold)]">{q.initials}</span>
                 </div>
                 <div>
-                  <p className="font-inter text-sm text-[#F5F0E8]">{q.name}</p>
-                  <p className="font-inter text-[10px] uppercase tracking-widest text-[#5A5548] mt-0.5">{q.role}</p>
+                  <p className="font-inter text-sm text-[var(--color-cream)]">{q.name}</p>
+                  <p className="font-inter text-[10px] uppercase tracking-widest text-[var(--color-subtle)] mt-0.5">{q.role}</p>
                 </div>
               </div>
             </motion.div>
@@ -730,8 +750,8 @@ function TrustStrip() {
   const inView = useInView(ref, { once: true, margin: '-60px' });
 
   return (
-    <section ref={ref} className="py-20 px-6 border-t border-[#2E2A22] bg-[#0F0F0F]">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-px bg-[#2E2A22]">
+    <section ref={ref} className="py-20 px-6 border-t border-[var(--color-border)] bg-[var(--color-dark)]">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--color-border)]">
         {items.map((item, i) => {
           const Icon = item.icon;
           return (
@@ -740,12 +760,12 @@ function TrustStrip() {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: i * 0.1 }}
-              className="bg-[#0F0F0F] flex items-start gap-5 p-8 group hover:bg-[#1A1710]/50 transition-colors duration-300"
+              className="bg-[var(--color-dark)] flex items-start gap-5 p-8 group hover:bg-[var(--color-surface)]/50 transition-colors duration-300"
             >
-              <Icon size={20} className="text-[#C9A84C] flex-shrink-0 mt-0.5" />
+              <Icon size={20} className="text-[var(--color-gold)] flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-playfair text-lg text-[#F5F0E8] mb-1">{item.title}</h4>
-                <p className="font-inter text-sm text-[#8A8070] leading-relaxed">{item.desc}</p>
+                <h4 className="font-playfair text-lg text-[var(--color-cream)] mb-1">{item.title}</h4>
+                <p className="font-inter text-sm text-[var(--color-muted)] leading-relaxed">{item.desc}</p>
               </div>
             </motion.div>
           );
@@ -763,7 +783,7 @@ function CTASection() {
   const inView = useInView(ref, { once: true, margin: '-80px' });
 
   return (
-    <section ref={ref} className="relative py-40 px-6 overflow-hidden bg-[#0A0A0A] border-t border-[#2E2A22]">
+    <section ref={ref} className="relative py-40 px-6 overflow-hidden bg-[var(--color-dark)] border-t border-[var(--color-border)]">
       {/* Background painting */}
       <div className="absolute inset-0 opacity-10">
         <Image
@@ -774,7 +794,7 @@ function CTASection() {
           sizes="100vw"
         />
       </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/80 to-[#0A0A0A]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-dark)] via-[var(--color-dark)]/80 to-[var(--color-dark)]" />
 
       <div className="relative z-10 max-w-4xl mx-auto text-center">
         <motion.div
@@ -783,28 +803,28 @@ function CTASection() {
           transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-8 h-px bg-[#C9A84C]" />
-            <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[#C9A84C]">Begin</span>
-            <div className="w-8 h-px bg-[#C9A84C]" />
+            <div className="w-8 h-px bg-[var(--color-gold)]" />
+            <span className="font-inter text-[10px] uppercase tracking-[0.14em] text-[var(--color-gold)] font-semibold">Begin</span>
+            <div className="w-8 h-px bg-[var(--color-gold)]" />
           </div>
-          <h2 className="font-playfair text-6xl lg:text-8xl text-[#F5F0E8] leading-[1.05] mb-6">
+          <h2 className="font-playfair text-6xl lg:text-8xl text-[var(--color-cream)] leading-[0.98] mb-6">
             Your collection<br />
-            <span className="italic text-[#C9A84C]">starts here.</span>
+            <span className="text-[var(--color-gold)] font-semibold">starts here.</span>
           </h2>
-          <p className="font-inter text-[15px] text-[#8A8070] leading-relaxed mb-12 max-w-lg mx-auto">
+          <p className="font-inter text-[15px] text-[var(--color-muted)] leading-relaxed mb-12 max-w-lg mx-auto">
             Hundreds of original paintings. Independent artists from 38 countries. Yours to discover, offer, and own.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/gallery"
-              className="group flex items-center justify-center gap-2 bg-[#C9A84C] text-[#0F0F0F] font-inter text-[11px] uppercase tracking-[0.25em] px-10 py-5 hover:bg-[#d4b55a] transition-colors duration-300"
+              className="group ios-button-primary flex items-center justify-center gap-2 font-inter text-[11px] uppercase tracking-[0.08em] px-10 py-5"
             >
               Enter the Gallery
               <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               href="/auth/register"
-              className="flex items-center justify-center border border-[#2E2A22] text-[#8A8070] font-inter text-[11px] uppercase tracking-[0.25em] px-10 py-5 hover:border-[#C9A84C] hover:text-[#C9A84C] transition-all duration-300"
+              className="ios-button-secondary flex items-center justify-center font-inter text-[11px] uppercase tracking-[0.08em] px-10 py-5"
             >
               Create Account
             </Link>
@@ -812,83 +832,6 @@ function CTASection() {
         </motion.div>
       </div>
     </section>
-  );
-}
-
-/* ────────────────────────────────────────────────
-   FOOTER
-   ──────────────────────────────────────────────── */
-function Footer() {
-  const links = {
-    Explore: [
-      { label: 'Gallery', href: '/gallery' },
-      { label: 'Artists', href: '/artists' },
-      { label: 'About', href: '/about' },
-      { label: 'How It Works', href: '/how-it-works' },
-    ],
-    Account: [
-      { label: 'Sign In', href: '/auth/login' },
-      { label: 'Register', href: '/auth/register' },
-      { label: 'Collector Dashboard', href: '/dashboard' },
-      { label: 'Artist Portal', href: '/artist' },
-    ],
-    Legal: [
-      { label: 'Privacy Policy', href: '/policies/privacy' },
-      { label: 'Terms of Service', href: '/policies/terms' },
-      { label: 'Contact', href: '/contact' },
-    ],
-  };
-
-  return (
-    <footer className="bg-[#0A0A0A] border-t border-[#2E2A22] px-6 pt-20 pb-10">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 mb-16">
-          {/* Brand */}
-          <div className="lg:col-span-2">
-            <Link href="/" className="inline-block mb-6">
-              <span className="font-playfair text-xl tracking-[0.2em] text-[#F5F0E8]">ARTKEZAI</span>
-              <span className="block font-inter text-[8px] uppercase tracking-[0.4em] text-[#8A8070] mt-0.5">Gallery</span>
-            </Link>
-            <p className="font-inter text-[13px] text-[#8A8070] leading-7 max-w-xs">
-              A curated marketplace for original paintings. We connect independent artists with collectors around the world.
-            </p>
-            <div className="mt-8 flex items-center gap-2">
-              <div className="w-2 h-2 bg-[#C9A84C] rounded-full" />
-              <span className="font-inter text-[11px] text-[#8A8070]">Independent artists. Original works only.</span>
-            </div>
-          </div>
-
-          {/* Links */}
-          {Object.entries(links).map(([group, items]) => (
-            <div key={group}>
-              <h4 className="font-inter text-[10px] uppercase tracking-[0.3em] text-[#5A5548] mb-5">{group}</h4>
-              <ul className="space-y-3">
-                {items.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href} className="font-inter text-[13px] text-[#8A8070] hover:text-[#C9A84C] transition-colors duration-200">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        {/* Bottom bar */}
-        <div className="pt-8 border-t border-[#2E2A22] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-inter text-[11px] text-[#5A5548]">
-            © 2024 Artkezai. All rights reserved.
-          </p>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-[#C9A84C]/60 rounded-full" />
-            <p className="font-inter text-[11px] text-[#5A5548]">
-              Original art. Verified authenticity. Fair for artists.
-            </p>
-          </div>
-        </div>
-      </div>
-    </footer>
   );
 }
 
@@ -909,7 +852,6 @@ export default function HomePage() {
       <Testimonials />
       <TrustStrip />
       <CTASection />
-      <Footer />
     </>
   );
 }

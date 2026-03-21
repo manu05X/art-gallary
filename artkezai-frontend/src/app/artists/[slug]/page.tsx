@@ -150,7 +150,7 @@ export default function ArtistDetailPage({ params }: { params: { slug: string } 
   if (notFound) {
     return (
       <div className="bg-dark min-h-screen pt-20 flex items-center justify-center">
-        <div className="card-surface p-16 text-center max-w-md">
+        <div className="ios-card p-16 text-center max-w-md">
           <p className="font-playfair text-2xl text-cream mb-2">Artist not found</p>
           <p className="font-inter text-sm text-muted mb-6">
             We couldn't find the artist you're looking for.
@@ -179,14 +179,16 @@ export default function ArtistDetailPage({ params }: { params: { slug: string } 
         <div className="max-w-5xl mx-auto px-6 -mt-20 md:-mt-24 relative z-10">
           <div className="flex flex-col md:flex-row gap-8 items-start">
             {/* Portrait */}
-            <div className="relative w-36 h-36 md:w-44 md:h-44 overflow-hidden border-2 border-border flex-shrink-0">
-              <Image
-                src={artist.image}
-                alt={artist.name}
-                fill
-                className="object-cover"
-                priority
-              />
+            <div className="relative w-36 h-36 md:w-44 md:h-44 overflow-hidden border border-border rounded-[var(--ios-radius-lg)] bg-surface-hover p-2 flex-shrink-0 shadow-[var(--ios-shadow-sm)]">
+              <div className="relative h-full w-full overflow-hidden rounded-[12px] border border-border">
+                <Image
+                  src={artist.image}
+                  alt={artist.name}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
             </div>
 
             {/* Info */}
@@ -312,38 +314,41 @@ function ArtistPaintingCard({
   return (
     <Link href={`/painting/${painting.slug}`}>
       <div
-        className="card-surface overflow-hidden group cursor-pointer"
+        className="ios-card overflow-hidden group cursor-pointer h-full"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        <div className="relative w-full aspect-[3/4] overflow-hidden bg-surface">
-          <Image
-            src={painting.image}
-            alt={painting.title}
-            fill
-            className={`object-cover transition-transform duration-700 ease-out ${
-              hovered ? 'scale-105' : 'scale-100'
-            }`}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
+        <div className="relative aspect-[4/5] p-3 pb-5 border-b border-border bg-surface-hover">
+          <div className="relative h-full overflow-hidden rounded-[14px] border border-border shadow-[inset_0_0_0_1px_rgba(255,255,255,0.42),0_8px_20px_rgba(17,22,36,0.16)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_10px_22px_rgba(0,0,0,0.42)]">
+            <Image
+              src={painting.image}
+              alt={painting.title}
+              fill
+              className={`object-cover transition-transform duration-700 ease-out ${
+                hovered ? 'scale-105' : 'scale-100'
+              }`}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
 
-          <div
-            className={`absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[rgba(15,15,15,0.95)] to-transparent flex flex-col justify-end p-4 transition-all duration-500 ${
-              hovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-          >
-            <div className="flex items-baseline justify-between mb-1">
-              <span className="font-inter text-[10px] uppercase tracking-[0.15em] text-muted">
-                {painting.medium}
-              </span>
-              <span className="font-playfair text-sm text-gold">
-                ${painting.price.toLocaleString()}
+            <div
+              className={`absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[rgba(15,15,15,0.95)] to-transparent flex flex-col justify-end p-4 transition-all duration-500 ${
+                hovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
+            >
+              <div className="flex items-baseline justify-between mb-1">
+                <span className="font-inter text-[10px] uppercase tracking-[0.15em] text-muted">
+                  {painting.medium}
+                </span>
+                <span className="font-playfair text-sm text-gold">
+                  ${painting.price.toLocaleString()}
+                </span>
+              </div>
+              <span className="font-inter text-[10px] uppercase tracking-[0.15em] text-gold">
+                View Painting →
               </span>
             </div>
-            <span className="font-inter text-[10px] uppercase tracking-[0.15em] text-gold">
-              View Painting →
-            </span>
           </div>
+          <div className="absolute left-1/2 bottom-2 -translate-x-1/2 w-16 h-[3px] rounded-full bg-border" />
         </div>
 
         <div className="p-4">

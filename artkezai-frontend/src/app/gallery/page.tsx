@@ -324,7 +324,7 @@ export default function GalleryPage() {
 /* ── Filter Tag ── */
 function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface border border-border font-inter text-[11px] text-cream">
+    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 ios-pill font-inter text-[11px] text-cream">
       {label}
       <button
         onClick={onRemove}
@@ -356,40 +356,43 @@ function PaintingCard({
   return (
     <Link href={`/painting/${painting.slug}`}>
       <div
-        className="card-surface overflow-hidden group cursor-pointer"
+        className="ios-card overflow-hidden group cursor-pointer h-full"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        {/* Image */}
-        <div className="relative w-full aspect-[3/4] overflow-hidden bg-surface">
-          <Image
-            src={painting.image}
-            alt={painting.title}
-            fill
-            className={`object-cover transition-transform duration-700 ease-out ${
-              hovered ? 'scale-105' : 'scale-100'
-            }`}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
+        {/* Postcard image frame */}
+        <div className="relative aspect-[4/5] p-3 pb-5 border-b border-border bg-surface-hover">
+          <div className="relative h-full overflow-hidden rounded-[14px] border border-border shadow-[inset_0_0_0_1px_rgba(255,255,255,0.42),0_8px_20px_rgba(17,22,36,0.16)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_10px_22px_rgba(0,0,0,0.42)]">
+            <Image
+              src={painting.image}
+              alt={painting.title}
+              fill
+              className={`object-cover transition-transform duration-700 ease-out ${
+                hovered ? 'scale-105' : 'scale-100'
+              }`}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
 
-          {/* Hover overlay */}
-          <div
-            className={`absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[rgba(15,15,15,0.95)] to-transparent flex flex-col justify-end p-4 transition-all duration-500 ${
-              hovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-          >
-            <div className="flex items-baseline justify-between mb-1">
-              <span className="font-inter text-[10px] uppercase tracking-[0.15em] text-muted">
-                {painting.medium}
-              </span>
-              <span className="font-playfair text-sm text-gold">
-                ${painting.price.toLocaleString()}
+            {/* Hover overlay */}
+            <div
+              className={`absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[rgba(15,15,15,0.95)] to-transparent flex flex-col justify-end p-4 transition-all duration-500 ${
+                hovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
+            >
+              <div className="flex items-baseline justify-between mb-1">
+                <span className="font-inter text-[10px] uppercase tracking-[0.08em] text-muted">
+                  {painting.medium}
+                </span>
+                <span className="font-playfair text-sm text-gold">
+                  ${painting.price.toLocaleString()}
+                </span>
+              </div>
+              <span className="font-inter text-[10px] uppercase tracking-[0.08em] text-gold">
+                View Painting →
               </span>
             </div>
-            <span className="font-inter text-[10px] uppercase tracking-[0.15em] text-gold">
-              View Painting →
-            </span>
           </div>
+          <div className="absolute left-1/2 bottom-2 -translate-x-1/2 w-16 h-[3px] rounded-full bg-border" />
         </div>
 
         {/* Info */}
@@ -397,7 +400,7 @@ function PaintingCard({
           <h3 className="font-playfair text-sm text-cream leading-snug line-clamp-2 mb-1">
             {painting.title}
           </h3>
-          <p className="font-inter text-[11px] uppercase tracking-[0.15em] text-muted">
+          <p className="font-inter text-[11px] uppercase tracking-[0.08em] text-muted">
             {painting.artistName}
           </p>
         </div>

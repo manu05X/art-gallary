@@ -60,50 +60,52 @@ const stats = [
 ];
 
 export default function AboutPage() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <main style={{ backgroundColor: '#0F0F0F', color: '#F5F0E8' }}>
+    <main style={{ backgroundColor: 'var(--color-dark)', color: 'var(--color-cream)' }}>
       {/* Section 1 — Split Hero */}
       <section
         className="flex flex-row"
-        style={{ minHeight: '100vh', backgroundColor: '#0F0F0F' }}
+        style={{ minHeight: '100vh', backgroundColor: 'var(--color-dark)' }}
       >
         {/* Left — Image */}
         <div
           className="hidden lg:flex"
-          style={{ width: '55%', position: 'relative', overflow: 'hidden' }}
+          style={{ width: '55%', position: 'relative', overflow: 'hidden', padding: '1.75rem' }}
         >
-          <Image
-            src="https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=1200&q=90"
-            alt="Gallery"
-            fill
-            className="object-cover"
-            priority
-            sizes="55vw"
-          />
-          {/* Right-to-dark gradient */}
           <div
-            className="absolute inset-0"
+            className="ios-card"
             style={{
-              background:
-                'linear-gradient(to right, transparent, rgba(15,15,15,0.80))',
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              overflow: 'hidden',
             }}
-          />
-          {/* Bottom-to-dark gradient */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(to top, rgba(15,15,15,0.70), transparent, transparent)',
-            }}
-          />
-          {/* Gold frame */}
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              inset: '24px',
-              border: '1px solid rgba(201,168,76,0.15)',
-            }}
-          />
+          >
+            <Image
+              src="https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=1200&q=90"
+              alt="Gallery"
+              fill
+              className="object-cover"
+              priority
+              sizes="55vw"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to right, transparent 8%, color-mix(in srgb, var(--color-dark) 72%, transparent) 100%)',
+              }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to top, color-mix(in srgb, var(--color-dark) 62%, transparent), transparent 45%, transparent)',
+              }}
+            />
+          </div>
         </div>
 
         {/* Right — Content */}
@@ -115,7 +117,7 @@ export default function AboutPage() {
             paddingRight: 'clamp(2rem, 4vw, 4rem)',
             paddingTop: '6rem',
             paddingBottom: '6rem',
-            backgroundColor: '#0F0F0F',
+            backgroundColor: 'var(--color-dark)',
           }}
         >
           <motion.div
@@ -131,8 +133,8 @@ export default function AboutPage() {
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '10px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.35em',
-                color: '#C9A84C',
+                letterSpacing: '0.14em',
+                color: 'var(--color-gold)',
                 marginBottom: '1.5rem',
               }}
             >
@@ -146,7 +148,7 @@ export default function AboutPage() {
                 fontFamily: '"Playfair Display", serif',
                 fontSize: 'clamp(2.75rem, 5vw, 3.75rem)',
                 lineHeight: 1.1,
-                color: '#F5F0E8',
+                color: 'var(--color-cream)',
                 margin: 0,
               }}
             >
@@ -161,7 +163,7 @@ export default function AboutPage() {
               style={{
                 width: '48px',
                 height: '1px',
-                backgroundColor: '#C9A84C',
+                backgroundColor: 'var(--color-gold)',
                 margin: '2rem 0',
               }}
             />
@@ -172,7 +174,7 @@ export default function AboutPage() {
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '16px',
-                color: '#8A8070',
+                color: 'var(--color-muted)',
                 lineHeight: 2,
                 margin: 0,
               }}
@@ -206,14 +208,15 @@ export default function AboutPage() {
                   top: 0,
                   bottom: 0,
                   width: '1px',
-                  backgroundColor: 'rgba(201,168,76,0.30)',
+                  backgroundColor: 'var(--color-gold)',
+                  opacity: 0.3,
                 }}
               />
               <h2
                 style={{
                   fontFamily: '"Playfair Display", serif',
                   fontSize: '2.25rem',
-                  color: '#F5F0E8',
+                  color: 'var(--color-cream)',
                   paddingLeft: '1.5rem',
                   margin: 0,
                 }}
@@ -228,7 +231,7 @@ export default function AboutPage() {
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '15px',
-                  color: '#8A8070',
+                  color: 'var(--color-muted)',
                   lineHeight: 2,
                   margin: 0,
                 }}
@@ -242,7 +245,7 @@ export default function AboutPage() {
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '15px',
-                  color: '#8A8070',
+                  color: 'var(--color-muted)',
                   lineHeight: 2,
                   margin: 0,
                 }}
@@ -261,9 +264,9 @@ export default function AboutPage() {
       <AnimatedSection>
         <section
           style={{
-            backgroundColor: '#1A1710',
-            borderTop: '1px solid #2E2A22',
-            borderBottom: '1px solid #2E2A22',
+            backgroundColor: 'var(--color-surface)',
+            borderTop: '1px solid var(--color-border)',
+            borderBottom: '1px solid var(--color-border)',
             padding: '6rem 1.5rem',
           }}
         >
@@ -275,7 +278,7 @@ export default function AboutPage() {
                 fontSize: '10px',
                 textTransform: 'uppercase',
                 letterSpacing: '0.3em',
-                color: '#C9A84C',
+                color: 'var(--color-gold)',
                 marginBottom: '1rem',
               }}
             >
@@ -285,7 +288,7 @@ export default function AboutPage() {
               style={{
                 fontFamily: '"Playfair Display", serif',
                 fontSize: '2.25rem',
-                color: '#F5F0E8',
+                color: 'var(--color-cream)',
                 margin: 0,
               }}
             >
@@ -301,14 +304,14 @@ export default function AboutPage() {
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '1px',
-              backgroundColor: '#2E2A22',
+              backgroundColor: 'var(--color-border)',
             }}
           >
             {values.map((value) => (
               <div
                 key={value.number}
                 style={{
-                  backgroundColor: '#1A1710',
+                  backgroundColor: 'var(--color-surface)',
                   padding: '2.5rem',
                   display: 'flex',
                   flexDirection: 'column',
@@ -320,7 +323,7 @@ export default function AboutPage() {
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '10px',
                     letterSpacing: '0.2em',
-                    color: '#C9A84C',
+                    color: 'var(--color-gold)',
                     textTransform: 'uppercase',
                   }}
                 >
@@ -330,7 +333,7 @@ export default function AboutPage() {
                   style={{
                     fontFamily: '"Playfair Display", serif',
                     fontSize: '1.5rem',
-                    color: '#F5F0E8',
+                    color: 'var(--color-cream)',
                     margin: 0,
                   }}
                 >
@@ -340,7 +343,7 @@ export default function AboutPage() {
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '14px',
-                    color: '#8A8070',
+                    color: 'var(--color-subtle)',
                     lineHeight: 1.75,
                     margin: 0,
                   }}
@@ -357,7 +360,7 @@ export default function AboutPage() {
       <AnimatedSection>
         <section
           style={{
-            backgroundColor: '#0F0F0F',
+            backgroundColor: 'var(--color-bg)',
             padding: '6rem 1.5rem',
           }}
         >
@@ -368,7 +371,7 @@ export default function AboutPage() {
                 fontFamily: '"Playfair Display", serif',
                 fontSize: '120px',
                 lineHeight: 1,
-                color: '#C9A84C',
+                color: 'var(--color-gold)',
                 fontWeight: 700,
                 marginBottom: '-1rem',
               }}
@@ -382,7 +385,7 @@ export default function AboutPage() {
                 fontFamily: '"Playfair Display", serif',
                 fontStyle: 'italic',
                 fontSize: 'clamp(1.25rem, 2.5vw, 1.875rem)',
-                color: '#F5F0E8',
+                color: 'var(--color-cream)',
                 lineHeight: 1.65,
                 margin: '0 0 2rem 0',
               }}
@@ -400,11 +403,11 @@ export default function AboutPage() {
                 fontSize: '11px',
                 textTransform: 'uppercase',
                 letterSpacing: '0.2em',
-                color: '#8A8070',
+                color: 'var(--color-muted)',
                 margin: 0,
               }}
             >
-              — The Founders, 2024
+              — The Founders, {currentYear}
             </p>
           </div>
         </section>
@@ -414,10 +417,10 @@ export default function AboutPage() {
       <AnimatedSection>
         <section
           style={{
-            borderTop: '1px solid #2E2A22',
-            borderBottom: '1px solid #2E2A22',
+            borderTop: '1px solid var(--color-border)',
+            borderBottom: '1px solid var(--color-border)',
             padding: '5rem 1.5rem',
-            backgroundColor: '#1A1710',
+            backgroundColor: 'var(--color-surface)',
           }}
         >
           <div
@@ -436,7 +439,7 @@ export default function AboutPage() {
                 style={{
                   flex: 1,
                   textAlign: 'center',
-                  borderLeft: index !== 0 ? '1px solid #2E2A22' : 'none',
+                  borderLeft: index !== 0 ? '1px solid var(--color-border)' : 'none',
                   padding: '1rem 2rem',
                 }}
               >
@@ -444,7 +447,7 @@ export default function AboutPage() {
                   style={{
                     fontFamily: '"Playfair Display", serif',
                     fontSize: 'clamp(2.5rem, 5vw, 3.75rem)',
-                    color: '#C9A84C',
+                    color: 'var(--color-gold)',
                     lineHeight: 1.1,
                     marginBottom: '0.5rem',
                   }}
@@ -457,7 +460,7 @@ export default function AboutPage() {
                     fontSize: '10px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.15em',
-                    color: '#8A8070',
+                    color: 'var(--color-muted)',
                   }}
                 >
                   {stat.label}
@@ -472,8 +475,8 @@ export default function AboutPage() {
       <AnimatedSection>
         <section
           style={{
-            backgroundColor: '#0F0F0F',
-            borderTop: '1px solid #2E2A22',
+            backgroundColor: 'var(--color-dark)',
+            borderTop: '1px solid var(--color-border)',
             padding: '6rem 1.5rem',
             textAlign: 'center',
           }}
@@ -483,8 +486,8 @@ export default function AboutPage() {
               fontFamily: 'Inter, sans-serif',
               fontSize: '10px',
               textTransform: 'uppercase',
-              letterSpacing: '0.35em',
-              color: '#C9A84C',
+              letterSpacing: '0.14em',
+              color: 'var(--color-gold)',
               marginBottom: '1.25rem',
             }}
           >
@@ -495,7 +498,7 @@ export default function AboutPage() {
             style={{
               fontFamily: '"Playfair Display", serif',
               fontSize: 'clamp(2.25rem, 4vw, 3rem)',
-              color: '#F5F0E8',
+              color: 'var(--color-cream)',
               margin: '0 0 2.5rem 0',
               lineHeight: 1.15,
             }}
@@ -516,18 +519,7 @@ export default function AboutPage() {
             {/* Primary button */}
             <Link
               href="/gallery"
-              style={{
-                display: 'inline-block',
-                backgroundColor: '#C9A84C',
-                color: '#0F0F0F',
-                fontFamily: '"Playfair Display", serif',
-                textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-                fontSize: '0.875rem',
-                padding: '1rem 2rem',
-                textDecoration: 'none',
-                fontWeight: 600,
-              }}
+              className="ios-button-primary inline-flex items-center justify-center font-inter text-[13px] uppercase tracking-[0.08em] px-8 py-4"
             >
               Browse Gallery →
             </Link>
@@ -535,26 +527,7 @@ export default function AboutPage() {
             {/* Secondary button */}
             <Link
               href="/contact"
-              style={{
-                display: 'inline-block',
-                border: '1px solid #2E2A22',
-                color: '#8A8070',
-                fontFamily: 'Inter, sans-serif',
-                textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-                fontSize: '0.75rem',
-                padding: '1rem 2rem',
-                textDecoration: 'none',
-                transition: 'border-color 0.2s ease, color 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#C9A84C';
-                e.currentTarget.style.color = '#C9A84C';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#2E2A22';
-                e.currentTarget.style.color = '#8A8070';
-              }}
+              className="ios-button-secondary inline-flex items-center justify-center font-inter text-[12px] uppercase tracking-[0.08em] px-8 py-4"
             >
               Questions? Contact us
             </Link>

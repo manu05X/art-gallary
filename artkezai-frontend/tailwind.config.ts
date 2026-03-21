@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -9,15 +10,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        surface: '#1A1710',
-        'surface-hover': '#1E1B14',
-        border: '#2E2A22',
-        gold: '#C9A84C',
-        'gold-hover': '#D4B55A',
-        cream: '#F5F0E8',
-        muted: '#8A8070',
-        subtle: '#5A5548',
-        dark: '#0F0F0F',
+        surface: 'var(--color-surface)',
+        'surface-hover': 'var(--color-surface-hover)',
+        border: 'var(--color-border)',
+        gold: 'var(--color-gold)',
+        'gold-hover': 'var(--color-gold-hover)',
+        cream: 'var(--color-cream)',
+        muted: 'var(--color-muted)',
+        subtle: 'var(--color-subtle)',
+        dark: 'var(--color-dark)',
       },
       fontFamily: {
         playfair: ['var(--font-playfair)', 'Georgia', 'serif'],

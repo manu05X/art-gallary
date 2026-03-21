@@ -102,14 +102,14 @@ const stats = [
 export default function HowItWorksPage() {
   return (
     <div
-      style={{ backgroundColor: '#0F0F0F', color: '#F5F0E8' }}
+      style={{ backgroundColor: 'var(--color-dark)', color: 'var(--color-cream)' }}
       className="min-h-screen"
     >
       {/* Section 1 — Hero */}
       <div
         style={{
-          backgroundColor: '#0F0F0F',
-          borderBottom: '1px solid #2E2A22',
+          backgroundColor: 'var(--color-dark)',
+          borderBottom: '1px solid var(--color-border)',
         }}
         className="pt-32 pb-20 px-6"
       >
@@ -125,9 +125,9 @@ export default function HowItWorksPage() {
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '10px',
-                letterSpacing: '0.3em',
+                letterSpacing: '0.14em',
                 textTransform: 'uppercase',
-                color: '#C9A84C',
+                color: 'var(--color-gold)',
               }}
               className="mb-6"
             >
@@ -138,8 +138,7 @@ export default function HowItWorksPage() {
               style={{
                 fontFamily: 'Playfair Display, serif',
                 fontSize: 'clamp(2.5rem, 5vw, 3.75rem)',
-                fontStyle: 'italic',
-                color: '#F5F0E8',
+                color: 'var(--color-cream)',
                 lineHeight: 1.1,
               }}
             >
@@ -149,7 +148,7 @@ export default function HowItWorksPage() {
               variants={itemVariants}
               style={{
                 height: '1px',
-                backgroundColor: '#C9A84C',
+                backgroundColor: 'var(--color-gold)',
                 width: '64px',
                 marginTop: '24px',
               }}
@@ -167,7 +166,7 @@ export default function HowItWorksPage() {
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '15px',
-                color: '#8A8070',
+                color: 'var(--color-muted)',
                 lineHeight: 1.75,
               }}
             >
@@ -182,7 +181,7 @@ export default function HowItWorksPage() {
       {steps.map((step, index) => (
         <AnimatedSection key={step.number}>
           <div
-            style={{ borderBottom: '1px solid #2E2A22' }}
+            style={{ borderBottom: '1px solid var(--color-border)' }}
             className="py-24 px-6"
           >
             <div
@@ -197,7 +196,7 @@ export default function HowItWorksPage() {
                   style={{
                     fontFamily: 'Playfair Display, serif',
                     fontSize: '160px',
-                    color: 'rgba(201, 168, 76, 0.05)',
+                    color: 'color-mix(in srgb, var(--color-gold) 45%, transparent)',
                     fontWeight: 700,
                     position: 'absolute',
                     top: '-60px',
@@ -216,9 +215,9 @@ export default function HowItWorksPage() {
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '10px',
-                      letterSpacing: '0.3em',
+                      letterSpacing: '0.14em',
                       textTransform: 'uppercase',
-                      color: '#C9A84C',
+                      color: 'var(--color-gold)',
                     }}
                     className="mb-4"
                   >
@@ -228,7 +227,7 @@ export default function HowItWorksPage() {
                     style={{
                       fontFamily: 'Playfair Display, serif',
                       fontSize: 'clamp(1.75rem, 3.5vw, 2.5rem)',
-                      color: '#F5F0E8',
+                      color: 'var(--color-cream)',
                       lineHeight: 1.15,
                     }}
                     className="mb-6"
@@ -239,7 +238,7 @@ export default function HowItWorksPage() {
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '15px',
-                      color: '#8A8070',
+                      color: 'var(--color-muted)',
                       lineHeight: 1.75,
                       maxWidth: '420px',
                     }}
@@ -252,17 +251,25 @@ export default function HowItWorksPage() {
               {/* Visual Side */}
               <div
                 style={{
-                  backgroundColor: '#1A1710',
-                  border: '1px solid #2E2A22',
+                  backgroundColor: 'var(--ios-glass)',
+                  border: '1px solid var(--ios-glass-border)',
                   height: '320px',
+                  aspectRatio: '1 / 1',
+                  maxWidth: '320px',
+                  width: '100%',
+                  margin: '0 auto',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  borderRadius: 'var(--ios-radius-xl)',
+                  backdropFilter: 'blur(18px) saturate(135%)',
+                  WebkitBackdropFilter: 'blur(18px) saturate(135%)',
+                  boxShadow: 'var(--ios-shadow-sm)',
                 }}
               >
                 <step.icon
                   size={48}
-                  style={{ color: '#C9A84C', opacity: 0.4 }}
+                  style={{ color: 'var(--color-gold)', opacity: 0.55 }}
                   strokeWidth={1}
                 />
               </div>
@@ -275,8 +282,8 @@ export default function HowItWorksPage() {
       <AnimatedSection>
         <div
           style={{
-            backgroundColor: '#1A1710',
-            borderBottom: '1px solid #2E2A22',
+            backgroundColor: 'var(--color-surface)',
+            borderBottom: '1px solid var(--color-border)',
           }}
           className="py-24 px-6"
         >
@@ -287,7 +294,7 @@ export default function HowItWorksPage() {
                 style={{
                   fontFamily: 'Playfair Display, serif',
                   fontSize: 'clamp(1.75rem, 3vw, 2.5rem)',
-                  color: '#F5F0E8',
+                  color: 'var(--color-cream)',
                   lineHeight: 1.15,
                 }}
                 className="mb-4"
@@ -298,7 +305,7 @@ export default function HowItWorksPage() {
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '14px',
-                  color: '#8A8070',
+                  color: 'var(--color-muted)',
                 }}
               >
                 Your guide to buying original art
@@ -313,7 +320,7 @@ export default function HowItWorksPage() {
                     style={{
                       width: '6px',
                       height: '6px',
-                      backgroundColor: '#C9A84C',
+                      backgroundColor: 'var(--color-gold)',
                       borderRadius: '9999px',
                       marginTop: '6px',
                       flexShrink: 0,
@@ -325,7 +332,7 @@ export default function HowItWorksPage() {
                         fontFamily: 'Inter, sans-serif',
                         fontSize: '15px',
                         fontWeight: 600,
-                        color: '#F5F0E8',
+                        color: 'var(--color-cream)',
                       }}
                       className="mb-1"
                     >
@@ -335,7 +342,7 @@ export default function HowItWorksPage() {
                       style={{
                         fontFamily: 'Inter, sans-serif',
                         fontSize: '14px',
-                        color: '#8A8070',
+                        color: 'var(--color-muted)',
                       }}
                     >
                       {item.description}
@@ -352,8 +359,8 @@ export default function HowItWorksPage() {
       <AnimatedSection>
         <div
           style={{
-            backgroundColor: '#0F0F0F',
-            borderBottom: '1px solid #2E2A22',
+            backgroundColor: 'var(--color-dark)',
+            borderBottom: '1px solid var(--color-border)',
           }}
           className="py-24 px-6"
         >
@@ -366,7 +373,7 @@ export default function HowItWorksPage() {
                     style={{
                       width: '6px',
                       height: '6px',
-                      backgroundColor: '#C9A84C',
+                      backgroundColor: 'var(--color-gold)',
                       borderRadius: '9999px',
                       marginTop: '6px',
                       flexShrink: 0,
@@ -378,7 +385,7 @@ export default function HowItWorksPage() {
                         fontFamily: 'Inter, sans-serif',
                         fontSize: '15px',
                         fontWeight: 600,
-                        color: '#F5F0E8',
+                        color: 'var(--color-cream)',
                       }}
                       className="mb-1"
                     >
@@ -388,7 +395,7 @@ export default function HowItWorksPage() {
                       style={{
                         fontFamily: 'Inter, sans-serif',
                         fontSize: '14px',
-                        color: '#8A8070',
+                        color: 'var(--color-muted)',
                       }}
                     >
                       {item.description}
@@ -404,7 +411,7 @@ export default function HowItWorksPage() {
                 style={{
                   fontFamily: 'Playfair Display, serif',
                   fontSize: 'clamp(1.75rem, 3vw, 2.5rem)',
-                  color: '#F5F0E8',
+                  color: 'var(--color-cream)',
                   lineHeight: 1.15,
                 }}
                 className="mb-4"
@@ -415,7 +422,7 @@ export default function HowItWorksPage() {
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '14px',
-                  color: '#8A8070',
+                  color: 'var(--color-muted)',
                 }}
               >
                 Your guide to selling original art
@@ -429,9 +436,9 @@ export default function HowItWorksPage() {
       <AnimatedSection>
         <div
           style={{
-            borderTop: '1px solid #2E2A22',
-            borderBottom: '1px solid #2E2A22',
-            backgroundColor: '#0F0F0F',
+            borderTop: '1px solid var(--color-border)',
+            borderBottom: '1px solid var(--color-border)',
+            backgroundColor: 'var(--color-dark)',
           }}
           className="py-20 px-6"
         >
@@ -440,7 +447,7 @@ export default function HowItWorksPage() {
               <div
                 key={index}
                 style={{
-                  borderLeft: index > 0 ? '1px solid #2E2A22' : 'none',
+                  borderLeft: index > 0 ? '1px solid var(--color-border)' : 'none',
                 }}
                 className="text-center py-8 px-8"
               >
@@ -448,7 +455,7 @@ export default function HowItWorksPage() {
                   style={{
                     fontFamily: 'Playfair Display, serif',
                     fontSize: 'clamp(3rem, 7vw, 4.5rem)',
-                    color: '#C9A84C',
+                    color: 'var(--color-gold)',
                     lineHeight: 1,
                     fontWeight: 700,
                   }}
@@ -460,7 +467,7 @@ export default function HowItWorksPage() {
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '11px',
-                    color: '#8A8070',
+                    color: 'var(--color-muted)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.15em',
                   }}
@@ -477,8 +484,8 @@ export default function HowItWorksPage() {
       <AnimatedSection>
         <div
           style={{
-            backgroundColor: '#1A1710',
-            borderTop: '1px solid #2E2A22',
+            backgroundColor: 'var(--color-surface)',
+            borderTop: '1px solid var(--color-border)',
           }}
           className="py-24 px-6 text-center"
         >
@@ -487,9 +494,9 @@ export default function HowItWorksPage() {
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '10px',
-                letterSpacing: '0.3em',
+                letterSpacing: '0.14em',
                 textTransform: 'uppercase',
-                color: '#C9A84C',
+                color: 'var(--color-gold)',
               }}
               className="mb-6"
             >
@@ -499,7 +506,7 @@ export default function HowItWorksPage() {
               style={{
                 fontFamily: 'Playfair Display, serif',
                 fontSize: 'clamp(2rem, 4vw, 3rem)',
-                color: '#F5F0E8',
+                color: 'var(--color-cream)',
                 lineHeight: 1.15,
               }}
               className="mb-10"
@@ -510,34 +517,13 @@ export default function HowItWorksPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
               <Link
                 href="/gallery"
-                style={{
-                  backgroundColor: '#C9A84C',
-                  color: '#0F0F0F',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  padding: '14px 32px',
-                  display: 'inline-block',
-                  letterSpacing: '0.02em',
-                  textDecoration: 'none',
-                }}
+                className="ios-button-primary inline-flex items-center justify-center font-inter text-[13px] uppercase tracking-[0.08em] px-8 py-4"
               >
                 Enter the Gallery →
               </Link>
               <Link
                 href="/auth/register"
-                style={{
-                  border: '1px solid #C9A84C',
-                  color: '#C9A84C',
-                  fontFamily: 'Inter, sans-serif',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  padding: '14px 32px',
-                  display: 'inline-block',
-                  letterSpacing: '0.02em',
-                  textDecoration: 'none',
-                  backgroundColor: 'transparent',
-                }}
+                className="ios-button-secondary inline-flex items-center justify-center font-inter text-[13px] uppercase tracking-[0.08em] px-8 py-4"
               >
                 Create Account
               </Link>
@@ -548,7 +534,7 @@ export default function HowItWorksPage() {
               style={{
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '13px',
-                color: '#8A8070',
+                color: 'var(--color-muted)',
                 textDecoration: 'none',
               }}
             >

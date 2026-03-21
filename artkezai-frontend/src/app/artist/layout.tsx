@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
 import { UserRole } from '@/types';
-import { Upload, Gallery, User, MessageSquare, BarChart3 } from 'lucide-react';
+import { Upload, Grid3x3, User, MessageSquare, BarChart3 } from 'lucide-react';
 
 export default function ArtistLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function ArtistLayout({ children }: { children: React.ReactNode }
   const navItems = [
     { href: '/artist', label: 'Overview', icon: BarChart3 },
     { href: '/artist/submit', label: 'Submit Painting', icon: Upload },
-    { href: '/artist/listings', label: 'My Listings', icon: Gallery },
+    { href: '/artist/listings', label: 'My Listings', icon: Grid3x3 },
     { href: '/artist/profile', label: 'Profile & Story', icon: User },
     { href: '/artist/messages', label: 'Messages', icon: MessageSquare },
   ];

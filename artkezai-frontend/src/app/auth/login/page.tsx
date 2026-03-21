@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,27 +16,44 @@ const HERO_IMAGE =
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuthStore();
+  const { login, isAuthenticated } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<LoginRequest>({ email: '', password: '' });
   const [focused, setFocused] = useState<string | null>(null);
 
+  useEffect(() => {
+    setMounted(true);
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  if (!mounted || isAuthenticated) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       const response = await authApi.login(formData);
-      login({
-        id: response.user.id,
-        email: response.user.email,
-        displayName: `${response.user.firstName} ${response.user.lastName}`.trim(),
-        role: response.user.role.toLowerCase() as 'buyer' | 'artist' | 'admin',
-      });
+      login(
+        {
+          id: response.user.id,
+          email: response.user.email,
+          firstName: response.user.firstName,
+          lastName: response.user.lastName,
+          displayName: `${response.user.firstName} ${response.user.lastName}`.trim(),
+          role: response.user.role.toLowerCase() as 'buyer' | 'artist' | 'admin',
+        },
+        response.token
+      );
       toast.success('Welcome back.');
       const redirect =
         response.user.role === UserRole.ARTIST
@@ -53,42 +70,43 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] flex">
+    <div className="min-h-screen bg-[var(--color-dark)] flex">
       {/* LEFT — Painting Panel */}
-      <div className="hidden lg:block lg:w-[55%] relative overflow-hidden">
-        <Image
-          src={HERO_IMAGE}
-          alt="Gallery painting"
-          fill
-          className="object-cover"
-          priority
-          sizes="55vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0F0F0F]/20 via-transparent to-[#0F0F0F]/60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F0F]/85 via-transparent to-transparent" />
-        <div className="absolute inset-6 border border-[#C9A84C]/20 pointer-events-none" />
+      <div className="hidden lg:block lg:w-[55%] relative overflow-hidden p-6">
+        <div className="ios-card relative w-full h-full overflow-hidden">
+          <Image
+            src={HERO_IMAGE}
+            alt="Gallery painting"
+            fill
+            className="object-cover"
+            priority
+            sizes="55vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-dark)]/20 via-transparent to-[var(--color-dark)]/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-dark)]/85 via-transparent to-transparent" />
+        </div>
 
         {/* Caption */}
         <div className="absolute bottom-10 left-10 right-10">
-          <p className="font-playfair text-[10px] uppercase tracking-[0.35em] text-[#C9A84C] mb-2">
+          <p className="font-playfair text-[10px] uppercase tracking-[0.14em] text-[var(--color-gold)] mb-2">
             Artkezai Collection
           </p>
-          <p className="font-playfair text-2xl text-[#F5F0E8] leading-snug">
+          <p className="font-playfair text-2xl text-[var(--color-cream)] leading-snug">
             Twilight Over the Valley
           </p>
-          <p className="font-inter text-[10px] uppercase tracking-widest text-[#8A8070] mt-1">
+          <p className="font-inter text-[10px] uppercase tracking-[0.08em] text-[var(--color-muted)] mt-1">
             James Whitfield · Acrylic on Canvas
           </p>
         </div>
       </div>
 
       {/* Vertical gold divider */}
-      <div className="hidden lg:block w-px bg-[#1A1710] relative">
+      <div className="hidden lg:block w-px bg-[var(--color-surface)] relative">
         <motion.div
           initial={{ scaleY: 0 }}
           animate={{ scaleY: 1 }}
           transition={{ duration: 1.2, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="absolute inset-0 bg-[#C9A84C]/50 origin-top"
+          className="absolute inset-0 bg-[var(--color-gold)]/50 origin-top"
         />
       </div>
 
@@ -102,7 +120,7 @@ export default function LoginPage() {
         >
           {/* Brand wordmark */}
           <Link href="/" className="inline-block mb-14">
-            <span className="font-playfair text-[12px] uppercase tracking-[0.4em] text-[#C9A84C]">
+            <span className="font-playfair text-[12px] uppercase tracking-[0.14em] text-[var(--color-gold)]">
               Artkezai
             </span>
           </Link>
@@ -113,7 +131,7 @@ export default function LoginPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="font-playfair text-4xl md:text-5xl text-[#F5F0E8] leading-tight mb-3"
+              className="font-playfair text-4xl md:text-5xl text-[var(--color-cream)] leading-tight mb-3"
             >
               Welcome<br />back.
             </motion.h1>
@@ -121,7 +139,7 @@ export default function LoginPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.45 }}
-              className="font-inter text-sm text-[#8A8070]"
+              className="font-inter text-sm text-[var(--color-muted)]"
             >
               Sign in to continue to your collection.
             </motion.p>
@@ -133,7 +151,7 @@ export default function LoginPage() {
             <div className="relative group">
               <label
                 className="block font-inter text-[10px] uppercase tracking-widest mb-3 transition-colors duration-200"
-                style={{ color: focused === 'email' ? '#C9A84C' : '#5A5548' }}
+                style={{ color: focused === 'email' ? 'var(--color-gold)' : 'var(--color-subtle)' }}
               >
                 Email Address
               </label>
@@ -146,11 +164,7 @@ export default function LoginPage() {
                 onBlur={() => setFocused(null)}
                 required
                 disabled={isLoading}
-                className="w-full bg-transparent pb-3 font-inter text-sm text-[#F5F0E8] focus:outline-none disabled:opacity-50"
-                style={{
-                  borderBottom: `1px solid ${focused === 'email' ? '#C9A84C' : '#2E2A22'}`,
-                  transition: 'border-color 0.2s ease',
-                }}
+                className="w-full px-4 py-3 font-inter text-sm border border-[var(--color-border)] rounded-[14px] bg-[color-mix(in_srgb,var(--color-surface)_82%,white_18%)] focus:outline-none disabled:opacity-50"
               />
             </div>
 
@@ -158,7 +172,7 @@ export default function LoginPage() {
             <div className="relative">
               <label
                 className="block font-inter text-[10px] uppercase tracking-widest mb-3 transition-colors duration-200"
-                style={{ color: focused === 'password' ? '#C9A84C' : '#5A5548' }}
+                style={{ color: focused === 'password' ? 'var(--color-gold)' : 'var(--color-subtle)' }}
               >
                 Password
               </label>
@@ -172,17 +186,13 @@ export default function LoginPage() {
                   onBlur={() => setFocused(null)}
                   required
                   disabled={isLoading}
-                  className="w-full bg-transparent pb-3 pr-8 font-inter text-sm text-[#F5F0E8] focus:outline-none disabled:opacity-50"
-                  style={{
-                    borderBottom: `1px solid ${focused === 'password' ? '#C9A84C' : '#2E2A22'}`,
-                    transition: 'border-color 0.2s ease',
-                  }}
+                  className="w-full pl-4 pr-10 py-3 font-inter text-sm border border-[var(--color-border)] rounded-[14px] bg-[color-mix(in_srgb,var(--color-surface)_82%,white_18%)] focus:outline-none disabled:opacity-50"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-0 bottom-3 text-[#5A5548] hover:text-[#C9A84C] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-subtle)] hover:text-[var(--color-gold)] transition-colors"
                 >
                   {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
@@ -193,7 +203,7 @@ export default function LoginPage() {
             <div className="text-right -mt-4">
               <Link
                 href="/auth/forgot-password"
-                className="font-inter text-[11px] uppercase tracking-widest text-[#5A5548] hover:text-[#C9A84C] transition-colors"
+                className="font-inter text-[11px] uppercase tracking-[0.08em] text-[var(--color-subtle)] hover:text-[var(--color-gold)] transition-colors"
               >
                 Forgot password?
               </Link>
@@ -203,14 +213,14 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full group flex items-center justify-between bg-[#C9A84C] text-[#0F0F0F] font-playfair uppercase tracking-widest text-sm px-7 py-4 hover:bg-[#d4b55a] transition-colors duration-300 disabled:opacity-60"
+              className="w-full group ios-button-primary flex items-center justify-between font-inter uppercase tracking-[0.08em] text-sm px-7 py-4 disabled:opacity-60"
             >
               <span>{isLoading ? 'Signing in…' : 'Sign In'}</span>
               {isLoading ? (
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  className="w-4 h-4 border-2 border-[#0F0F0F] border-t-transparent rounded-full"
+                  className="w-4 h-4 border-2 border-[var(--color-bg)] border-t-transparent rounded-full"
                 />
               ) : (
                 <ArrowRight
@@ -222,12 +232,12 @@ export default function LoginPage() {
           </form>
 
           {/* Footer links */}
-          <div className="mt-12 pt-8 border-t border-[#2E2A22] space-y-3">
-            <p className="font-inter text-[12px] text-[#5A5548]">
+          <div className="mt-12 pt-8 border-t border-[var(--color-border)] space-y-3">
+            <p className="font-inter text-[12px] text-[var(--color-subtle)]">
               New to Artkezai?{' '}
               <Link
                 href="/auth/register"
-                className="text-[#C9A84C] hover:text-[#d4b55a] transition-colors"
+                className="text-[var(--color-gold)] hover:text-[var(--color-gold-hover)] transition-colors"
               >
                 Create an account →
               </Link>

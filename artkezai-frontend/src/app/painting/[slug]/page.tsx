@@ -223,19 +223,19 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
 
   if (!painting) {
     return (
-      <div className="bg-[#0F0F0F] min-h-screen flex items-center justify-center p-4">
+      <div className="bg-[var(--color-dark)] min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="bg-[#1A1710] border border-[#2E2A22] p-10 text-center max-w-md"
+          className="ios-card p-10 text-center max-w-md"
         >
-          <p className="font-playfair text-2xl text-[#F5F0E8] mb-4">Painting not found</p>
-          <p className="font-inter text-sm text-[#8A8070] mb-6">
+          <p className="font-playfair text-2xl text-[var(--color-cream)] mb-4">Painting not found</p>
+          <p className="font-inter text-sm text-[var(--color-muted)] mb-6">
             The painting you&apos;re looking for doesn&apos;t exist or has been removed.
           </p>
           <Link
             href="/gallery"
-            className="inline-flex items-center gap-2 font-inter text-xs uppercase tracking-widest text-[#C9A84C] border border-[#C9A84C] px-6 py-3 hover:bg-[#C9A84C] hover:text-[#0F0F0F] transition-colors"
+            className="inline-flex items-center gap-2 ios-button-secondary font-inter text-xs uppercase tracking-widest px-6 py-3"
           >
             <ArrowLeft size={16} />
             Back to Gallery
@@ -250,19 +250,19 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
     .slice(0, 4);
 
   return (
-    <div className="bg-[#0F0F0F] min-h-screen">
+    <div className="bg-[var(--color-dark)] min-h-screen">
       {/* Breadcrumb */}
-      <div className="border-b border-[#2E2A22] px-4 sm:px-6 lg:px-8 py-5">
+      <div className="border-b border-[var(--color-border)] px-4 sm:px-6 lg:px-8 py-5">
         <div className="max-w-7xl mx-auto flex items-center gap-2">
           <Link
             href="/gallery"
-            className="inline-flex items-center gap-2 font-inter text-[11px] uppercase tracking-widest text-[#8A8070] hover:text-[#C9A84C] transition-colors"
+            className="inline-flex items-center gap-2 font-inter text-[11px] uppercase tracking-widest text-[var(--color-muted)] hover:text-[var(--color-gold)] transition-colors"
           >
             <ArrowLeft size={13} />
             Gallery
           </Link>
-          <span className="text-[#2E2A22] text-xs">/</span>
-          <span className="font-inter text-[11px] uppercase tracking-widest text-[#F5F0E8] truncate max-w-[200px]">
+          <span className="text-[var(--color-border)] text-xs">/</span>
+          <span className="font-inter text-[11px] uppercase tracking-widest text-[var(--color-cream)] truncate max-w-[200px]">
             {painting.title}
           </span>
         </div>
@@ -279,7 +279,7 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
             transition={{ duration: 0.6 }}
             className="lg:col-span-2"
           >
-            <div className="relative w-full aspect-[4/5] bg-[#1A1710] overflow-hidden group">
+            <div className="relative w-full aspect-[4/5] bg-[var(--color-surface)] overflow-hidden group rounded-[var(--ios-radius-xl)] border border-[var(--color-border)]">
               <Image
                 src={painting.image}
                 alt={painting.title}
@@ -288,9 +288,9 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
                 priority
                 sizes="(max-width: 1024px) 100vw, 66vw"
               />
-              <div className="absolute inset-4 border border-[#C9A84C]/25 pointer-events-none" />
-              <div className="absolute top-6 left-6 bg-[#0F0F0F]/80 backdrop-blur-sm border border-[#2E2A22] px-3 py-1.5">
-                <span className="font-inter text-[10px] uppercase tracking-widest text-[#C9A84C]">
+              <div className="absolute inset-4 border border-[color-mix(in_srgb,var(--color-gold)_30%,transparent)] pointer-events-none" />
+              <div className="absolute top-6 left-6 bg-[color-mix(in_srgb,var(--color-dark)_84%,transparent)] backdrop-blur-sm border border-[var(--color-border)] px-3 py-1.5 rounded-full">
+                <span className="font-inter text-[10px] uppercase tracking-widest text-[var(--color-gold)]">
                   {painting.category}
                 </span>
               </div>
@@ -298,8 +298,8 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
 
             {/* About this painting */}
             <AnimatedSection delay={0.3} className="mt-12">
-              <h2 className="font-playfair text-2xl text-[#F5F0E8] mb-5">About this Painting</h2>
-              <p className="font-inter text-[15px] text-[#8A8070] leading-8">
+              <h2 className="font-playfair text-2xl text-[var(--color-cream)] mb-5">About this Painting</h2>
+              <p className="font-inter text-[15px] text-[var(--color-muted)] leading-8">
                 {painting.description}
               </p>
             </AnimatedSection>
@@ -315,31 +315,31 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
             <div className="space-y-6">
               {/* Title */}
               <div>
-                <h1 className="font-playfair text-4xl md:text-5xl text-[#F5F0E8] leading-tight mb-3">
+                <h1 className="font-playfair text-4xl md:text-5xl text-[var(--color-cream)] leading-tight mb-3">
                   {painting.title}
                 </h1>
                 <Link
                   href={`/artists/${painting.artistSlug}`}
-                  className="font-inter text-sm text-[#8A8070] hover:text-[#C9A84C] transition-colors"
+                  className="font-inter text-sm text-[var(--color-muted)] hover:text-[var(--color-gold)] transition-colors"
                 >
                   by <span className="font-semibold">{painting.artistName}</span>
                 </Link>
               </div>
 
-              <div className="h-px bg-[#2E2A22]" />
+              <div className="h-px bg-[var(--color-border)]" />
 
               {/* Price */}
               <div>
-                <p className="font-playfair text-4xl text-[#C9A84C] mb-1">
+                <p className="font-playfair text-4xl text-[var(--color-gold)] mb-1">
                   ${painting.price.toLocaleString()}
                 </p>
-                <p className="font-inter text-[11px] uppercase tracking-widest text-[#8A8070]">
+                <p className="font-inter text-[11px] uppercase tracking-widest text-[var(--color-muted)]">
                   {painting.currency} · or make an offer
                 </p>
               </div>
 
               {/* Metadata */}
-              <div className="space-y-3 py-6 border-y border-[#2E2A22]">
+              <div className="space-y-3 py-6 border-y border-[var(--color-border)]">
                 <MetaRow label="Medium" value={painting.medium} />
                 <MetaRow label="Dimensions" value={`${painting.width} × ${painting.height} cm`} />
                 <MetaRow label="Year" value={String(painting.yearCreated)} />
@@ -350,35 +350,35 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
 
               {/* CTA Buttons */}
               <div className="space-y-3">
-                <button className="w-full bg-[#C9A84C] text-[#0F0F0F] font-playfair uppercase tracking-widest text-sm py-4 hover:bg-[#d4b55a] transition-colors flex items-center justify-center gap-2">
+                <button className="w-full ios-button-primary font-playfair uppercase tracking-widest text-sm py-4 flex items-center justify-center gap-2">
                   <ShoppingCart size={18} />
                   Buy Now
                 </button>
                 <button
                   onClick={() => setShowOffer(true)}
-                  className="w-full border border-[#C9A84C] text-[#C9A84C] font-playfair uppercase tracking-widest text-sm py-4 hover:bg-[#C9A84C]/10 transition-colors flex items-center justify-center gap-2"
+                  className="w-full ios-button-secondary font-playfair uppercase tracking-widest text-sm py-4 flex items-center justify-center gap-2"
                 >
                   <Zap size={18} />
                   Make an Offer
                 </button>
-                <button className="w-full border border-[#2E2A22] text-[#8A8070] font-inter text-xs uppercase tracking-widest py-3 hover:border-[#C9A84C] hover:text-[#C9A84C] transition-colors flex items-center justify-center gap-2">
+                <button className="w-full border border-[var(--color-border)] text-[var(--color-muted)] font-inter text-xs uppercase tracking-widest py-3 hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] transition-colors flex items-center justify-center gap-2 rounded-full">
                   <MessageSquare size={16} />
                   Message Gallery
                 </button>
               </div>
 
               {/* Trust signals */}
-              <div className="space-y-3 pt-4 border-t border-[#2E2A22] text-xs">
-                <div className="flex items-center gap-2 text-[#8A8070]">
-                  <Shield size={15} className="text-[#C9A84C] shrink-0" />
+              <div className="space-y-3 pt-4 border-t border-[var(--color-border)] text-xs">
+                <div className="flex items-center gap-2 text-[var(--color-muted)]">
+                  <Shield size={15} className="text-[var(--color-gold)] shrink-0" />
                   Secure checkout — all transactions protected
                 </div>
-                <div className="flex items-center gap-2 text-[#8A8070]">
-                  <RotateCcw size={15} className="text-[#C9A84C] shrink-0" />
+                <div className="flex items-center gap-2 text-[var(--color-muted)]">
+                  <RotateCcw size={15} className="text-[var(--color-gold)] shrink-0" />
                   Certificate of authenticity included
                 </div>
-                <div className="flex items-center gap-2 text-[#8A8070]">
-                  <Truck size={15} className="text-[#C9A84C] shrink-0" />
+                <div className="flex items-center gap-2 text-[var(--color-muted)]">
+                  <Truck size={15} className="text-[var(--color-gold)] shrink-0" />
                   Professional art shipping arranged
                 </div>
               </div>
@@ -388,11 +388,11 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
       </div>
 
       {/* About the Artist */}
-      <section className="border-t border-[#2E2A22] py-16 px-4 sm:px-6 lg:px-8">
+      <section className="border-t border-[var(--color-border)] py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <AnimatedSection delay={0.1}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
-              <div className="relative h-80 overflow-hidden group">
+              <div className="relative h-80 overflow-hidden group rounded-[var(--ios-radius-xl)] border border-[var(--color-border)]">
                 <Image
                   src={painting.artistImage}
                   alt={painting.artistName}
@@ -402,18 +402,18 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
                 />
               </div>
               <div className="md:col-span-2">
-                <h2 className="font-playfair text-3xl text-[#F5F0E8] mb-2">
+                <h2 className="font-playfair text-3xl text-[var(--color-cream)] mb-2">
                   {painting.artistName}
                 </h2>
-                <p className="font-inter text-[11px] uppercase tracking-widest text-[#8A8070] mb-6">
+                <p className="font-inter text-[11px] uppercase tracking-widest text-[var(--color-muted)] mb-6">
                   From {painting.country}
                 </p>
-                <p className="font-inter text-[15px] text-[#8A8070] leading-8 mb-8">
+                <p className="font-inter text-[15px] text-[var(--color-muted)] leading-8 mb-8">
                   {painting.artistBio}
                 </p>
                 <Link
                   href={`/artists/${painting.artistSlug}`}
-                  className="inline-flex items-center gap-2 font-inter text-xs uppercase tracking-widest text-[#C9A84C] border border-[#C9A84C] px-6 py-3 hover:bg-[#C9A84C] hover:text-[#0F0F0F] transition-colors"
+                  className="inline-flex items-center gap-2 ios-button-secondary font-inter text-xs uppercase tracking-widest px-6 py-3"
                 >
                   View Artist Profile →
                 </Link>
@@ -425,16 +425,16 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
 
       {/* Related Paintings */}
       {related.length > 0 && (
-        <section className="bg-gradient-to-b from-[#0F0F0F] to-[#1A1710] border-t border-[#2E2A22] py-16 px-4 sm:px-6 lg:px-8">
+        <section className="bg-gradient-to-b from-[var(--color-dark)] to-[var(--color-surface)] border-t border-[var(--color-border)] py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
             <AnimatedSection delay={0.1}>
-              <h2 className="font-playfair text-3xl text-[#F5F0E8] mb-10">You Might Also Like</h2>
+              <h2 className="font-playfair text-3xl text-[var(--color-cream)] mb-10">You Might Also Like</h2>
             </AnimatedSection>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {related.map((rel, i) => (
                 <AnimatedSection key={rel.id} delay={i * 0.1}>
                   <Link href={`/painting/${rel.slug}`}>
-                    <div className="bg-[#1A1710] border border-[#2E2A22] overflow-hidden group cursor-pointer">
+                    <div className="bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden group cursor-pointer rounded-[var(--ios-radius-lg)]">
                       <div className="relative w-full aspect-[3/4] overflow-hidden">
                         <Image
                           src={rel.image}
@@ -445,11 +445,11 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
                         />
                       </div>
                       <div className="p-4 space-y-1">
-                        <h3 className="font-playfair text-sm text-[#F5F0E8]">{rel.title}</h3>
-                        <p className="font-inter text-[11px] uppercase tracking-widest text-[#8A8070]">
+                        <h3 className="font-playfair text-sm text-[var(--color-cream)]">{rel.title}</h3>
+                        <p className="font-inter text-[11px] uppercase tracking-widest text-[var(--color-muted)]">
                           {rel.artistName}
                         </p>
-                        <p className="font-inter text-sm text-[#C9A84C]">
+                        <p className="font-inter text-sm text-[var(--color-gold)]">
                           ${rel.price.toLocaleString()}
                         </p>
                       </div>
@@ -468,30 +468,30 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#1A1710] border border-[#2E2A22] p-8 w-full max-w-md"
+            className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--ios-radius-xl)] p-8 w-full max-w-md"
           >
-            <h3 className="font-playfair text-2xl text-[#F5F0E8] mb-2">Make an Offer</h3>
-            <p className="font-inter text-sm text-[#8A8070] mb-6">
+            <h3 className="font-playfair text-2xl text-[var(--color-cream)] mb-2">Make an Offer</h3>
+            <p className="font-inter text-sm text-[var(--color-muted)] mb-6">
               Listed at{' '}
-              <span className="text-[#C9A84C]">${painting.price.toLocaleString()}</span>
+              <span className="text-[var(--color-gold)]">${painting.price.toLocaleString()}</span>
             </p>
             <input
               type="number"
               placeholder="Your offer (USD)"
-              className="w-full bg-[#0F0F0F] border border-[#2E2A22] text-[#F5F0E8] font-inter text-sm px-4 py-3 mb-4 focus:outline-none focus:border-[#C9A84C] transition-colors"
+              className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] font-inter text-sm px-4 py-3 mb-4 focus:outline-none focus:border-[var(--color-gold)] transition-colors rounded-[14px]"
             />
             <textarea
               placeholder="Message to the gallery (optional)"
               rows={3}
-              className="w-full bg-[#0F0F0F] border border-[#2E2A22] text-[#F5F0E8] font-inter text-sm px-4 py-3 mb-6 focus:outline-none focus:border-[#C9A84C] transition-colors resize-none"
+              className="w-full bg-[var(--color-dark)] border border-[var(--color-border)] text-[var(--color-cream)] font-inter text-sm px-4 py-3 mb-6 focus:outline-none focus:border-[var(--color-gold)] transition-colors resize-none rounded-[14px]"
             />
             <div className="flex gap-3">
-              <button className="flex-1 bg-[#C9A84C] text-[#0F0F0F] font-playfair uppercase tracking-widest text-sm py-3 hover:bg-[#d4b55a] transition-colors">
+              <button className="flex-1 ios-button-primary font-playfair uppercase tracking-widest text-sm py-3">
                 Submit Offer
               </button>
               <button
                 onClick={() => setShowOffer(false)}
-                className="flex-1 border border-[#2E2A22] text-[#8A8070] font-inter text-xs uppercase tracking-widest py-3 hover:border-[#C9A84C] hover:text-[#C9A84C] transition-colors"
+                className="flex-1 border border-[var(--color-border)] text-[var(--color-muted)] font-inter text-xs uppercase tracking-widest py-3 hover:border-[var(--color-gold)] hover:text-[var(--color-gold)] transition-colors rounded-full"
               >
                 Cancel
               </button>
@@ -506,8 +506,8 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid grid-cols-2">
-      <p className="font-inter text-[11px] uppercase tracking-widest text-[#5A5548]">{label}</p>
-      <p className="font-inter text-sm text-[#F5F0E8]">{value}</p>
+      <p className="font-inter text-[11px] uppercase tracking-widest text-[var(--color-subtle)]">{label}</p>
+      <p className="font-inter text-sm text-[var(--color-cream)]">{value}</p>
     </div>
   );
 }
