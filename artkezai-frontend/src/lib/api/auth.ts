@@ -3,8 +3,19 @@ import { User, AuthResponse, RegisterRequest, LoginRequest, ResetPasswordRequest
 
 export const authApi = {
   register: async (req: RegisterRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/register', req);
-    return response;
+    const data = await apiClient.post('/auth/register', req);
+    return {
+      user: {
+        id: String(data.userId),
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: data.role,
+        createdAt: '',
+        updatedAt: '',
+      },
+      token: data.token,
+    };
   },
 
   login: async (req: LoginRequest): Promise<AuthResponse> => {

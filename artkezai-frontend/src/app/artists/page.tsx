@@ -108,7 +108,7 @@ export default function ArtistsPage() {
               placeholder="Search artists by name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-surface border border-border text-cream pl-10 pr-4 py-3 font-inter text-sm placeholder-subtle focus:outline-none focus:border-gold transition-colors duration-300"
+              className="w-full text-cream pl-10 pr-4 py-3 font-inter text-sm placeholder-subtle focus:outline-none focus:border-gold transition-colors duration-300"
             />
           </div>
         </div>
@@ -162,12 +162,12 @@ function ArtistCard({
   return (
     <Link href={`/artists/${artist.slug}`}>
       <div
-        className="card-surface overflow-hidden group cursor-pointer h-full"
+        className="ios-card overflow-hidden group cursor-pointer h-full"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
         {/* Portrait */}
-        <div className="relative w-full aspect-[4/3] overflow-hidden bg-surface">
+        <div className="relative w-full aspect-square overflow-hidden bg-surface">
           <Image
             src={artist.image}
             alt={artist.name}
@@ -180,7 +180,7 @@ function ArtistCard({
 
           {/* Country badge */}
           <div className="absolute top-4 left-4">
-            <span className="bg-dark/80 backdrop-blur-sm px-3 py-1 font-inter text-[10px] uppercase tracking-[0.15em] text-cream">
+            <span className="ios-pill px-3 py-1 font-inter text-[10px] uppercase tracking-[0.08em] text-cream">
               {artist.country}
             </span>
           </div>
@@ -195,10 +195,10 @@ function ArtistCard({
             {artist.bio}
           </p>
           <div className="flex items-center justify-between pt-3 border-t border-border">
-            <span className="font-inter text-[11px] uppercase tracking-[0.12em] text-subtle">
+            <span className="font-inter text-[11px] uppercase tracking-[0.08em] text-subtle">
               {artist.paintingCount} paintings
             </span>
-            <span className="font-inter text-[11px] uppercase tracking-[0.12em] text-gold group-hover:text-gold-hover transition-colors duration-300">
+            <span className="font-inter text-[11px] uppercase tracking-[0.08em] text-gold group-hover:text-gold-hover transition-colors duration-300">
               View Profile →
             </span>
           </div>

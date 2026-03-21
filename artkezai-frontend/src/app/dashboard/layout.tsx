@@ -1,23 +1,24 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
-import { UserRole } from '@/types';
-import { LayoutGrid, ShoppingBag, MessageSquare, Settings } from 'lucide-react';
+import { ShoppingBag, MessageSquare, Settings } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
+    setMounted(true);
     if (!isAuthenticated) {
       router.push('/auth/login');
     }
   }, [isAuthenticated, router]);
 
-  if (!isAuthenticated) {
+  if (!mounted || !isAuthenticated) {
     return null;
   }
 
@@ -32,8 +33,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="section container">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <aside className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold text-brand mb-6">Dashboard</h2>
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--ios-radius-lg)] shadow-[var(--ios-shadow-sm)] p-6">
+            <h2 className="text-xl font-bold text-[var(--color-cream)] mb-6">Dashboard</h2>
             <nav className="space-y-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -41,7 +42,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-cream)] hover:bg-[var(--color-surface-hover)] transition"
                   >
                     <Icon size={20} />
                     <span>{item.label}</span>
