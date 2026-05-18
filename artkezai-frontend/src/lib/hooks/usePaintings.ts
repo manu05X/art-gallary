@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { paintingsApi } from '@/lib/api/paintings';
-import { PaintingListDto, PaintingDto, SubmitPaintingRequest, GalleryFilters, Category, Medium, Country } from '@/types';
+import { SubmitPaintingRequest, GalleryFilters } from '@/types';
 import toast from 'react-hot-toast';
 
 export const usePaintings = (filters: GalleryFilters, page: number = 1, sort: string = 'newest') => {
@@ -27,7 +27,7 @@ export const useSubmitPainting = () => {
 
   return useMutation({
     mutationFn: (req: SubmitPaintingRequest) => paintingsApi.submitPainting(req),
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success('Painting submitted successfully');
       queryClient.invalidateQueries({ queryKey: ['paintings'] });
     },

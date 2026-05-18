@@ -12,6 +12,7 @@ import com.artkezai.user.User;
 import com.artkezai.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,9 @@ public class AuthService {
 	private final JwtService jwtService;
 	private final PasswordEncoder passwordEncoder;
 	private final EmailService emailService;
+
+	@Value("${artkezai.frontend-url:http://localhost:3000}")
+	private String frontendUrl;
 
 	public AuthResponse register(RegisterRequest request) {
 		if (userRepository.existsByEmail(request.getEmail())) {
@@ -73,17 +77,17 @@ public class AuthService {
 	}
 
 	public void forgotPassword(ForgotPasswordRequest request) {
-		User user = userRepository.findByEmail(request.getEmail())
-				.orElseThrow(() -> new BusinessException("Email not found"));
+		// Silent return for unknown emails — don't leak registration status
+		userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+			String resetToken = UUID.randomUUID().toString();
+			user.setResetToken(resetToken);
+			user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
+			userRepository.save(user);
 
-		String resetToken = UUID.randomUUID().toString();
-		user.setResetToken(resetToken);
-		user.setResetTokenExpiry(LocalDateTime.now().plusHours(24));
-		userRepository.save(user);
-
-		String resetLink = "https://artkezai.com/reset-password?token=" + resetToken;
-		emailService.sendPasswordReset(user, resetLink);
-		log.info("Password reset email sent to: {}", user.getEmail());
+			String resetLink = frontendUrl + "/auth/reset-password?token=" + resetToken;
+			emailService.sendPasswordReset(user, resetLink);
+			log.info("Password reset email sent to: {}", user.getEmail());
+		});
 	}
 
 	public void resetPassword(ResetPasswordRequest request) {

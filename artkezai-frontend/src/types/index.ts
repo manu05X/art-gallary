@@ -165,34 +165,38 @@ export enum OfferStatus {
 }
 
 export interface OfferDto {
-  id: string;
-  paintingId: string;
-  buyerId: string;
+  id: number;
+  paintingId: number;
+  paintingTitle: string;
+  paintingThumbnailUrl?: string;
   buyerName: string;
-  adminCounterAmount?: number;
-  buyerAmount: number;
+  offerAmount: number;
+  counterAmount?: number;
+  buyerMessage?: string;
+  adminMessage?: string;
+  currency: string;
   status: OfferStatus;
-  message?: string;
   expiresAt: string;
+  respondedAt?: string;
   createdAt: string;
-  updatedAt: string;
-  painting: {
-    slug: string;
-    title: string;
-    primaryImage: PaintingImageDto;
-  };
 }
 
 export interface MakeOfferRequest {
-  paintingId: string;
-  amount: number;
+  paintingId: number;
+  offerAmount: number;
   message?: string;
 }
 
+export enum OfferAction {
+  ACCEPT = 'ACCEPT',
+  REJECT = 'REJECT',
+  COUNTER = 'COUNTER',
+}
+
 export interface RespondOfferRequest {
-  status: OfferStatus;
+  action: OfferAction;
   counterAmount?: number;
-  rejectionReason?: string;
+  message?: string;
 }
 
 export enum OrderStatus {
@@ -272,23 +276,27 @@ export interface UpdateShippingRequest {
 }
 
 export interface MessageDto {
-  id: string;
-  threadId: string;
-  senderId: string;
+  id: number;
+  threadId: number;
+  senderId: number;
   senderName: string;
   body: string;
+  isRead?: boolean;
   createdAt: string;
 }
 
 export interface ThreadDto {
-  id: string;
+  id: number;
   subject: string;
-  paintingId?: string;
-  participantIds: string[];
+  userId: number;
+  userName: string;
+  isResolved: boolean;
+  unreadCount: number;
+  paintingId?: number;
   lastMessageAt: string;
   createdAt: string;
-  updatedAt: string;
   lastMessage?: string;
+  messages?: MessageDto[];
 }
 
 export interface SendMessageRequest {

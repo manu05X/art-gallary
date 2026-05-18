@@ -28,17 +28,17 @@ export const paintingsApi = {
     params.append('page', page.toString());
     params.append('sort', sort);
 
-    const response = await apiClient.get(`/paintings?${params.toString()}`);
+    const response = await apiClient.get<never, PagedResponse<PaintingListDto>>(`/paintings?${params.toString()}`);
     return response;
   },
 
   getPaintingBySlug: async (slug: string): Promise<PaintingDto> => {
-    const response = await apiClient.get(`/paintings/${slug}`);
+    const response = await apiClient.get<never, PaintingDto>(`/paintings/slug/${slug}`);
     return response;
   },
 
   submitPainting: async (req: SubmitPaintingRequest): Promise<PaintingDto> => {
-    const response = await apiClient.post('/paintings', req);
+    const response = await apiClient.post<SubmitPaintingRequest, PaintingDto>('/paintings', req);
     return response;
   },
 
@@ -46,7 +46,7 @@ export const paintingsApi = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await apiClient.post(`/paintings/${paintingId}/images`, formData, {
+    const response = await apiClient.post<FormData, PaintingImageDto>(`/paintings/${paintingId}/images`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -55,27 +55,27 @@ export const paintingsApi = {
   },
 
   getCategories: async (): Promise<Category[]> => {
-    const response = await apiClient.get('/paintings/categories');
+    const response = await apiClient.get<never, Category[]>('/paintings/categories');
     return response;
   },
 
   getMediums: async (): Promise<Medium[]> => {
-    const response = await apiClient.get('/paintings/mediums');
+    const response = await apiClient.get<never, Medium[]>('/paintings/mediums');
     return response;
   },
 
   getCountries: async (): Promise<Country[]> => {
-    const response = await apiClient.get('/paintings/countries');
+    const response = await apiClient.get<never, Country[]>('/paintings/countries');
     return response;
   },
 
   getMyListings: async (page: number = 1): Promise<PagedResponse<PaintingListDto>> => {
-    const response = await apiClient.get(`/paintings/my-listings?page=${page}`);
+    const response = await apiClient.get<never, PagedResponse<PaintingListDto>>(`/paintings/my-listings?page=${page}`);
     return response;
   },
 
   updatePainting: async (paintingId: string, req: Partial<SubmitPaintingRequest>): Promise<PaintingDto> => {
-    const response = await apiClient.patch(`/paintings/${paintingId}`, req);
+    const response = await apiClient.patch<Partial<SubmitPaintingRequest>, PaintingDto>(`/paintings/${paintingId}`, req);
     return response;
   },
 };

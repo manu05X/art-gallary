@@ -1,28 +1,36 @@
 import apiClient from '@/lib/api';
 import { OfferDto, MakeOfferRequest, RespondOfferRequest, PagedResponse } from '@/types';
+import { SpringPage, toPagedResponse } from '@/lib/api/utils';
 
 export const offersApi = {
   makeOffer: async (req: MakeOfferRequest): Promise<OfferDto> => {
-    const response = await apiClient.post('/offers', req);
+    const response = await apiClient.post<MakeOfferRequest, OfferDto>('/offers', req);
     return response;
   },
 
   getMyOffers: async (page: number = 1): Promise<PagedResponse<OfferDto>> => {
-    const response = await apiClient.get(`/offers/my-offers?page=${page}`);
+    const response = await apiClient.get<never, SpringPage<OfferDto>>(`/offers/my?page=${Math.max(page - 1, 0)}`);
+    return toPagedResponse<OfferDto>(response);
+  },
+
+  getArtistOffers: async (page: number = 1): Promise<PagedResponse<OfferDto>> => {
+    const response = await apiClient.get<never, SpringPage<OfferDto>>(
+      `/offers/received?page=${Math.max(page - 1, 0)}`
+    );
+    return toPagedResponse<OfferDto>(response);
+  },
+
+  respondToOffer: async (offerId: number, req: RespondOfferRequest): Promise<OfferDto> => {
+    const response = await apiClient.post<RespondOfferRequest, OfferDto>(`/offers/${offerId}/respond`, req);
     return response;
   },
 
-  respondToOffer: async (offerId: string, req: RespondOfferRequest): Promise<OfferDto> => {
-    const response = await apiClient.patch(`/admin/offers/${offerId}`, req);
-    return response;
-  },
-
-  withdrawOffer: async (offerId: string): Promise<void> => {
-    await apiClient.patch(`/offers/${offerId}/withdraw`);
+  withdrawOffer: async (offerId: number): Promise<void> => {
+    await apiClient.post(`/offers/${offerId}/withdraw`);
   },
 
   getAllOffers: async (page: number = 1): Promise<PagedResponse<OfferDto>> => {
-    const response = await apiClient.get(`/admin/offers?page=${page}`);
-    return response;
+    const response = await apiClient.get<never, SpringPage<OfferDto>>(`/offers?page=${Math.max(page - 1, 0)}`);
+    return toPagedResponse<OfferDto>(response);
   },
 };

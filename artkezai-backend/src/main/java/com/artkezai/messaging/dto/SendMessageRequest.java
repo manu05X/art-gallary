@@ -17,4 +17,6 @@ public class SendMessageRequest {
 
 	private String subject;
 
+	private Long paintingId;
+
 }

@@ -5,6 +5,8 @@ import com.artkezai.common.exception.ResourceNotFoundException;
 import com.artkezai.messaging.dto.MessageDto;
 import com.artkezai.messaging.dto.SendMessageRequest;
 import com.artkezai.messaging.dto.ThreadDto;
+import com.artkezai.painting.Painting;
+import com.artkezai.painting.PaintingRepository;
 import com.artkezai.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,15 +26,23 @@ public class MessageService {
 
 	private final ThreadRepository threadRepository;
 	private final MessageRepository messageRepository;
+	private final PaintingRepository paintingRepository;
 
 	public ThreadDto createThread(SendMessageRequest request, User user) {
 		if (request.getSubject() == null || request.getSubject().trim().isEmpty()) {
 			throw new BusinessException("Subject is required for new thread");
 		}
 
+		Painting painting = null;
+		if (request.getPaintingId() != null) {
+			painting = paintingRepository.findById(request.getPaintingId())
+					.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", request.getPaintingId()));
+		}
+
 		MessageThread thread = MessageThread.builder()
 				.subject(request.getSubject())
 				.user(user)
+				.painting(painting)
 				.isResolved(false)
 				.build();
 

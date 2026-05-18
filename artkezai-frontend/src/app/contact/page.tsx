@@ -33,7 +33,7 @@ export default function ContactPage() {
 
     if (isAuthenticated) {
       createThread(
-        { subject: formData.subject },
+        { subject: formData.subject, body: formData.message },
         {
           onSuccess: () => {
             setFormData({ name: '', email: '', subject: '', message: '' });

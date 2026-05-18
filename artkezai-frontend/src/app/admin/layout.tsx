@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
-import { UserRole } from '@/types';
 import {
   LayoutGrid,
   CheckSquare,
@@ -23,12 +22,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/auth/login');
-    } else if (user?.role !== UserRole.ADMIN) {
+    } else if (user?.role !== 'admin') {
       router.push('/dashboard');
     }
   }, [isAuthenticated, user, router]);
 
-  if (!isAuthenticated || user?.role !== UserRole.ADMIN) {
+  if (!isAuthenticated || user?.role !== 'admin') {
     return null;
   }
 

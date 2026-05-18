@@ -2,6 +2,7 @@ package com.artkezai.painting;
 
 import com.artkezai.common.response.ApiResponse;
 import com.artkezai.painting.dto.GalleryFilterRequest;
+import com.artkezai.painting.dto.PaintingDetailDto;
 import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.painting.dto.SubmitPaintingRequest;
 import com.artkezai.user.User;
@@ -36,16 +37,16 @@ public class PaintingController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<ApiResponse<Painting>> getPainting(@PathVariable Long id) {
+	public ResponseEntity<ApiResponse<PaintingDetailDto>> getPainting(@PathVariable Long id) {
 		log.info("Get painting: {}", id);
-		Painting painting = paintingService.getPainting(id);
+		PaintingDetailDto painting = paintingService.getPainting(id);
 		return ResponseEntity.ok(ApiResponse.ok(painting));
 	}
 
 	@GetMapping("/slug/{slug}")
-	public ResponseEntity<ApiResponse<Painting>> getPaintingBySlug(@PathVariable String slug) {
+	public ResponseEntity<ApiResponse<PaintingDetailDto>> getPaintingBySlug(@PathVariable String slug) {
 		log.info("Get painting by slug: {}", slug);
-		Painting painting = paintingService.getPaintingBySlug(slug);
+		PaintingDetailDto painting = paintingService.getPaintingBySlug(slug);
 		return ResponseEntity.ok(ApiResponse.ok(painting));
 	}
 

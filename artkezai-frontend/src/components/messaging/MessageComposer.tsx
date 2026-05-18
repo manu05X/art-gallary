@@ -5,7 +5,7 @@ import { Send } from 'lucide-react';
 import { useSendMessage } from '@/lib/hooks/useMessages';
 
 interface MessageComposerProps {
-  threadId: string;
+  threadId: number;
 }
 
 export function MessageComposer({ threadId }: MessageComposerProps) {

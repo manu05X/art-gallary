@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
-import { UserRole } from '@/types';
 import { Upload, Grid3x3, User, MessageSquare, BarChart3 } from 'lucide-react';
 
 export default function ArtistLayout({ children }: { children: React.ReactNode }) {
@@ -14,12 +13,12 @@ export default function ArtistLayout({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/auth/login');
-    } else if (user?.role !== UserRole.ARTIST) {
+    } else if (user?.role !== 'artist') {
       router.push('/dashboard');
     }
   }, [isAuthenticated, user, router]);
 
-  if (!isAuthenticated || user?.role !== UserRole.ARTIST) {
+  if (!isAuthenticated || user?.role !== 'artist') {
     return null;
   }
 
