@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/lib/store/authStore';
 import { ApiResponse } from '@/types';
 
@@ -11,7 +11,7 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const { token } = useAuthStore.getState();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -22,12 +22,12 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response: AxiosResponse<ApiResponse<any>>) => {
     if (response.data?.data !== undefined) {
-      return Promise.resolve(response.data.data);
+      return response.data.data;
     }
     return response;
   },
-  (error) => {
-    if (error.response?.status === 401) {
+  (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
       useAuthStore.getState().logout();
       window.location.href = '/auth/login';
     }

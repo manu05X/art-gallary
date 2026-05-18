@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { messagesApi } from '@/lib/api/messages';
-import { ThreadDto, MessageDto } from '@/types';
+import { parseApiError } from '@/lib/api/utils';
 import toast from 'react-hot-toast';
 
 export const useMyThreads = (page: number = 1) => {
@@ -13,7 +13,7 @@ export const useMyThreads = (page: number = 1) => {
   });
 };
 
-export const useThread = (threadId: string) => {
+export const useThread = (threadId: number) => {
   return useQuery({
     queryKey: ['thread', threadId],
     queryFn: () => messagesApi.getThread(threadId),
@@ -26,13 +26,13 @@ export const useSendMessage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ threadId, body }: { threadId: string; body: string }) =>
+    mutationFn: ({ threadId, body }: { threadId: number; body: string }) =>
       messagesApi.sendMessage(threadId, body),
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['thread'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to send message');
+      toast.error(parseApiError(error, 'Failed to send message').message);
     },
   });
 };
@@ -41,14 +41,14 @@ export const useCreateThread = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ subject, paintingId }: { subject: string; paintingId?: string }) =>
-      messagesApi.createThread(subject, paintingId),
+    mutationFn: ({ subject, body, paintingId }: { subject: string; body: string; paintingId?: number }) =>
+      messagesApi.createThread(subject, body, paintingId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-threads'] });
       toast.success('Thread created');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Failed to create thread');
+      toast.error(parseApiError(error, 'Failed to create thread').message);
     },
   });
 };

@@ -42,11 +42,11 @@ export default function AdminOffersPage() {
           {offers.map((offer) => (
             <div key={offer.id} className="p-6 hover:bg-gray-50 transition">
               <div className="flex gap-6">
-                {offer.painting.primaryImage && (
+                {offer.paintingThumbnailUrl && (
                   <div className="flex-shrink-0 w-20 h-20 relative rounded-lg overflow-hidden bg-gray-100">
                     <Image
-                      src={offer.painting.primaryImage.url}
-                      alt={offer.painting.title}
+                      src={offer.paintingThumbnailUrl}
+                      alt={offer.paintingTitle}
                       fill
                       className="object-cover"
                     />
@@ -55,22 +55,22 @@ export default function AdminOffersPage() {
 
                 <div className="flex-1">
                   <Link
-                    href={`/painting/${offer.painting.slug}`}
+                    href="/gallery"
                     className="text-lg font-semibold text-brand hover:text-accent transition"
                   >
-                    {offer.painting.title}
+                    {offer.paintingTitle}
                   </Link>
 
                   <div className="flex items-center gap-4 mt-2">
                     <OfferStatusBadge status={offer.status} />
                     <span className="text-sm text-gray-600">
-                      ${offer.buyerAmount.toLocaleString()} from {offer.buyerName}
+                      ${offer.offerAmount.toLocaleString()} {offer.currency} from {offer.buyerName}
                     </span>
                   </div>
 
-                  {offer.adminCounterAmount && (
+                  {offer.counterAmount && (
                     <p className="text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded mt-2 inline-block">
-                      Counter: ${offer.adminCounterAmount.toLocaleString()}
+                      Counter: ${offer.counterAmount.toLocaleString()} {offer.currency}
                     </p>
                   )}
                 </div>

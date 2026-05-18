@@ -29,4 +29,6 @@ public class GalleryFilterRequest {
 
 	private String orientation;
 
+	private String sortBy; // "newest", "oldest", "price-asc", "price-desc", or field name like "createdAt"
+
 }

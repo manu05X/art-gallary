@@ -6,6 +6,7 @@ import com.artkezai.common.exception.BusinessException;
 import com.artkezai.common.exception.ResourceNotFoundException;
 import com.artkezai.common.exception.UnauthorizedException;
 import com.artkezai.common.util.SlugUtil;
+import com.artkezai.painting.dto.PaintingDetailDto;
 import com.artkezai.painting.dto.GalleryFilterRequest;
 import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.painting.dto.SubmitPaintingRequest;
@@ -18,13 +19,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Sort;
 import java.util.UUID;
 
 @Service
@@ -222,25 +227,31 @@ public class PaintingService {
 			spec = spec.and(PaintingSpec.hasOrientation(filter.getOrientation()));
 		}
 
+		// Apply sort from filter's sortBy parameter if provided
+		Sort sort = buildSortFromSortBy(filter.getSortBy());
+		pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+
 		return paintingRepository.findAll(spec, pageable).map(this::toPaintingListDto);
 	}
 
 	@Transactional(readOnly = true)
-	public Painting getPainting(Long id) {
+	public PaintingDetailDto getPainting(Long id) {
 		Painting painting = paintingRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", id));
 
 		painting.setViewCount(painting.getViewCount() + 1);
-		return paintingRepository.save(painting);
+		Painting savedPainting = paintingRepository.save(painting);
+		return toPaintingDetailDto(savedPainting);
 	}
 
 	@Transactional(readOnly = true)
-	public Painting getPaintingBySlug(String slug) {
+	public PaintingDetailDto getPaintingBySlug(String slug) {
 		Painting painting = paintingRepository.findBySlug(slug)
 				.orElseThrow(() -> new ResourceNotFoundException("Painting", "slug", slug));
 
 		painting.setViewCount(painting.getViewCount() + 1);
-		return paintingRepository.save(painting);
+		Painting savedPainting = paintingRepository.save(painting);
+		return toPaintingDetailDto(savedPainting);
 	}
 
 	private PaintingListDto toPaintingListDto(Painting painting) {
@@ -265,6 +276,81 @@ public class PaintingService {
 				.status(painting.getStatus())
 				.createdAt(painting.getCreatedAt())
 				.build();
+	}
+
+	private PaintingDetailDto toPaintingDetailDto(Painting painting) {
+		List<PaintingDetailDto.PaintingImageDto> allImages = painting.getImages().stream()
+				.sorted(Comparator.comparing(img -> img.getSortOrder() == null ? 0 : img.getSortOrder()))
+				.map(img -> PaintingDetailDto.PaintingImageDto.builder()
+						.id(img.getId())
+						.url(img.getUrl())
+						.displayOrder(img.getSortOrder())
+						.isPrimary(img.getIsPrimary())
+						.build())
+				.toList();
+
+		PaintingDetailDto.PaintingImageDto primaryImage = allImages.stream()
+				.filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+				.findFirst()
+				.orElse(allImages.isEmpty() ? null : allImages.get(0));
+
+		return PaintingDetailDto.builder()
+				.id(painting.getId())
+				.slug(painting.getSlug())
+				.title(painting.getTitle())
+				.artistId(painting.getArtist() != null ? painting.getArtist().getId() : null)
+				.artistName(painting.getArtist() != null ? painting.getArtist().getDisplayName() : null)
+				.mediumId(painting.getMedium() != null ? painting.getMedium().getId() : null)
+				.mediumName(painting.getMedium() != null ? painting.getMedium().getName() : null)
+				.categoryId(painting.getCategory() != null ? painting.getCategory().getId() : null)
+				.categoryName(painting.getCategory() != null ? painting.getCategory().getName() : null)
+				.price(painting.getPrice())
+				.currency(painting.getCurrency())
+				.country(painting.getCountry() != null ? painting.getCountry().getName() : null)
+				.countryCode(painting.getCountry() != null ? painting.getCountry().getCode() : null)
+				.status(painting.getStatus())
+				.primaryImage(primaryImage)
+				.createdAt(painting.getCreatedAt())
+				.updatedAt(painting.getUpdatedAt())
+				.description(painting.getDescription())
+				.width(painting.getWidthCm())
+				.height(painting.getHeightCm())
+				.yearCreated(painting.getYearCreated())
+				.orientation(painting.getOrientation())
+				.allImages(allImages)
+				.artist(PaintingDetailDto.ArtistDto.builder()
+						.id(painting.getArtist() != null && painting.getArtist().getUser() != null
+								? painting.getArtist().getUser().getId()
+								: null)
+						.firstName(painting.getArtist() != null && painting.getArtist().getUser() != null
+								? painting.getArtist().getUser().getFirstName()
+								: null)
+						.lastName(painting.getArtist() != null && painting.getArtist().getUser() != null
+								? painting.getArtist().getUser().getLastName()
+								: null)
+						.profileImageUrl(painting.getArtist() != null ? painting.getArtist().getProfilePhotoUrl() : null)
+						.bio(painting.getArtist() != null ? painting.getArtist().getBio() : null)
+						.slug(painting.getArtist() != null ? painting.getArtist().getSlug() : null)
+						.build())
+				.build();
+	}
+
+	/**
+	 * Maps user-friendly sort parameters to database field names and directions
+	 * Supports: "newest", "oldest", "price-asc", "price-desc"
+	 */
+	private Sort buildSortFromSortBy(String sortBy) {
+		if (sortBy == null || sortBy.isEmpty()) {
+			return Sort.by(Sort.Direction.DESC, "createdAt");
+		}
+
+		return switch (sortBy.toLowerCase()) {
+			case "newest" -> Sort.by(Sort.Direction.DESC, "createdAt");
+			case "oldest" -> Sort.by(Sort.Direction.ASC, "createdAt");
+			case "price-asc" -> Sort.by(Sort.Direction.ASC, "price");
+			case "price-desc" -> Sort.by(Sort.Direction.DESC, "price");
+			default -> Sort.by(Sort.Direction.DESC, "createdAt"); // Default fallback
+		};
 	}
 
 }

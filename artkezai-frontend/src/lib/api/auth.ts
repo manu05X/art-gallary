@@ -1,9 +1,18 @@
 import apiClient from '@/lib/api';
 import { User, AuthResponse, RegisterRequest, LoginRequest, ResetPasswordRequest } from '@/types';
 
+interface AuthPayload {
+  userId: number | string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: User['role'];
+  token: string;
+}
+
 export const authApi = {
   register: async (req: RegisterRequest): Promise<AuthResponse> => {
-    const data = await apiClient.post('/auth/register', req);
+    const data = await apiClient.post<RegisterRequest, AuthPayload>('/auth/register', req);
     return {
       user: {
         id: String(data.userId),
@@ -19,7 +28,7 @@ export const authApi = {
   },
 
   login: async (req: LoginRequest): Promise<AuthResponse> => {
-    const data = await apiClient.post('/auth/login', req);
+    const data = await apiClient.post<LoginRequest, AuthPayload>('/auth/login', req);
     return {
       user: {
         id: String(data.userId),
@@ -46,7 +55,6 @@ export const authApi = {
   },
 
   getMe: async (): Promise<User> => {
-    const response = await apiClient.get('/auth/me');
-    return response;
+    return apiClient.get<never, User>('/auth/me');
   },
 };

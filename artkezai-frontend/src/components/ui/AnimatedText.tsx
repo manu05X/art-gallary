@@ -42,24 +42,24 @@ export default function AnimatedText({
   };
 
   return (
-    <motion.div
-      as={Component}
-      className={className}
-      variants={container}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: '-80px' }}
-    >
-      {words.map((word, index) => (
-        <motion.span
-          key={index}
-          variants={child}
-          className="inline-block mr-[0.35em]"
-          style={{ overflow: 'hidden' }}
-        >
-          {word}
-        </motion.span>
-      ))}
-    </motion.div>
+    <Component className={className}>
+      <motion.div
+        variants={container}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-80px' }}
+      >
+        {words.map((word, index) => (
+          <motion.span
+            key={index}
+            variants={child}
+            className="inline-block mr-[0.35em]"
+            style={{ overflow: 'hidden' }}
+          >
+            {word}
+          </motion.span>
+        ))}
+      </motion.div>
+    </Component>
   );
 }

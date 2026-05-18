@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { paintingsApi } from '@/lib/api/paintings';
 import { offersApi } from '@/lib/api/offers';
 import { ordersApi } from '@/lib/api/orders';
-import { PaintingStatus, OrderStatus } from '@/types';
+import { PaintingStatus, PaymentStatus } from '@/types';
 import { AlertCircle, Clock, ShoppingBag, CreditCard } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -26,10 +26,15 @@ export default function AdminDashboardPage() {
   const paintingsList = paintings?.data || [];
   const offersList = offers?.data || [];
   const ordersList = orders?.data || [];
+  const pendingPaymentStatuses = [
+    PaymentStatus.INITIATED,
+    PaymentStatus.INSTRUCTIONS_SENT,
+    PaymentStatus.AWAITING_TRANSFER,
+  ];
 
   const pendingReviewCount = paintingsList.filter((p) => p.status === PaintingStatus.UNDER_REVIEW).length;
   const activeOffersCount = offersList.length;
-  const pendingPaymentsCount = ordersList.filter((o) => o.paymentStatus === 'PENDING').length;
+  const pendingPaymentsCount = ordersList.filter((o) => pendingPaymentStatuses.includes(o.paymentStatus)).length;
   const totalOrdersCount = ordersList.length;
 
   const stats = [

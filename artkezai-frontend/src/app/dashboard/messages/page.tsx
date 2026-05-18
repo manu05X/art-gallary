@@ -2,16 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useMyThreads, useThread, useSendMessage } from '@/lib/hooks/useMessages';
+import { useMyThreads, useThread } from '@/lib/hooks/useMessages';
 import { MessageComposer } from '@/components/messaging/MessageComposer';
 import { MessageSquare } from 'lucide-react';
 
 export default function MessagesPage() {
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
+  const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
   const { data: threadsData, isLoading: threadsLoading } = useMyThreads(1);
-  const { data: selectedThread, isLoading: threadLoading } = useThread(selectedThreadId || '');
 
   const threads = threadsData?.data || [];
+  const activeThreadId = selectedThreadId ?? threads[0]?.id ?? 0;
+  const { data: selectedThread, isLoading: threadLoading } = useThread(activeThreadId);
 
   if (threadsLoading) {
     return (
@@ -33,7 +34,7 @@ export default function MessagesPage() {
     );
   }
 
-  const selected = selectedThreadId ? threads.find((t) => t.id === selectedThreadId) : threads[0];
+  const selected = threads.find((t) => t.id === activeThreadId) || threads[0];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-screen max-h-screen">
@@ -51,7 +52,7 @@ export default function MessagesPage() {
               }`}
             >
               <h3 className="font-semibold text-sm text-brand truncate">{thread.subject}</h3>
-              <p className="text-xs text-gray-500 truncate mt-1">{thread.lastMessage}</p>
+              <p className="text-xs text-gray-500 truncate mt-1">{thread.unreadCount} unread</p>
               <p className="text-xs text-gray-400 mt-1">
                 {new Date(thread.lastMessageAt).toLocaleDateString()}
               </p>

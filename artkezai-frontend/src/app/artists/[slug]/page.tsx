@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin, Instagram, Globe, ArrowLeft } from 'lucide-react';
+import { MapPin, Instagram, Globe, ArrowLeft, Grid3X3, Landmark } from 'lucide-react';
+import MuseumGalleryView from '@/components/gallery/MuseumGalleryView';
 
 /* ── Static artist data (keyed by slug) ── */
 const artistData: Record<
@@ -146,6 +147,7 @@ const fallbackArtist = {
 export default function ArtistDetailPage({ params }: { params: { slug: string } }) {
   const artist = artistData[params.slug] || fallbackArtist;
   const notFound = !artistData[params.slug];
+  const [viewMode, setViewMode] = useState<'grid' | 'museum'>('grid');
 
   if (notFound) {
     return (
@@ -265,8 +267,13 @@ export default function ArtistDetailPage({ params }: { params: { slug: string } 
       )}
 
       {/* ─── Paintings ─── */}
-      <section className="max-w-7xl mx-auto px-6 pb-20">
-        <div className="flex items-center justify-between mb-8 pb-6 border-b border-border">
+      <section className={viewMode === 'museum' ? 'pb-0' : 'max-w-7xl mx-auto px-6 pb-20'}>
+        {/* Section header + view toggle */}
+        <div
+          className={`flex items-center justify-between mb-8 pb-6 border-b border-border ${
+            viewMode === 'museum' ? 'max-w-7xl mx-auto px-6' : ''
+          }`}
+        >
           <div>
             <h2 className="font-playfair text-2xl text-cream">
               Paintings by {artist.name.split(' ')[0]}
@@ -275,6 +282,34 @@ export default function ArtistDetailPage({ params }: { params: { slug: string } 
               {artist.paintings.length} works available
             </p>
           </div>
+
+          {/* View toggle */}
+          {artist.paintings.length > 0 && (
+            <div className="flex items-center gap-1 p-1 border border-border rounded-sm bg-surface">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-2 px-3 py-2 font-inter text-[10px] uppercase tracking-[0.15em] transition-all duration-300 ${
+                  viewMode === 'grid'
+                    ? 'bg-dark text-cream shadow-sm'
+                    : 'text-muted hover:text-cream'
+                }`}
+              >
+                <Grid3X3 size={12} />
+                Grid
+              </button>
+              <button
+                onClick={() => setViewMode('museum')}
+                className={`flex items-center gap-2 px-3 py-2 font-inter text-[10px] uppercase tracking-[0.15em] transition-all duration-300 ${
+                  viewMode === 'museum'
+                    ? 'bg-dark text-cream shadow-sm'
+                    : 'text-muted hover:text-cream'
+                }`}
+              >
+                <Landmark size={12} />
+                Museum
+              </button>
+            </div>
+          )}
         </div>
 
         {artist.paintings.length === 0 ? (
@@ -284,6 +319,16 @@ export default function ArtistDetailPage({ params }: { params: { slug: string } 
               Check back soon for new works from this artist.
             </p>
           </div>
+        ) : viewMode === 'museum' ? (
+          <MuseumGalleryView
+            paintings={artist.paintings}
+            artist={{
+              name: artist.name,
+              country: artist.country,
+              bio: artist.bio,
+              image: artist.image,
+            }}
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {artist.paintings.map((painting) => (

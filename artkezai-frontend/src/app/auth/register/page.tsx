@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/authStore';
 import { authApi } from '@/lib/api/auth';
+import { parseApiError } from '@/lib/api/utils';
 import { RegisterRequest, UserRole } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -74,16 +75,11 @@ export default function RegisterPage() {
       toast.success('Welcome to Artkezai.');
       router.push(role === UserRole.ARTIST ? '/artist' : '/dashboard');
     } catch (error: any) {
-      const apiMessage = error.response?.data?.message;
-      const backendFieldErrors = error.response?.data?.errors;
+      const { message, fieldErrors: backendFieldErrors } = parseApiError(error, 'Registration failed. Please try again.');
       if (backendFieldErrors && typeof backendFieldErrors === 'object') {
         setFieldErrors(backendFieldErrors);
       }
-      const validationMessage =
-        backendFieldErrors && typeof backendFieldErrors === 'object'
-          ? Object.values(backendFieldErrors)[0]
-          : undefined;
-      toast.error((validationMessage as string) || apiMessage || 'Registration failed. Please try again.');
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

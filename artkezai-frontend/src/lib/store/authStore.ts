@@ -9,6 +9,8 @@ export interface AuthUser {
   displayName: string;
   role: 'buyer' | 'artist' | 'admin';
   avatar?: string;
+  bio?: string;
+  country?: string;
 }
 
 interface AuthStore {

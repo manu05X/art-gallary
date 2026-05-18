@@ -14,7 +14,7 @@ export default function SubmitPaintingPage() {
   const { data: countries = [] } = useCountries();
 
   const { mutate: submitPainting, isPending: isSubmitting } = useSubmitPainting();
-  const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
+  const { mutate: uploadImage } = useUploadImage();
 
   const [formData, setFormData] = useState<SubmitPaintingRequest>({
     title: '',

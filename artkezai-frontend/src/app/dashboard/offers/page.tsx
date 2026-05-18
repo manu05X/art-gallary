@@ -2,13 +2,13 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMyOffers, useRespondToOffer } from '@/lib/hooks/useOffers';
+import { useMyOffers, useWithdrawOffer } from '@/lib/hooks/useOffers';
 import { OfferStatusBadge } from '@/components/offer/OfferStatusBadge';
 import { OfferStatus } from '@/types';
 
 export default function MyOffersPage() {
   const { data, isLoading, error } = useMyOffers();
-  const { mutate: respondToOffer, isPending } = useRespondToOffer();
+  const { mutate: withdrawOffer, isPending } = useWithdrawOffer();
 
   if (isLoading) {
     return (
@@ -49,11 +49,11 @@ export default function MyOffersPage() {
         {offers.map((offer) => (
           <div key={offer.id} className="p-6">
             <div className="flex gap-6">
-              {offer.painting.primaryImage && (
+              {offer.paintingThumbnailUrl && (
                 <div className="flex-shrink-0 w-20 h-20 relative rounded-lg overflow-hidden bg-gray-100">
                   <Image
-                    src={offer.painting.primaryImage.url}
-                    alt={offer.painting.title}
+                    src={offer.paintingThumbnailUrl}
+                    alt={offer.paintingTitle}
                     fill
                     className="object-cover"
                   />
@@ -62,56 +62,39 @@ export default function MyOffersPage() {
 
               <div className="flex-1">
                 <Link
-                  href={`/painting/${offer.painting.slug}`}
+                  href="/gallery"
                   className="text-lg font-semibold text-brand hover:text-accent transition"
                 >
-                  {offer.painting.title}
+                  {offer.paintingTitle}
                 </Link>
 
                 <div className="flex items-center gap-4 mt-2">
                   <OfferStatusBadge status={offer.status} />
                   <span className="text-sm text-gray-600">
-                    Offer: ${offer.buyerAmount.toLocaleString()}
+                    Offer: ${offer.offerAmount.toLocaleString()} {offer.currency}
                   </span>
                 </div>
 
-                {offer.adminCounterAmount && (
+                {offer.counterAmount && (
                   <div className="mt-2">
                     <p className="text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded">
-                      Counter offer: ${offer.adminCounterAmount.toLocaleString()}
+                      Counter offer: ${offer.counterAmount.toLocaleString()} {offer.currency}
                     </p>
                   </div>
                 )}
 
-                {offer.message && (
-                  <p className="text-sm text-gray-600 mt-2 italic">"{offer.message}"</p>
+                {offer.buyerMessage && (
+                  <p className="text-sm text-gray-600 mt-2 italic">"{offer.buyerMessage}"</p>
                 )}
 
-                {offer.status === OfferStatus.COUNTERED && (
+                {(offer.status === OfferStatus.SUBMITTED || offer.status === OfferStatus.COUNTERED) && (
                   <div className="flex gap-3 mt-4">
                     <button
-                      onClick={() =>
-                        respondToOffer({
-                          offerId: offer.id,
-                          req: { status: OfferStatus.ACCEPTED },
-                        })
-                      }
-                      disabled={isPending}
-                      className="btn btn-primary text-sm disabled:opacity-50"
-                    >
-                      Accept Counter
-                    </button>
-                    <button
-                      onClick={() =>
-                        respondToOffer({
-                          offerId: offer.id,
-                          req: { status: OfferStatus.REJECTED },
-                        })
-                      }
+                      onClick={() => withdrawOffer(offer.id)}
                       disabled={isPending}
                       className="btn btn-outline text-sm disabled:opacity-50"
                     >
-                      Decline
+                      Withdraw Offer
                     </button>
                   </div>
                 )}
