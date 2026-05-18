@@ -2,12 +2,13 @@ package com.artkezai.config;
 
 import com.artkezai.auth.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.method.security.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -20,6 +21,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
@@ -28,6 +31,10 @@ import java.util.Arrays;
 public class SecurityConfig {
 
 	private final JwtAuthFilter jwtAuthFilter;
+
+	// Comma-separated list of allowed origins — set ALLOWED_ORIGINS env var in production
+	@Value("${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}")
+	private String allowedOrigins;
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -45,6 +52,7 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/api/content/**").permitAll()
 						.requestMatchers("/api/auth/**").permitAll()
 						.requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
+						.requestMatchers("/actuator/health").permitAll()
 
 						// Buyer + Admin
 						.requestMatchers("/api/offers/**").hasAnyRole("BUYER", "ADMIN")
@@ -70,8 +78,12 @@ public class SecurityConfig {
 
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
+		List<String> origins = Arrays.stream(allowedOrigins.split(","))
+				.map(String::trim)
+				.collect(Collectors.toList());
+
 		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:5173"));
+		configuration.setAllowedOrigins(origins);
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(Arrays.asList("*"));
 		configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));

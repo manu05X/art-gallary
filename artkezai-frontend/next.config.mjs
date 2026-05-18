@@ -3,23 +3,17 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '9000',
-      },
-      {
-        protocol: 'http',
-        hostname: 'minio.local',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cdn.midjourney.com',
-      },
+      // Local dev — MinIO
+      { protocol: 'http', hostname: 'localhost', port: '9000' },
+      { protocol: 'http', hostname: 'minio.local' },
+      // Production — Render backend (image proxy)
+      { protocol: 'https', hostname: '*.onrender.com' },
+      // Production — Cloudinary / S3 / any CDN (add as needed)
+      { protocol: 'https', hostname: '*.amazonaws.com' },
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
+      // Stock images used in dev seed data
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'cdn.midjourney.com' },
     ],
   },
   env: {

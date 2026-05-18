@@ -77,6 +77,16 @@ app:
   mail-from: ${MAIL_FROM:noreply@artkezai.com}
   mail-from-name: Artkezai Gallery
 
+# ── Actuator (health check for Render) ───────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 # ── Logging ──────────────────────────────────────────────
 logging:
   level:
@@ -85,3 +95,26 @@ logging:
     org.flywaydb: INFO
   pattern:
     console: "%d{HH:mm:ss} [%highlight(%-5level)] %cyan(%logger{30}) - %msg%n"
+
+---
+# ══════════════════════════════════════════════════════════
+# Production profile  (SPRING_PROFILES_ACTIVE=prod)
+# ══════════════════════════════════════════════════════════
+spring:
+  config:
+    activate:
+      on-profile: prod
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USER:}
+    password: ${MAIL_PASS:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+logging:
+  level:
+    com.artkezai: INFO
+    org.springframework.security: WARN
+    org.flywaydb: WARN

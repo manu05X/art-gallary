@@ -1,0 +1,53 @@
+services:
+  # ── Spring Boot Backend ────────────────────────────────
+  - type: web
+    name: artkezai-backend
+    runtime: docker
+    dockerfilePath: ./artkezai-backend/Dockerfile
+    dockerContext: ./artkezai-backend
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DB_URL
+        fromDatabase:
+          name: artkezai-db
+          property: connectionString
+      - key: DB_USER
+        fromDatabase:
+          name: artkezai-db
+          property: user
+      - key: DB_PASS
+        fromDatabase:
+          name: artkezai-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false          # set manually after Vercel deploy
+      - key: ALLOWED_ORIGINS
+        sync: false          # set manually after Vercel deploy
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USER
+        sync: false
+      - key: MAIL_PASS
+        sync: false
+      - key: MINIO_ENDPOINT
+        sync: false          # leave blank to disable image upload on free tier
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+# ── Neon PostgreSQL (free tier) ───────────────────────────
+databases:
+  - name: artkezai-db
+    plan: free
+    databaseName: artkezai
+    user: artkezai_user
