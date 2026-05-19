@@ -259,29 +259,7 @@ export default function IntroPage() {
                 {/* ENTER */}
                 <button
                   onClick={handleEnter}
-                  style={{
-                    fontFamily: '"Inter", sans-serif',
-                    fontSize: '0.68rem',
-                    letterSpacing: '0.2em',
-                    textTransform: 'uppercase',
-                    color: '#ffffff',
-                    background: 'transparent',
-                    border: '1px solid rgba(255,255,255,0.45)',
-                    padding: '0.65rem 2.8rem',
-                    cursor: 'pointer',
-                    borderRadius: '2px',
-                    transition: 'all 0.25s ease',
-                  }}
-                  onMouseEnter={e => {
-                    const el = e.currentTarget as HTMLButtonElement;
-                    el.style.background = 'rgba(255,255,255,0.08)';
-                    el.style.borderColor = 'rgba(255,255,255,0.85)';
-                  }}
-                  onMouseLeave={e => {
-                    const el = e.currentTarget as HTMLButtonElement;
-                    el.style.background = 'transparent';
-                    el.style.borderColor = 'rgba(255,255,255,0.45)';
-                  }}
+                  className="font-inter text-[11px] uppercase tracking-[0.06em] px-8 py-2.5 ios-button-primary"
                 >
                   Enter
                 </button>
