@@ -9,9 +9,7 @@ services:
     healthCheckPath: /actuator/health
     envVars:
       - key: DB_URL
-        fromDatabase:
-          name: artkezai-db
-          property: connectionString
+        sync: false          # set manually: jdbc:postgresql://<host>/<dbname>
       - key: DB_USER
         fromDatabase:
           name: artkezai-db
