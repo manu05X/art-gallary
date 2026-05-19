@@ -1,15 +1,34 @@
 # Artkezai — Paintings Marketplace
 
-A curated, paintings-only online marketplace. Built with Next.js 14 + Spring Boot 3 + PostgreSQL.
+A curated, paintings-only online marketplace connecting independent artists with collectors worldwide.
+
+## Live Demo
+
+| Layer | URL |
+|---|---|
+| Frontend | https://artkezai-frontend.vercel.app |
+| Backend API | https://artkezai-backend.onrender.com/api |
+| Health Check | https://artkezai-backend.onrender.com/actuator/health |
+
+**Demo credentials:**
+```
+Admin:   admin@artkezai.com  / Admin@123
+Artist:  elena@artkezai.com  / Artist@123
+```
 
 ---
 
-## Prerequisites (all installed ✅)
+## Tech Stack
 
-- Docker Desktop
-- Java 17+
-- Node.js 18+
-- IntelliJ IDEA
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 14, TypeScript, Tailwind CSS, Framer Motion, Zustand, React Query |
+| Backend | Spring Boot 3.2, Java 17, Spring Security 6, JWT |
+| Database | PostgreSQL (Render free tier) + Flyway migrations |
+| Storage | MinIO (local) / disabled on free tier |
+| Payments | Stripe (test mode) |
+| Email | MailHog (local) / Gmail SMTP (prod) |
+| Deployment | Render (backend) + Vercel (frontend) |
 
 ---
 
@@ -17,155 +36,106 @@ A curated, paintings-only online marketplace. Built with Next.js 14 + Spring Boo
 
 ```
 artkezai/
-├── docker-compose.yml        ← All local services
+├── docker-compose.yml        ← All local services (Postgres, MinIO, MailHog, Redis)
+├── render.yaml               ← Render deployment blueprint
 ├── artkezai-backend/         ← Spring Boot API (port 8080)
+│   ├── Dockerfile
+│   └── src/main/resources/db/migration/   ← Flyway migrations V1–V8
 └── artkezai-frontend/        ← Next.js App (port 3000)
+    └── vercel.json
 ```
 
 ---
 
-## Step 1 — Start Local Services (Docker)
+## Local Development
 
-Open Terminal in the `artkezai/` root folder:
+### Prerequisites
+- Docker Desktop
+- Java 17+
+- Node.js 18+
+
+### Step 1 — Start local services
 
 ```bash
 docker-compose up -d
 ```
 
-This starts:
-| Service     | URL                          | Credentials         |
-|-------------|------------------------------|---------------------|
-| PostgreSQL  | localhost:5432               | artkezai_user / artkezai_pass |
-| MinIO API   | http://localhost:9000        | minioadmin / minioadmin123 |
-| MinIO UI    | http://localhost:9001        | minioadmin / minioadmin123 |
-| MailHog UI  | http://localhost:8025        | (no login needed)   |
-| Redis       | localhost:6379               | —                   |
+| Service | URL | Credentials |
+|---|---|---|
+| PostgreSQL | localhost:5432 | artkezai_user / artkezai_pass |
+| MinIO API | http://localhost:9000 | minioadmin / minioadmin123 |
+| MinIO UI | http://localhost:9001 | minioadmin / minioadmin123 |
+| MailHog UI | http://localhost:8025 | (no login) |
 
-Verify all are running:
-```bash
-docker-compose ps
-```
+### Step 2 — Run the backend
 
----
-
-## Step 2 — Run the Backend (Spring Boot)
-
-### Option A: IntelliJ IDEA (Recommended)
-1. Open IntelliJ → **File → Open** → select `artkezai/artkezai-backend/`
-2. Wait for Maven to download dependencies (first time: ~3 minutes)
-3. Open `src/main/java/com/artkezai/ArtkezaiApplication.java`
-4. Click the ▶️ Run button
-5. Backend starts at: **http://localhost:8080**
-
-### Option B: Terminal
 ```bash
 cd artkezai-backend
-./mvnw spring-boot:run
+mvn spring-boot:run
+# Starts at http://localhost:8080
 ```
 
-First run: Flyway will automatically create all database tables and seed reference data.
+Flyway runs automatically and creates all tables + seeds demo data on first start.
 
-**Verify:**
-```bash
-curl http://localhost:8080/api/categories
-# Should return list of painting categories
-```
-
----
-
-## Step 3 — Run the Frontend (Next.js)
+### Step 3 — Run the frontend
 
 ```bash
 cd artkezai-frontend
 npm install
 npm run dev
+# Starts at http://localhost:3000
 ```
 
-Frontend starts at: **http://localhost:3000**
+---
+
+## Default Accounts
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@artkezai.com | Admin@123 |
+| Artist | elena@artkezai.com | Artist@123 |
+| Artist | james@artkezai.com | Artist@123 |
+| Artist | priya@artkezai.com | Artist@123 |
 
 ---
 
-## Step 4 — Configure Stripe (for payments)
-
-1. Create a free account at https://stripe.com
-2. Go to Developers → API Keys → copy your **Test Secret Key**
-3. Open `artkezai-backend/src/main/resources/application.yml`
-4. Replace `sk_test_REPLACE_WITH_YOUR_TEST_KEY` with your key
-5. Copy your **Publishable Key** into `artkezai-frontend/.env.local`
-6. For webhooks (local testing): install Stripe CLI
-   ```bash
-   brew install stripe/stripe-cli/stripe
-   stripe login
-   stripe listen --forward-to localhost:8080/api/payments/webhook
-   ```
-
----
-
-## Default Admin Login
+## API Endpoints (sample)
 
 ```
-Email:    admin@artkezai.com
-Password: Admin@123
+GET  /api/paintings              List all approved paintings
+GET  /api/paintings/slug/:slug   Painting detail
+GET  /api/artists                List all artists
+POST /api/auth/login             Login
+POST /api/auth/register          Register
+POST /api/auth/forgot-password   Request password reset
+POST /api/auth/reset-password    Reset password with token
 ```
-⚠️ Change this password immediately after first login.
 
 ---
 
-## Useful URLs During Development
+## Deployment
 
-| URL                          | Purpose                        |
-|------------------------------|--------------------------------|
-| http://localhost:3000        | Artkezai website               |
-| http://localhost:8080/api    | Spring Boot REST API           |
-| http://localhost:9001        | MinIO image storage console    |
-| http://localhost:8025        | MailHog — view sent emails     |
+**Backend → Render**
+- Docker web service (free tier)
+- PostgreSQL free tier database
+- Auto-deploys on push to `main`
 
----
+**Frontend → Vercel**
+- Next.js auto-detected
+- Set `NEXT_PUBLIC_API_URL=https://artkezai-backend.onrender.com/api`
+- Auto-deploys on push to `main`
 
-## Development Flow (follow the 8-week roadmap)
+### Required Render environment variables
 
-**Week 1–2 (Foundation — already scaffolded):**
-- [x] Docker Compose setup
-- [x] Spring Boot project with all modules
-- [x] Database migrations (V1–V6)
-- [x] JWT auth system
-- [x] Next.js with all pages scaffolded
-
-**Week 3 (Gallery + Moderation):**
-- [ ] Wire gallery filters to real database
-- [ ] Test artist painting submission flow
-- [ ] Test admin moderation queue
-
-**Week 4 (Offers):**
-- [ ] Test Make Offer flow end-to-end
-- [ ] Test admin counter-offer
-- [ ] Verify order creation on acceptance
-
-**Week 5 (Payments):**
-- [ ] Configure Stripe test keys
-- [ ] Test Buy Now checkout
-- [ ] Test bank transfer workflow
-
-**Week 6 (Messaging):**
-- [ ] Test message thread creation
-- [ ] Verify admin inbox
-
-**Week 7–8 (Polish):**
-- [ ] Content pages
-- [ ] Mobile responsiveness
-- [ ] All 10 acceptance tests pass
-
----
-
-## Stopping Services
-
-```bash
-# Stop Docker services
-docker-compose down
-
-# Stop but keep data
-docker-compose stop
-```
+| Key | Value |
+|---|---|
+| DB_URL | jdbc:postgresql://\<host\>/artkezai_db |
+| DB_USER | (from Render DB) |
+| DB_PASS | (from Render DB) |
+| JWT_SECRET | (auto-generated) |
+| ALLOWED_ORIGINS | https://artkezai-frontend.vercel.app |
+| FRONTEND_URL | https://artkezai-frontend.vercel.app |
+| SPRING_PROFILES_ACTIVE | prod |
 
 ---
 
@@ -173,22 +143,16 @@ docker-compose stop
 
 **Port already in use:**
 ```bash
-lsof -i :5432   # Find what's using PostgreSQL port
-lsof -i :8080   # Find what's using backend port
-```
-
-**Database connection failed:**
-```bash
-docker-compose logs postgres   # Check PostgreSQL logs
-```
-
-**MinIO bucket not created:**
-```bash
-docker-compose restart minio-setup
+lsof -i :8080
+lsof -i :3000
 ```
 
 **Flyway migration error:**
 ```bash
-# Check migration status
-./mvnw flyway:info
+mvn flyway:info
+```
+
+**Database connection failed:**
+```bash
+docker-compose logs postgres
 ```
