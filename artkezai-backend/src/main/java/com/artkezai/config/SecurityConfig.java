@@ -33,7 +33,7 @@ public class SecurityConfig {
 	private final JwtAuthFilter jwtAuthFilter;
 
 	// Comma-separated list of allowed origins — set ALLOWED_ORIGINS env var in production
-	@Value("${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}")
+	@Value("${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,https://artkezai-frontend.vercel.app}")
 	private String allowedOrigins;
 
 	@Bean
