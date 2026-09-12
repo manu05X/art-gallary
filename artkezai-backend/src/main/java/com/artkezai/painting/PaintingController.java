@@ -10,6 +10,7 @@ import com.artkezai.painting.dto.PaintingDetailDto;
 import com.artkezai.painting.dto.PaintingImageResponse;
 import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.painting.dto.SubmitPaintingRequest;
+import com.artkezai.painting.dto.UpdatePaintingRequest;
 import com.artkezai.painting.dto.MediumResponse;
 import com.artkezai.user.User;
 import jakarta.validation.Valid;
@@ -123,10 +124,10 @@ public class PaintingController {
 		return ResponseEntity.ok(ApiResponse.ok(PaintingCreateResponse.from(painting), "Painting submitted for review"));
 	}
 
-	@PutMapping("/{id}")
-	public ResponseEntity<ApiResponse<Painting>> updatePainting(
+	@PatchMapping("/{id}")
+	public ResponseEntity<ApiResponse<PaintingCreateResponse>> updatePainting(
 			@PathVariable Long id,
-			@Valid @RequestBody SubmitPaintingRequest request,
+			@Valid @RequestBody UpdatePaintingRequest request,
 			Authentication authentication) {
 		if (authentication == null || !authentication.isAuthenticated()) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -136,7 +137,7 @@ public class PaintingController {
 		User artist = (User) authentication.getPrincipal();
 		log.info("Update painting: {} by artist: {}", id, artist.getEmail());
 		Painting painting = paintingService.updatePainting(id, request, artist);
-		return ResponseEntity.ok(ApiResponse.ok(painting, "Painting updated"));
+		return ResponseEntity.ok(ApiResponse.ok(PaintingCreateResponse.from(painting), "Painting updated"));
 	}
 
 	@PostMapping("/{id}/images")

@@ -10,6 +10,7 @@ import com.artkezai.painting.dto.PaintingDetailDto;
 import com.artkezai.painting.dto.GalleryFilterRequest;
 import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.painting.dto.SubmitPaintingRequest;
+import com.artkezai.painting.dto.UpdatePaintingRequest;
 import com.artkezai.painting.dto.CategoryResponse;
 import com.artkezai.painting.dto.CountryResponse;
 import com.artkezai.painting.dto.MediumResponse;
@@ -150,7 +151,7 @@ public class PaintingService {
 		return painting;
 	}
 
-	public Painting updatePainting(Long paintingId, SubmitPaintingRequest request, User artist) {
+	public Painting updatePainting(Long paintingId, UpdatePaintingRequest request, User artist) {
 		Painting painting = paintingRepository.findById(paintingId)
 				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", paintingId));
 
@@ -158,14 +159,15 @@ public class PaintingService {
 			throw new UnauthorizedException("You can only update your own paintings");
 		}
 
-		painting.setTitle(request.getTitle());
-		painting.setDescription(request.getDescription());
-		painting.setPrice(request.getPrice());
+		// Partial update: only fields actually present in the request are applied.
+		if (request.getTitle() != null) painting.setTitle(request.getTitle());
+		if (request.getDescription() != null) painting.setDescription(request.getDescription());
+		if (request.getPrice() != null) painting.setPrice(request.getPrice());
 		if (request.getCurrency() != null) painting.setCurrency(request.getCurrency());
-		painting.setWidthCm(request.getWidthCm());
-		painting.setHeightCm(request.getHeightCm());
-		painting.setOrientation(request.getOrientation());
-		painting.setYearCreated(request.getYearCreated());
+		if (request.getWidthCm() != null) painting.setWidthCm(request.getWidthCm());
+		if (request.getHeightCm() != null) painting.setHeightCm(request.getHeightCm());
+		if (request.getOrientation() != null) painting.setOrientation(request.getOrientation());
+		if (request.getYearCreated() != null) painting.setYearCreated(request.getYearCreated());
 
 		if (request.getMediumId() != null) {
 			Medium medium = mediumRepository.findById(request.getMediumId())

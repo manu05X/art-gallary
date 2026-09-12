@@ -60,7 +60,7 @@ public class SecurityConfig {
 
 						// Artist + Admin
 						.requestMatchers(HttpMethod.POST, "/api/paintings").hasAnyRole("ARTIST", "ADMIN")
-						.requestMatchers(HttpMethod.PUT, "/api/paintings/{id}/**").hasAnyRole("ARTIST", "ADMIN")
+						.requestMatchers(HttpMethod.PATCH, "/api/paintings/{id}/**").hasAnyRole("ARTIST", "ADMIN")
 						.requestMatchers(HttpMethod.POST, "/api/paintings/{id}/submit").hasAnyRole("ARTIST", "ADMIN")
 						.requestMatchers(HttpMethod.POST, "/api/paintings/{id}/images").hasAnyRole("ARTIST", "ADMIN")
 						.requestMatchers(HttpMethod.DELETE, "/api/paintings/{id}/images/**").hasAnyRole("ARTIST", "ADMIN")

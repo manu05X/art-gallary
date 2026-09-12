@@ -1,147 +1,101 @@
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { SlidersHorizontal, X } from 'lucide-react';
 import FilterPanel from '@/components/gallery/FilterPanel';
 import { SortDropdown } from '@/components/gallery/SortDropdown';
+import PaintingCard from '@/components/gallery/PaintingCard';
+import { useCategories, useMediums, useCountries, usePaintings } from '@/lib/hooks/usePaintings';
 
-/* ── Static painting data ── */
-const paintings = [
-  {
-    id: '1',
-    title: 'Amber Reverie',
-    slug: 'amber-reverie',
-    price: 1200,
-    artistName: 'Elena Morozova',
-    medium: 'Oil on Canvas',
-    category: 'Abstract',
-    image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600&q=80',
-  },
-  {
-    id: '2',
-    title: 'Twilight Over the Valley',
-    slug: 'twilight-over-the-valley',
-    price: 2400,
-    artistName: 'James Whitfield',
-    medium: 'Acrylic on Canvas',
-    category: 'Landscape',
-    image: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=600&q=80',
-  },
-  {
-    id: '3',
-    title: 'Silent Conversation',
-    slug: 'silent-conversation',
-    price: 800,
-    artistName: 'Priya Sharma',
-    medium: 'Watercolor',
-    category: 'Portrait',
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&q=80',
-  },
-  {
-    id: '4',
-    title: 'Golden Hour Fields',
-    slug: 'golden-hour-fields',
-    price: 3100,
-    artistName: 'James Whitfield',
-    medium: 'Oil on Canvas',
-    category: 'Landscape',
-    image: 'https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=600&q=80',
-  },
-  {
-    id: '5',
-    title: 'Fractured Light',
-    slug: 'fractured-light',
-    price: 1800,
-    artistName: 'Elena Morozova',
-    medium: 'Mixed Media',
-    category: 'Abstract',
-    image: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=600&q=80',
-  },
-  {
-    id: '6',
-    title: 'The Red Door',
-    slug: 'the-red-door',
-    price: 950,
-    artistName: 'Priya Sharma',
-    medium: 'Acrylic on Canvas',
-    category: 'Still Life',
-    image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&q=80',
-  },
-  {
-    id: '7',
-    title: 'Whispers of Dawn',
-    slug: 'whispers-of-dawn',
-    price: 2200,
-    artistName: 'Elena Morozova',
-    medium: 'Oil on Canvas',
-    category: 'Abstract',
-    image: 'https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=600&q=80',
-  },
-  {
-    id: '8',
-    title: 'Solitude',
-    slug: 'solitude',
-    price: 1450,
-    artistName: 'James Whitfield',
-    medium: 'Watercolor',
-    category: 'Landscape',
-    image: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=600&q=80',
-  },
-  {
-    id: '9',
-    title: 'Urban Pulse',
-    slug: 'urban-pulse',
-    price: 3400,
-    artistName: 'Priya Sharma',
-    medium: 'Mixed Media',
-    category: 'Abstract',
-    image: 'https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=600&q=80',
-  },
-];
+const FALLBACK_PAINTING_IMAGE = 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600&q=80';
 
-const categories = ['Abstract', 'Landscape', 'Portrait', 'Still Life'];
-const mediums = ['Oil on Canvas', 'Acrylic on Canvas', 'Watercolor', 'Mixed Media'];
+// The UI's own sort vocabulary (SortDropdown's options) doesn't match the
+// backend's sortBy values one-to-one — translate here, at the one place that
+// owns this page's sort UI, rather than inside the shared API client.
+function toBackendSort(uiSort: string): string {
+  switch (uiSort) {
+    case 'price-low':
+      return 'price-asc';
+    case 'price-high':
+      return 'price-desc';
+    case 'featured': // no backend concept of "featured" yet — fall back to newest
+    case 'newest':
+    default:
+      return 'newest';
+  }
+}
 
 export default function GalleryPage() {
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | undefined>();
   const [activeMedium, setActiveMedium] = useState<string | undefined>();
+  const [activeCountry, setActiveCountry] = useState<string | undefined>();
   const [sort, setSort] = useState('newest');
   const [minPrice, setMinPrice] = useState<number | undefined>();
   const [maxPrice, setMaxPrice] = useState<number | undefined>();
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState<string | undefined>();
+  const [page, setPage] = useState(1);
 
-  /* ── Filtering ── */
-  const filtered = paintings.filter((p) => {
-    if (activeCategory && p.category !== activeCategory) return false;
-    if (activeMedium && p.medium !== activeMedium) return false;
-    if (minPrice && p.price < minPrice) return false;
-    if (maxPrice && p.price > maxPrice) return false;
-    return true;
-  });
+  const { data: categoriesData } = useCategories();
+  const { data: mediumsData } = useMediums();
+  const { data: countriesData } = useCountries();
 
-  /* ── Sorting ── */
-  const sorted = [...filtered].sort((a, b) => {
-    if (sort === 'price-low') return a.price - b.price;
-    if (sort === 'price-high') return b.price - a.price;
-    return 0; // newest / featured — keep original order
-  });
+  const categories = categoriesData ?? [];
+  const mediums = mediumsData ?? [];
+  const countries = countriesData ?? [];
 
-  const hasFilters = !!(activeCategory || activeMedium || minPrice || maxPrice);
+  const categoryId = categories.find((c) => c.name === activeCategory)?.id;
+  const mediumId = mediums.find((m) => m.name === activeMedium)?.id;
+  const countryId = countries.find((c) => c.name === activeCountry)?.id;
+
+  const {
+    data: galleryPage,
+    isLoading,
+    isError,
+    refetch,
+  } = usePaintings(
+    {
+      categoryId,
+      mediumId,
+      country: countryId, // API boundary translates this to countryId
+      minPrice,
+      maxPrice,
+      search,
+    },
+    page,
+    toBackendSort(sort)
+  );
+
+  const paintings = galleryPage?.data ?? [];
+  const hasFilters = !!(activeCategory || activeMedium || activeCountry || minPrice || maxPrice || search);
+
+  // Any filter/search/sort change invalidates the current page — go back to page 1.
+  useEffect(() => {
+    setPage(1);
+  }, [activeCategory, activeMedium, activeCountry, minPrice, maxPrice, search, sort]);
 
   const clearFilters = () => {
     setActiveCategory(undefined);
     setActiveMedium(undefined);
+    setActiveCountry(undefined);
     setMinPrice(undefined);
     setMaxPrice(undefined);
+    setSearchInput('');
+    setSearch(undefined);
   };
 
   const handleFilterChange = (filters: Record<string, string | number | undefined>) => {
     if ('category' in filters) setActiveCategory(filters.category as string | undefined);
     if ('medium' in filters) setActiveMedium(filters.medium as string | undefined);
+    if ('country' in filters) setActiveCountry(filters.country as string | undefined);
     if ('minPrice' in filters) setMinPrice(filters.minPrice as number | undefined);
     if ('maxPrice' in filters) setMaxPrice(filters.maxPrice as number | undefined);
+  };
+
+  const applySearch = () => {
+    setSearch(searchInput.trim() || undefined);
   };
 
   return (
@@ -181,14 +135,15 @@ export default function GalleryPage() {
                 filters={{
                   category: activeCategory,
                   medium: activeMedium,
+                  country: activeCountry,
                   minPrice,
                   maxPrice,
                 }}
                 onChange={handleFilterChange}
                 onClear={clearFilters}
-                categories={categories}
-                mediums={mediums}
-                countries={[]}
+                categories={categories.map((c) => c.name)}
+                mediums={mediums.map((m) => m.name)}
+                countries={countries.map((c) => c.name)}
               />
             </div>
           </aside>
@@ -196,15 +151,27 @@ export default function GalleryPage() {
           {/* Gallery Area */}
           <div className="lg:col-span-3">
             {/* Top Bar */}
-            <div className="flex items-center justify-between mb-8 pb-6 border-b border-border">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-6 border-b border-border">
               <div>
-                <p className="font-playfair text-2xl text-gold">{sorted.length}</p>
+                <p className="font-playfair text-2xl text-gold">{galleryPage?.totalCount ?? 0}</p>
                 <p className="font-inter text-[11px] uppercase tracking-[0.15em] text-muted">
                   paintings found
                 </p>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 flex-wrap">
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onBlur={applySearch}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') applySearch();
+                  }}
+                  placeholder="Search paintings..."
+                  className="bg-surface border border-border text-cream placeholder:text-subtle px-3 py-2.5 font-inter text-sm focus:outline-none focus:border-gold transition-colors duration-300 w-40 sm:w-56"
+                />
+
                 {/* Mobile Filter Toggle */}
                 <button
                   onClick={() => setMobileFilterOpen(true)}
@@ -233,12 +200,27 @@ export default function GalleryPage() {
                     onRemove={() => setActiveMedium(undefined)}
                   />
                 )}
+                {activeCountry && (
+                  <FilterTag
+                    label={activeCountry}
+                    onRemove={() => setActiveCountry(undefined)}
+                  />
+                )}
                 {(minPrice || maxPrice) && (
                   <FilterTag
                     label={`$${minPrice || 0} – $${maxPrice || '∞'}`}
                     onRemove={() => {
                       setMinPrice(undefined);
                       setMaxPrice(undefined);
+                    }}
+                  />
+                )}
+                {search && (
+                  <FilterTag
+                    label={`"${search}"`}
+                    onRemove={() => {
+                      setSearchInput('');
+                      setSearch(undefined);
                     }}
                   />
                 )}
@@ -252,7 +234,25 @@ export default function GalleryPage() {
             )}
 
             {/* Painting Grid */}
-            {sorted.length === 0 ? (
+            {isLoading ? (
+              <div className="card-surface p-16 text-center">
+                <p className="font-playfair text-2xl text-cream mb-2">Loading paintings…</p>
+                <p className="font-inter text-sm text-muted">Fetching the latest approved artwork.</p>
+              </div>
+            ) : isError ? (
+              <div className="card-surface p-16 text-center">
+                <p className="font-playfair text-2xl text-cream mb-2">Something went wrong</p>
+                <p className="font-inter text-sm text-muted mb-6">
+                  We couldn&apos;t load the gallery. Please try again.
+                </p>
+                <button
+                  onClick={() => refetch()}
+                  className="font-inter text-[11px] uppercase tracking-[0.12em] text-gold border border-gold px-6 py-2.5 hover:bg-gold hover:text-dark transition-all duration-300"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : paintings.length === 0 ? (
               <div className="card-surface p-16 text-center">
                 <p className="font-playfair text-2xl text-cream mb-2">No paintings found</p>
                 <p className="font-inter text-sm text-muted mb-6">
@@ -266,11 +266,53 @@ export default function GalleryPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {sorted.map((painting) => (
-                  <PaintingCard key={painting.id} painting={painting} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {paintings.map((painting) => (
+                    <PaintingCard
+                      key={painting.id}
+                      id={painting.id}
+                      title={painting.title}
+                      slug={painting.slug}
+                      price={painting.price}
+                      currency={painting.currency}
+                      primaryImageUrl={painting.primaryImageUrl || FALLBACK_PAINTING_IMAGE}
+                      thumbnailUrl={painting.thumbnailUrl || undefined}
+                      artist={{
+                        displayName: painting.artistName,
+                        slug: painting.artistSlug,
+                        country: painting.countryName || '',
+                      }}
+                      medium={painting.mediumName || ''}
+                      category={painting.categoryName || ''}
+                      isOfferEnabled={painting.isOfferEnabled}
+                    />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {galleryPage && galleryPage.totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-4 mt-12">
+                    <button
+                      onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                      disabled={!galleryPage.hasPreviousPage}
+                      className="font-inter text-[11px] uppercase tracking-[0.12em] text-gold border border-gold px-6 py-2.5 hover:bg-gold hover:text-dark transition-all duration-300 disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      Previous
+                    </button>
+                    <span className="font-inter text-[11px] uppercase tracking-[0.15em] text-muted">
+                      Page {page} of {galleryPage.totalPages}
+                    </span>
+                    <button
+                      onClick={() => setPage((p) => p + 1)}
+                      disabled={!galleryPage.hasNextPage}
+                      className="font-inter text-[11px] uppercase tracking-[0.12em] text-gold border border-gold px-6 py-2.5 hover:bg-gold hover:text-dark transition-all duration-300 disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -298,6 +340,7 @@ export default function GalleryPage() {
                 filters={{
                   category: activeCategory,
                   medium: activeMedium,
+                  country: activeCountry,
                   minPrice,
                   maxPrice,
                 }}
@@ -309,9 +352,9 @@ export default function GalleryPage() {
                   clearFilters();
                   setMobileFilterOpen(false);
                 }}
-                categories={categories}
-                mediums={mediums}
-                countries={[]}
+                categories={categories.map((c) => c.name)}
+                mediums={mediums.map((m) => m.name)}
+                countries={countries.map((c) => c.name)}
               />
             </div>
           </div>
@@ -333,78 +376,5 @@ function FilterTag({ label, onRemove }: { label: string; onRemove: () => void })
         <X size={12} />
       </button>
     </span>
-  );
-}
-
-/* ── Painting Card ── */
-function PaintingCard({
-  painting,
-}: {
-  painting: {
-    id: string;
-    title: string;
-    slug: string;
-    price: number;
-    artistName: string;
-    medium: string;
-    category: string;
-    image: string;
-  };
-}) {
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <Link href={`/painting/${painting.slug}`}>
-      <div
-        className="ios-card overflow-hidden group cursor-pointer h-full"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        {/* Postcard image frame */}
-        <div className="relative aspect-[4/5] p-3 pb-5 border-b border-border bg-surface-hover">
-          <div className="relative h-full overflow-hidden rounded-[14px] border border-border shadow-[inset_0_0_0_1px_rgba(255,255,255,0.42),0_8px_20px_rgba(17,22,36,0.16)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_10px_22px_rgba(0,0,0,0.42)]">
-            <Image
-              src={painting.image}
-              alt={painting.title}
-              fill
-              className={`object-cover transition-transform duration-700 ease-out ${
-                hovered ? 'scale-105' : 'scale-100'
-              }`}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
-
-            {/* Hover overlay */}
-            <div
-              className={`absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-[rgba(15,15,15,0.95)] to-transparent flex flex-col justify-end p-4 transition-all duration-500 ${
-                hovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-              }`}
-            >
-              <div className="flex items-baseline justify-between mb-1">
-                <span className="font-inter text-[10px] uppercase tracking-[0.08em] text-muted">
-                  {painting.medium}
-                </span>
-                <span className="font-playfair text-sm text-gold">
-                  ${painting.price.toLocaleString()}
-                </span>
-              </div>
-              <span className="font-inter text-[10px] uppercase tracking-[0.08em] text-gold">
-                View Painting →
-              </span>
-            </div>
-          </div>
-          <div className="absolute left-1/2 bottom-2 -translate-x-1/2 w-16 h-[3px] rounded-full bg-border" />
-        </div>
-
-        {/* Info */}
-        <div className="p-4">
-          <h3 className="font-playfair text-sm text-cream leading-snug line-clamp-2 mb-1">
-            {painting.title}
-          </h3>
-          <p className="font-inter text-[11px] uppercase tracking-[0.08em] text-muted">
-            {painting.artistName}
-          </p>
-        </div>
-      </div>
-    </Link>
   );
 }

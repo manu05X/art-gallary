@@ -326,12 +326,12 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
 
               {/* Metadata */}
               <div className="space-y-3 py-6 border-y border-[var(--color-border)]">
-                <MetaRow label="Medium" value={painting.mediumName} />
+                <MetaRow label="Medium" value={painting.mediumName || 'Not specified'} />
                 <MetaRow label="Dimensions" value={`${painting.width} × ${painting.height} cm`} />
                 <MetaRow label="Year" value={String(painting.yearCreated)} />
                 <MetaRow label="Origin" value={painting.country} />
                 <MetaRow label="Orientation" value={painting.orientation} />
-                <MetaRow label="Category" value={painting.categoryName} />
+                <MetaRow label="Category" value={painting.categoryName || 'Not specified'} />
               </div>
 
               {/* CTA Buttons */}
@@ -429,7 +429,7 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
                     <div className="bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden group cursor-pointer rounded-[var(--ios-radius-lg)]">
                       <div className="relative w-full aspect-[3/4] overflow-hidden">
                         <Image
-                          src={rel.primaryImage?.url || FALLBACK_PAINTING_IMAGE}
+                          src={rel.primaryImageUrl || FALLBACK_PAINTING_IMAGE}
                           alt={rel.title}
                           fill
                           className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"

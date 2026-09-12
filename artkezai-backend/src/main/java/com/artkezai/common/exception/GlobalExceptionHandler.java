@@ -1,13 +1,17 @@
 package com.artkezai.common.exception;
 
 import com.artkezai.common.response.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +58,46 @@ public class GlobalExceptionHandler {
 		return ResponseEntity
 				.status(HttpStatus.BAD_REQUEST)
 				.body(ApiResponse.validationError(errors));
+	}
+
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<ApiResponse<?>> handleConstraintViolation(
+			ConstraintViolationException ex, WebRequest request) {
+		Map<String, String> errors = new HashMap<>();
+		ex.getConstraintViolations().forEach(violation ->
+				errors.put(violation.getPropertyPath().toString(), violation.getMessage())
+		);
+		log.warn("Constraint violation: {}", errors);
+		return ResponseEntity
+				.status(HttpStatus.BAD_REQUEST)
+				.body(ApiResponse.validationError(errors));
+	}
+
+	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+	public ResponseEntity<ApiResponse<?>> handleMethodNotSupported(
+			HttpRequestMethodNotSupportedException ex, WebRequest request) {
+		log.warn("Method not supported: {}", ex.getMessage());
+		return ResponseEntity
+				.status(HttpStatus.METHOD_NOT_ALLOWED)
+				.body(ApiResponse.error("HTTP method not supported for this endpoint"));
+	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ApiResponse<?>> handleTypeMismatch(
+			MethodArgumentTypeMismatchException ex, WebRequest request) {
+		log.warn("Type mismatch: {}", ex.getMessage());
+		return ResponseEntity
+				.status(HttpStatus.BAD_REQUEST)
+				.body(ApiResponse.error("Invalid value for parameter '" + ex.getName() + "'"));
+	}
+
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ApiResponse<?>> handleMessageNotReadable(
+			HttpMessageNotReadableException ex, WebRequest request) {
+		log.warn("Malformed request body: {}", ex.getMessage());
+		return ResponseEntity
+				.status(HttpStatus.BAD_REQUEST)
+				.body(ApiResponse.error("Malformed request body"));
 	}
 
 	@ExceptionHandler(Exception.class)
