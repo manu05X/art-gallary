@@ -1,7 +1,7 @@
 package com.artkezai.admin;
 
 import com.artkezai.common.response.ApiResponse;
-import com.artkezai.painting.Painting;
+import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,10 +27,10 @@ public class AdminController {
 	private final AdminService adminService;
 
 	@GetMapping("/moderation/queue")
-	public ResponseEntity<ApiResponse<Page<Painting>>> getModerationQueue(
+	public ResponseEntity<ApiResponse<Page<PaintingListDto>>> getModerationQueue(
 			@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		log.info("Get moderation queue");
-		Page<Painting> paintings = adminService.getModerationQueue(pageable);
+		Page<PaintingListDto> paintings = adminService.getModerationQueue(pageable);
 		return ResponseEntity.ok(ApiResponse.ok(paintings));
 	}
 

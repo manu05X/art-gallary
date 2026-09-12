@@ -108,6 +108,21 @@ public class PaintingController {
 				.body(ApiResponse.ok(PaintingCreateResponse.from(painting), "Painting submitted"));
 	}
 
+	@PostMapping("/{id}/submit")
+	public ResponseEntity<ApiResponse<PaintingCreateResponse>> submitForReview(
+			@PathVariable Long id,
+			Authentication authentication) {
+		if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(ApiResponse.error("Not authenticated"));
+		}
+
+		User artist = (User) authentication.getPrincipal();
+		log.info("Submit painting for review: {} by artist: {}", id, artist.getEmail());
+		Painting painting = paintingService.submitForReview(id, artist);
+		return ResponseEntity.ok(ApiResponse.ok(PaintingCreateResponse.from(painting), "Painting submitted for review"));
+	}
+
 	@PutMapping("/{id}")
 	public ResponseEntity<ApiResponse<Painting>> updatePainting(
 			@PathVariable Long id,

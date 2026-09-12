@@ -131,6 +131,25 @@ public class PaintingService {
 				.toList();
 	}
 
+	public Painting submitForReview(Long paintingId, User artist) {
+		Painting painting = paintingRepository.findById(paintingId)
+				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", paintingId));
+
+		if (!painting.getArtist().getUser().getId().equals(artist.getId())) {
+			throw new UnauthorizedException("You can only submit your own paintings for review");
+		}
+
+		if (painting.getStatus() != PaintingStatus.DRAFT) {
+			throw new BusinessException(
+					"Only paintings in DRAFT status can be submitted for review. Current status: " + painting.getStatus());
+		}
+
+		painting.setStatus(PaintingStatus.UNDER_REVIEW);
+		painting = paintingRepository.save(painting);
+		log.info("Painting {} submitted for review by artist: {}", paintingId, artist.getEmail());
+		return painting;
+	}
+
 	public Painting updatePainting(Long paintingId, SubmitPaintingRequest request, User artist) {
 		Painting painting = paintingRepository.findById(paintingId)
 				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", paintingId));
@@ -290,7 +309,7 @@ public class PaintingService {
 		return toPaintingDetailDto(savedPainting);
 	}
 
-	private PaintingListDto toPaintingListDto(Painting painting) {
+	public PaintingListDto toPaintingListDto(Painting painting) {
 		Optional<PaintingImage> primaryImage = painting.getImages().stream()
 				.filter(PaintingImage::getIsPrimary)
 				.findFirst();

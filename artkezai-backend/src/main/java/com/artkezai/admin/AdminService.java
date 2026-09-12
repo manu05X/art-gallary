@@ -1,9 +1,12 @@
 package com.artkezai.admin;
 
+import com.artkezai.common.exception.BusinessException;
 import com.artkezai.common.exception.ResourceNotFoundException;
 import com.artkezai.painting.Painting;
 import com.artkezai.painting.PaintingRepository;
+import com.artkezai.painting.PaintingService;
 import com.artkezai.painting.PaintingStatus;
+import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.user.User;
 import com.artkezai.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,16 +28,23 @@ public class AdminService {
 	private final PaintingRepository paintingRepository;
 	private final UserRepository userRepository;
 	private final AuditLogRepository auditLogRepository;
+	private final PaintingService paintingService;
 
 	@Transactional(readOnly = true)
-	public Page<Painting> getModerationQueue(Pageable pageable) {
+	public Page<PaintingListDto> getModerationQueue(Pageable pageable) {
 		return paintingRepository.findAll((root, query, cb) ->
-				cb.equal(root.get("status"), PaintingStatus.UNDER_REVIEW), pageable);
+				cb.equal(root.get("status"), PaintingStatus.UNDER_REVIEW), pageable)
+				.map(paintingService::toPaintingListDto);
 	}
 
 	public void approvePainting(Long paintingId, User admin) {
 		Painting painting = paintingRepository.findById(paintingId)
 				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", paintingId));
+
+		if (painting.getStatus() != PaintingStatus.UNDER_REVIEW) {
+			throw new BusinessException(
+					"Only paintings under review can be approved. Current status: " + painting.getStatus());
+		}
 
 		painting.setStatus(PaintingStatus.APPROVED);
 		paintingRepository.save(painting);
@@ -46,6 +56,11 @@ public class AdminService {
 	public void rejectPainting(Long paintingId, String reason, User admin) {
 		Painting painting = paintingRepository.findById(paintingId)
 				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", paintingId));
+
+		if (painting.getStatus() != PaintingStatus.UNDER_REVIEW) {
+			throw new BusinessException(
+					"Only paintings under review can be rejected. Current status: " + painting.getStatus());
+		}
 
 		painting.setStatus(PaintingStatus.REJECTED);
 		painting.setRejectionReason(reason);
