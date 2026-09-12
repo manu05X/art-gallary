@@ -78,8 +78,10 @@ export const paintingsApi = {
     return response;
   },
 
-  updatePainting: async (paintingId: string, req: Partial<SubmitPaintingRequest>): Promise<PaintingDto> => {
-    const response = await apiClient.patch<Partial<SubmitPaintingRequest>, PaintingDto>(`/paintings/${paintingId}`, req);
+  // Partial update — every field optional; the backend applies only what's sent
+  // and returns the same minimal confirmation shape as create/submit-for-review.
+  updatePainting: async (paintingId: string, req: Partial<SubmitPaintingRequest>): Promise<PaintingCreateResponse> => {
+    const response = await apiClient.patch<Partial<SubmitPaintingRequest>, PaintingCreateResponse>(`/paintings/${paintingId}`, req);
     return response;
   },
 
