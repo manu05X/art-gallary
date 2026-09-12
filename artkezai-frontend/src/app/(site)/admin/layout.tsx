@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
 import {
@@ -18,16 +18,31 @@ import {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
+    const unsubscribe = useAuthStore.persist.onFinishHydration(() => setHasHydrated(true));
+
+    if (useAuthStore.persist.hasHydrated()) {
+      setHasHydrated(true);
+    }
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydrated) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.push('/auth/login');
     } else if (user?.role !== 'admin') {
       router.push('/dashboard');
     }
-  }, [isAuthenticated, user, router]);
+  }, [hasHydrated, isAuthenticated, user, router]);
 
-  if (!isAuthenticated || user?.role !== 'admin') {
+  if (!hasHydrated || !isAuthenticated || user?.role !== 'admin') {
     return null;
   }
 

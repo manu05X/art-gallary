@@ -38,6 +38,11 @@ export default function IntroPage() {
     setTimeout(() => router.push('/'), 900);
   };
 
+  const handleBrowseGallery = () => {
+    setPhase('leaving');
+    setTimeout(() => router.push('/gallery'), 900);
+  };
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden" style={{ background: '#080808' }}>
 
@@ -266,7 +271,7 @@ export default function IntroPage() {
 
                 {/* Enter without music style link */}
                 <button
-                  onClick={handleEnter}
+                  onClick={handleBrowseGallery}
                   style={{
                     fontFamily: '"Inter", sans-serif',
                     fontSize: '0.6rem',
