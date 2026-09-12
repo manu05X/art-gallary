@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
 import { Upload, Grid3x3, User, MessageSquare, BarChart3 } from 'lucide-react';
@@ -9,16 +9,31 @@ import { Upload, Grid3x3, User, MessageSquare, BarChart3 } from 'lucide-react';
 export default function ArtistLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
+    const unsubscribe = useAuthStore.persist.onFinishHydration(() => setHasHydrated(true));
+
+    if (useAuthStore.persist.hasHydrated()) {
+      setHasHydrated(true);
+    }
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydrated) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.push('/auth/login');
     } else if (user?.role !== 'artist') {
       router.push('/dashboard');
     }
-  }, [isAuthenticated, user, router]);
+  }, [hasHydrated, isAuthenticated, user, router]);
 
-  if (!isAuthenticated || user?.role !== 'artist') {
+  if (!hasHydrated || !isAuthenticated || user?.role !== 'artist') {
     return null;
   }
 

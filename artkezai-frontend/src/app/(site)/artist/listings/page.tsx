@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMyListings } from '@/lib/hooks/usePaintings';
+import { useMyListings, useSubmitForReview } from '@/lib/hooks/usePaintings';
 import { PaintingStatus } from '@/types';
 
 export default function MyListingsPage() {
-  const [activeTab, setActiveTab] = useState<PaintingStatus>(PaintingStatus.LIVE);
+  const [activeTab, setActiveTab] = useState<PaintingStatus>(PaintingStatus.APPROVED);
   const { data, isLoading, error } = useMyListings(1);
+  const { mutate: submitForReview, isPending: isSubmitting } = useSubmitForReview();
 
   const allListings = data?.data || [];
   const filteredListings = allListings.filter((p) => p.status === activeTab);
@@ -16,7 +17,8 @@ export default function MyListingsPage() {
   const tabs = [
     { value: PaintingStatus.DRAFT, label: 'Draft' },
     { value: PaintingStatus.UNDER_REVIEW, label: 'Under Review' },
-    { value: PaintingStatus.LIVE, label: 'Live' },
+    { value: PaintingStatus.APPROVED, label: 'Approved' },
+    { value: PaintingStatus.REJECTED, label: 'Rejected' },
     { value: PaintingStatus.SOLD, label: 'Sold' },
   ];
 
@@ -26,8 +28,10 @@ export default function MyListingsPage() {
         return 'badge-gray';
       case PaintingStatus.UNDER_REVIEW:
         return 'badge-warning';
-      case PaintingStatus.LIVE:
+      case PaintingStatus.APPROVED:
         return 'badge-success';
+      case PaintingStatus.REJECTED:
+        return 'badge-danger';
       case PaintingStatus.SOLD:
         return 'badge-primary';
       default:
@@ -136,13 +140,23 @@ export default function MyListingsPage() {
                       View Painting
                     </Link>
                     {(painting.status === PaintingStatus.DRAFT ||
-                      painting.status === PaintingStatus.LIVE) && (
+                      painting.status === PaintingStatus.APPROVED) && (
                       <Link
                         href={`/artist/submit?id=${painting.id}`}
                         className="text-sm font-semibold text-brand hover:underline"
                       >
                         Edit
                       </Link>
+                    )}
+                    {painting.status === PaintingStatus.DRAFT && (
+                      <button
+                        type="button"
+                        onClick={() => submitForReview(painting.id)}
+                        disabled={isSubmitting}
+                        className="text-sm font-semibold text-brand hover:underline disabled:opacity-50"
+                      >
+                        Submit for Review
+                      </button>
                     )}
                   </div>
                 </div>

@@ -43,7 +43,8 @@ export interface ResetPasswordRequest {
 export enum PaintingStatus {
   DRAFT = 'DRAFT',
   UNDER_REVIEW = 'UNDER_REVIEW',
-  LIVE = 'LIVE',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
   SOLD = 'SOLD',
 }
 

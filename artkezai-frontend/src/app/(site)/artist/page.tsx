@@ -24,8 +24,8 @@ export default function ArtistDashboardPage() {
       color: 'bg-blue-100 text-blue-700',
     },
     {
-      label: 'Live Paintings',
-      value: allListings.filter((p) => p.status === PaintingStatus.LIVE).length,
+      label: 'Approved Paintings',
+      value: allListings.filter((p) => p.status === PaintingStatus.APPROVED).length,
       icon: Eye,
       color: 'bg-green-100 text-green-700',
     },

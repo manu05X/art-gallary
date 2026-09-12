@@ -79,4 +79,9 @@ export const paintingsApi = {
     const response = await apiClient.patch<Partial<SubmitPaintingRequest>, PaintingDto>(`/paintings/${paintingId}`, req);
     return response;
   },
+
+  submitForReview: async (paintingId: string): Promise<PaintingCreateResponse> => {
+    const response = await apiClient.post<never, PaintingCreateResponse>(`/paintings/${paintingId}/submit`);
+    return response;
+  },
 };

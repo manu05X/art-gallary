@@ -98,3 +98,18 @@ export const useUpdatePainting = () => {
     },
   });
 };
+
+export const useSubmitForReview = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (paintingId: string) => paintingsApi.submitForReview(paintingId),
+    onSuccess: () => {
+      toast.success('Painting submitted for review');
+      queryClient.invalidateQueries({ queryKey: ['my-listings'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to submit painting for review');
+    },
+  });
+};
