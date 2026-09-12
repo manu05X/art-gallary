@@ -3,6 +3,7 @@ package com.artkezai.painting;
 import com.artkezai.common.response.ApiResponse;
 import com.artkezai.painting.dto.GalleryFilterRequest;
 import com.artkezai.painting.dto.PaintingDetailDto;
+import com.artkezai.painting.dto.PaintingImageResponse;
 import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.painting.dto.SubmitPaintingRequest;
 import com.artkezai.user.User;
@@ -82,7 +83,7 @@ public class PaintingController {
 	}
 
 	@PostMapping("/{id}/images")
-	public ResponseEntity<ApiResponse<PaintingImage>> uploadImage(
+	public ResponseEntity<ApiResponse<PaintingImageResponse>> uploadImage(
 			@PathVariable Long id,
 			@RequestParam MultipartFile file,
 			Authentication authentication) throws Exception {
@@ -94,7 +95,8 @@ public class PaintingController {
 		User artist = (User) authentication.getPrincipal();
 		log.info("Upload image for painting: {} by artist: {}", id, artist.getEmail());
 		PaintingImage image = paintingService.uploadImage(id, file, artist);
-		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(image, "Image uploaded"));
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(ApiResponse.ok(PaintingImageResponse.from(image), "Image uploaded"));
 	}
 
 	@DeleteMapping("/{id}/images/{imageId}")
