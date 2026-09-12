@@ -10,6 +10,9 @@ import com.artkezai.painting.dto.PaintingDetailDto;
 import com.artkezai.painting.dto.GalleryFilterRequest;
 import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.painting.dto.SubmitPaintingRequest;
+import com.artkezai.painting.dto.CategoryResponse;
+import com.artkezai.painting.dto.CountryResponse;
+import com.artkezai.painting.dto.MediumResponse;
 import com.artkezai.user.User;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -96,6 +99,36 @@ public class PaintingService {
 		painting = paintingRepository.save(painting);
 		log.info("Painting submitted: {} by artist: {}", painting.getId(), artist.getEmail());
 		return painting;
+	}
+
+	@Transactional(readOnly = true)
+	public Page<PaintingListDto> getMyListings(User artist, Pageable pageable) {
+		ArtistProfile artistProfile = artistProfileRepository.findByUserId(artist.getId())
+				.orElseThrow(() -> new BusinessException("Artist profile not found"));
+
+		return paintingRepository.findByArtistId(artistProfile.getId(), pageable)
+				.map(this::toPaintingListDto);
+	}
+
+	@Transactional(readOnly = true)
+	public List<CategoryResponse> getActiveCategories() {
+		return categoryRepository.findByIsActiveTrueOrderBySortOrder().stream()
+				.map(CategoryResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<MediumResponse> getActiveMediums() {
+		return mediumRepository.findByIsActiveTrue().stream()
+				.map(MediumResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<CountryResponse> getActiveCountries() {
+		return countryRepository.findByIsActiveTrueOrderByNameAsc().stream()
+				.map(CountryResponse::from)
+				.toList();
 	}
 
 	public Painting updatePainting(Long paintingId, SubmitPaintingRequest request, User artist) {
