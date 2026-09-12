@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
-import { Sora, Plus_Jakarta_Sans } from 'next/font/google';
+import { Playfair_Display, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import QueryClientWrapper from '@/components/providers/QueryClientWrapper';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
-const playfair = Sora({
+// Editorial display serif — every heading across the app already uses the
+// font-playfair class expecting a serif; it was loading Sora (a sans) instead.
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-playfair',

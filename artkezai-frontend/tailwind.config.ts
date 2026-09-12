@@ -8,6 +8,15 @@ const config: Config = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    // .container alone (no center/padding config) does not self-center —
+    // used bare by the admin/artist/buyer dashboard layouts.
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: '1.5rem',
+        lg: '2rem',
+      },
+    },
     extend: {
       colors: {
         surface: 'var(--color-surface)',
@@ -19,6 +28,14 @@ const config: Config = {
         muted: 'var(--color-muted)',
         subtle: 'var(--color-subtle)',
         dark: 'var(--color-dark)',
+        // Fixed workspace tokens (see globals.css) — already referenced as
+        // text-brand/bg-brand/text-accent across the dashboard pages.
+        brand: 'var(--color-brand)',
+        'brand-hover': 'var(--color-brand-hover)',
+        accent: 'var(--color-accent)',
+        'accent-hover': 'var(--color-accent-hover)',
+        workspace: 'var(--color-workspace)',
+        'workspace-border': 'var(--color-workspace-border)',
       },
       fontFamily: {
         playfair: ['var(--font-playfair)', 'Georgia', 'serif'],

@@ -46,7 +46,7 @@ export default function ArtistLayout({ children }: { children: React.ReactNode }
   ];
 
   return (
-    <div className="section container">
+    <div className="section container min-h-screen bg-workspace">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <aside className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow p-6">
