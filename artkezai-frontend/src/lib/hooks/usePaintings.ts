@@ -28,7 +28,6 @@ export const useSubmitPainting = () => {
   return useMutation({
     mutationFn: (req: SubmitPaintingRequest) => paintingsApi.submitPainting(req),
     onSuccess: () => {
-      toast.success('Painting submitted successfully');
       queryClient.invalidateQueries({ queryKey: ['paintings'] });
     },
     onError: (error: any) => {

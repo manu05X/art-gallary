@@ -2,6 +2,7 @@ import apiClient from '@/lib/api';
 import {
   PaintingListDto,
   PaintingDto,
+  PaintingCreateResponse,
   PaintingImageDto,
   SubmitPaintingRequest,
   GalleryFilters,
@@ -37,8 +38,8 @@ export const paintingsApi = {
     return response;
   },
 
-  submitPainting: async (req: SubmitPaintingRequest): Promise<PaintingDto> => {
-    const response = await apiClient.post<SubmitPaintingRequest, PaintingDto>('/paintings', req);
+  submitPainting: async (req: SubmitPaintingRequest): Promise<PaintingCreateResponse> => {
+    const response = await apiClient.post<SubmitPaintingRequest, PaintingCreateResponse>('/paintings', req);
     return response;
   },
 

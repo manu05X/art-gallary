@@ -20,7 +20,7 @@ export default function ModerationPage() {
 
   const handleApprove = async (paintingId: string) => {
     try {
-      await paintingsApi.updatePainting(paintingId, { categoryId: '' });
+      await paintingsApi.updatePainting(paintingId, {});
       toast.success('Painting approved');
       refetch();
     } catch (error) {
@@ -31,7 +31,7 @@ export default function ModerationPage() {
   const handleReject = async () => {
     if (!rejectingId) return;
     try {
-      await paintingsApi.updatePainting(rejectingId, { categoryId: '' });
+      await paintingsApi.updatePainting(rejectingId, {});
       toast.success(`Painting rejected: ${rejectReason || 'No reason provided'}`);
       setRejectingId(null);
       setRejectReason('');

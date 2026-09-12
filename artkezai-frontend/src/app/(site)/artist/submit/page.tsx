@@ -13,19 +13,19 @@ export default function SubmitPaintingPage() {
   const { data: mediums = [] } = useMediums();
   const { data: countries = [] } = useCountries();
 
-  const { mutate: submitPainting, isPending: isSubmitting } = useSubmitPainting();
-  const { mutate: uploadImage } = useUploadImage();
+  const { mutateAsync: submitPainting, isPending: isSubmitting } = useSubmitPainting();
+  const { mutateAsync: uploadImage } = useUploadImage();
 
   const [formData, setFormData] = useState<SubmitPaintingRequest>({
     title: '',
     description: '',
     price: 0,
     currency: 'USD',
-    mediumId: '',
-    categoryId: '',
-    country: '',
-    width: 0,
-    height: 0,
+    mediumId: 0,
+    categoryId: 0,
+    countryId: 0,
+    widthCm: 0,
+    heightCm: 0,
     yearCreated: new Date().getFullYear(),
     orientation: 'Landscape',
   });
@@ -39,7 +39,8 @@ export default function SubmitPaintingPage() {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: name === 'price' || name === 'width' || name === 'height' || name === 'yearCreated'
+      [name]: name === 'price' || name === 'mediumId' || name === 'categoryId' || name === 'countryId' ||
+        name === 'widthCm' || name === 'heightCm' || name === 'yearCreated'
         ? Number(value)
         : value,
     });
@@ -67,7 +68,7 @@ export default function SubmitPaintingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.categoryId || !formData.mediumId || !formData.country) {
+    if (!formData.title || !formData.categoryId || !formData.mediumId || !formData.countryId) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -77,15 +78,18 @@ export default function SubmitPaintingPage() {
       return;
     }
 
-    submitPainting(formData, {
-      onSuccess: async (painting) => {
-        for (const file of selectedFiles) {
-          await uploadImage({ paintingId: painting.id, file });
-        }
-        toast.success('Painting submitted successfully!');
-        router.push('/artist/listings');
-      },
-    });
+    try {
+      const painting = await submitPainting(formData);
+
+      for (const file of selectedFiles) {
+        await uploadImage({ paintingId: painting.id, file });
+      }
+
+      toast.success('Painting submitted successfully!');
+      router.push('/artist/listings');
+    } catch {
+      // Mutation hooks surface the request-specific error toast.
+    }
   };
 
   return (
@@ -136,7 +140,7 @@ export default function SubmitPaintingPage() {
               className="select"
               disabled={isSubmitting}
             >
-              <option value="">Select category</option>
+              <option value={0}>Select category</option>
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
@@ -157,7 +161,7 @@ export default function SubmitPaintingPage() {
               className="select"
               disabled={isSubmitting}
             >
-              <option value="">Select medium</option>
+              <option value={0}>Select medium</option>
               {mediums.map((med) => (
                 <option key={med.id} value={med.id}>
                   {med.name}
@@ -174,8 +178,8 @@ export default function SubmitPaintingPage() {
             </label>
             <input
               type="number"
-              name="width"
-              value={formData.width}
+              name="widthCm"
+              value={formData.widthCm}
               onChange={handleInputChange}
               className="input"
               disabled={isSubmitting}
@@ -188,8 +192,8 @@ export default function SubmitPaintingPage() {
             </label>
             <input
               type="number"
-              name="height"
-              value={formData.height}
+              name="heightCm"
+              value={formData.heightCm}
               onChange={handleInputChange}
               className="input"
               disabled={isSubmitting}
@@ -236,16 +240,16 @@ export default function SubmitPaintingPage() {
               Country <span className="text-red-600">*</span>
             </label>
             <select
-              name="country"
-              value={formData.country}
+              name="countryId"
+              value={formData.countryId}
               onChange={handleInputChange}
               required
               className="select"
               disabled={isSubmitting}
             >
-              <option value="">Select country</option>
+              <option value={0}>Select country</option>
               {countries.map((country) => (
-                <option key={country.id} value={country.code}>
+                <option key={country.id} value={country.id}>
                   {country.name}
                 </option>
               ))}

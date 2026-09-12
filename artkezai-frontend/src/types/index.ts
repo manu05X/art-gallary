@@ -108,16 +108,24 @@ export interface PaintingDto extends PaintingListDto {
   };
 }
 
+export interface PaintingCreateResponse {
+  id: string;
+  title: string;
+  slug: string;
+  status: PaintingStatus;
+  createdAt: string;
+}
+
 export interface SubmitPaintingRequest {
   title: string;
   description: string;
   price: number;
   currency: string;
-  mediumId: string;
-  categoryId: string;
-  country: string;
-  width: number;
-  height: number;
+  mediumId: number;
+  categoryId: number;
+  countryId: number;
+  widthCm: number;
+  heightCm: number;
   yearCreated: number;
   orientation: string;
 }
