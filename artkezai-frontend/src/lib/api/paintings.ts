@@ -13,6 +13,9 @@ import {
 } from '@/types';
 
 export const paintingsApi = {
+  // Frontend callers use 1-based page numbers and their own filter/sort naming
+  // (search, country, sort); this is the one place that translates both to what
+  // the backend actually expects (keyword, countryId, sortBy, 0-based page).
   getGallery: async (
     filters: GalleryFilters,
     page: number = 1,
@@ -21,13 +24,13 @@ export const paintingsApi = {
     const params = new URLSearchParams();
     if (filters.categoryId) params.append('categoryId', filters.categoryId);
     if (filters.mediumId) params.append('mediumId', filters.mediumId);
-    if (filters.country) params.append('country', filters.country);
+    if (filters.country) params.append('countryId', filters.country);
     if (filters.minPrice !== undefined) params.append('minPrice', filters.minPrice.toString());
     if (filters.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
     if (filters.orientation) params.append('orientation', filters.orientation);
-    if (filters.search) params.append('search', filters.search);
-    params.append('page', page.toString());
-    params.append('sort', sort);
+    if (filters.search) params.append('keyword', filters.search);
+    params.append('page', Math.max(page - 1, 0).toString());
+    params.append('sortBy', sort);
 
     const response = await apiClient.get<never, PagedResponse<PaintingListDto>>(`/paintings?${params.toString()}`);
     return response;

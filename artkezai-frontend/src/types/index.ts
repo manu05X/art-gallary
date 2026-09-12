@@ -72,32 +72,43 @@ export interface PaintingImageDto {
   isPrimary: boolean;
 }
 
+// Mirrors the backend's PaintingListDto exactly (see PaintingListDto.java) — used
+// for gallery cards, my-listings, and related-paintings, all of which receive the
+// same flat list shape (image URLs, not a nested image object; no numeric ids).
 export interface PaintingListDto {
   id: string;
   slug: string;
   title: string;
-  artistId: string;
-  artistName: string;
-  mediumId: string;
-  mediumName: string;
-  categoryId: string;
-  categoryName: string;
   price: number;
   currency: string;
-  country: string;
-  countryCode: string;
+  primaryImageUrl: string | null;
+  thumbnailUrl: string | null;
+  artistName: string;
+  artistSlug: string;
+  mediumName: string | null;
+  categoryName: string | null;
+  countryName: string | null;
+  isOfferEnabled: boolean;
   status: PaintingStatus;
-  primaryImage: PaintingImageDto;
   createdAt: string;
-  updatedAt: string;
 }
 
+// Mirrors PaintingDetailDto.java — a richer, differently-shaped response returned
+// only for a single painting (numeric ids for editing, a nested primaryImage
+// object, updatedAt, etc.). Adds the detail-only fields on top of the shared base.
 export interface PaintingDto extends PaintingListDto {
+  artistId: string;
+  mediumId: string;
+  categoryId: string;
+  country: string;
+  countryCode: string;
+  updatedAt: string;
   description: string;
   width: number;
   height: number;
   yearCreated: number;
   orientation: string;
+  primaryImage: PaintingImageDto;
   allImages: PaintingImageDto[];
   artist: {
     id: string;

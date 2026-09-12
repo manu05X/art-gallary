@@ -92,10 +92,10 @@ export default function MyListingsPage() {
           {filteredListings.map((painting) => (
             <div key={painting.id} className="p-6 hover:bg-gray-50 transition">
               <div className="flex gap-6">
-                {painting.primaryImage && (
+                {painting.primaryImageUrl && (
                   <div className="flex-shrink-0 w-24 h-24 relative rounded-lg overflow-hidden bg-gray-100">
                     <Image
-                      src={painting.primaryImage.url}
+                      src={painting.primaryImageUrl}
                       alt={painting.title}
                       fill
                       className="object-cover"
