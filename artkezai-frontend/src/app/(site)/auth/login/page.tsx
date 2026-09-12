@@ -17,7 +17,7 @@ const HERO_IMAGE =
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated } = useAuthStore();
+  const { login, isAuthenticated, user } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -28,9 +28,10 @@ export default function LoginPage() {
   useEffect(() => {
     setMounted(true);
     if (isAuthenticated) {
-      router.push('/dashboard');
+      const redirect = user?.role === 'artist' ? '/artist' : user?.role === 'admin' ? '/admin' : '/dashboard';
+      router.push(redirect);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (fieldErrors[e.target.name]) {

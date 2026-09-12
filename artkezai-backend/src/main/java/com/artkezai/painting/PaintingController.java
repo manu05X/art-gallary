@@ -1,15 +1,22 @@
 package com.artkezai.painting;
 
 import com.artkezai.common.response.ApiResponse;
+import com.artkezai.common.response.PagedResponse;
 import com.artkezai.painting.dto.GalleryFilterRequest;
+import com.artkezai.painting.dto.CategoryResponse;
+import com.artkezai.painting.dto.CountryResponse;
+import com.artkezai.painting.dto.PaintingCreateResponse;
 import com.artkezai.painting.dto.PaintingDetailDto;
+import com.artkezai.painting.dto.PaintingImageResponse;
 import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.painting.dto.SubmitPaintingRequest;
+import com.artkezai.painting.dto.MediumResponse;
 import com.artkezai.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -27,13 +34,48 @@ public class PaintingController {
 
 	private final PaintingService paintingService;
 
+	@GetMapping("/categories")
+	public ResponseEntity<ApiResponse<java.util.List<CategoryResponse>>> getCategories() {
+		return ResponseEntity.ok(ApiResponse.ok(paintingService.getActiveCategories()));
+	}
+
+	@GetMapping("/mediums")
+	public ResponseEntity<ApiResponse<java.util.List<MediumResponse>>> getMediums() {
+		return ResponseEntity.ok(ApiResponse.ok(paintingService.getActiveMediums()));
+	}
+
+	@GetMapping("/countries")
+	public ResponseEntity<ApiResponse<java.util.List<CountryResponse>>> getCountries() {
+		return ResponseEntity.ok(ApiResponse.ok(paintingService.getActiveCountries()));
+	}
+
 	@GetMapping
-	public ResponseEntity<ApiResponse<Page<PaintingListDto>>> getGallery(
+	public ResponseEntity<ApiResponse<PagedResponse<PaintingListDto>>> getGallery(
 			@ModelAttribute GalleryFilterRequest filter,
 			@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		log.info("Get gallery request with filters");
 		Page<PaintingListDto> paintings = paintingService.getGallery(filter, pageable);
-		return ResponseEntity.ok(ApiResponse.ok(paintings));
+		return ResponseEntity.ok(ApiResponse.ok(PagedResponse.from(paintings)));
+	}
+
+	@GetMapping("/my-listings")
+	public ResponseEntity<ApiResponse<PagedResponse<PaintingListDto>>> getMyListings(
+			@RequestParam(defaultValue = "1") int page,
+			Authentication authentication) {
+		if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(ApiResponse.error("Not authenticated"));
+		}
+
+		User artist = (User) authentication.getPrincipal();
+		log.info("Get my listings for artist: {}", artist.getEmail());
+		int zeroBasedPage = Math.max(page - 1, 0);
+		Pageable pageable = PageRequest.of(zeroBasedPage, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+		Page<PaintingListDto> listings = paintingService.getMyListings(artist, pageable);
+
+		PagedResponse<PaintingListDto> response = PagedResponse.from(listings);
+		response.setPage(response.getPage() + 1);
+		return ResponseEntity.ok(ApiResponse.ok(response));
 	}
 
 	@GetMapping("/{id}")
@@ -51,7 +93,7 @@ public class PaintingController {
 	}
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<Painting>> submitPainting(
+	public ResponseEntity<ApiResponse<PaintingCreateResponse>> submitPainting(
 			@Valid @RequestBody SubmitPaintingRequest request,
 			Authentication authentication) {
 		if (authentication == null || !authentication.isAuthenticated()) {
@@ -62,7 +104,23 @@ public class PaintingController {
 		User artist = (User) authentication.getPrincipal();
 		log.info("Submit painting request from artist: {}", artist.getEmail());
 		Painting painting = paintingService.submitPainting(request, artist);
-		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(painting, "Painting submitted"));
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(ApiResponse.ok(PaintingCreateResponse.from(painting), "Painting submitted"));
+	}
+
+	@PostMapping("/{id}/submit")
+	public ResponseEntity<ApiResponse<PaintingCreateResponse>> submitForReview(
+			@PathVariable Long id,
+			Authentication authentication) {
+		if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(ApiResponse.error("Not authenticated"));
+		}
+
+		User artist = (User) authentication.getPrincipal();
+		log.info("Submit painting for review: {} by artist: {}", id, artist.getEmail());
+		Painting painting = paintingService.submitForReview(id, artist);
+		return ResponseEntity.ok(ApiResponse.ok(PaintingCreateResponse.from(painting), "Painting submitted for review"));
 	}
 
 	@PutMapping("/{id}")
@@ -82,7 +140,7 @@ public class PaintingController {
 	}
 
 	@PostMapping("/{id}/images")
-	public ResponseEntity<ApiResponse<PaintingImage>> uploadImage(
+	public ResponseEntity<ApiResponse<PaintingImageResponse>> uploadImage(
 			@PathVariable Long id,
 			@RequestParam MultipartFile file,
 			Authentication authentication) throws Exception {
@@ -94,7 +152,8 @@ public class PaintingController {
 		User artist = (User) authentication.getPrincipal();
 		log.info("Upload image for painting: {} by artist: {}", id, artist.getEmail());
 		PaintingImage image = paintingService.uploadImage(id, file, artist);
-		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(image, "Image uploaded"));
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(ApiResponse.ok(PaintingImageResponse.from(image), "Image uploaded"));
 	}
 
 	@DeleteMapping("/{id}/images/{imageId}")

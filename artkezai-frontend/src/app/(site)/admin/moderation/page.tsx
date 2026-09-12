@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
-import { paintingsApi } from '@/lib/api/paintings';
-import { PaintingStatus } from '@/types';
+import { adminApi } from '@/lib/api/admin';
 import toast from 'react-hot-toast';
 
 export default function ModerationPage() {
@@ -13,31 +12,31 @@ export default function ModerationPage() {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['moderation-queue'],
-    queryFn: () => paintingsApi.getGallery({ categoryId: '' }, 1),
+    queryFn: () => adminApi.getModerationQueue(),
   });
 
-  const paintings = data?.data.filter((p) => p.status === PaintingStatus.UNDER_REVIEW) || [];
+  const paintings = data || [];
 
   const handleApprove = async (paintingId: string) => {
     try {
-      await paintingsApi.updatePainting(paintingId, { categoryId: '' });
+      await adminApi.approvePainting(paintingId);
       toast.success('Painting approved');
       refetch();
-    } catch (error) {
-      toast.error('Failed to approve painting');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to approve painting');
     }
   };
 
   const handleReject = async () => {
     if (!rejectingId) return;
     try {
-      await paintingsApi.updatePainting(rejectingId, { categoryId: '' });
+      await adminApi.rejectPainting(rejectingId, rejectReason || 'No reason provided');
       toast.success(`Painting rejected: ${rejectReason || 'No reason provided'}`);
       setRejectingId(null);
       setRejectReason('');
       refetch();
-    } catch (error) {
-      toast.error('Failed to reject painting');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to reject painting');
     }
   };
 
@@ -76,10 +75,10 @@ export default function ModerationPage() {
         {paintings.map((painting) => (
           <div key={painting.id} className="p-6">
             <div className="flex gap-6">
-              {painting.primaryImage && (
+              {painting.primaryImageUrl && (
                 <div className="flex-shrink-0 w-32 h-32 relative rounded-lg overflow-hidden bg-gray-100">
                   <Image
-                    src={painting.primaryImage.url}
+                    src={painting.primaryImageUrl}
                     alt={painting.title}
                     fill
                     className="object-cover"

@@ -10,6 +10,9 @@ import com.artkezai.painting.dto.PaintingDetailDto;
 import com.artkezai.painting.dto.GalleryFilterRequest;
 import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.painting.dto.SubmitPaintingRequest;
+import com.artkezai.painting.dto.CategoryResponse;
+import com.artkezai.painting.dto.CountryResponse;
+import com.artkezai.painting.dto.MediumResponse;
 import com.artkezai.user.User;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -46,8 +49,11 @@ public class PaintingService {
 	private final ArtistProfileRepository artistProfileRepository;
 	private final MinioClient minioClient;
 
-	@Value("${minio.bucket-name:artkezai}")
+	@Value("${minio.bucket}")
 	private String bucketName;
+
+	@Value("${minio.public-base-url}")
+	private String publicBaseUrl;
 
 	public Painting submitPainting(SubmitPaintingRequest request, User artist) {
 		ArtistProfile artistProfile = artistProfileRepository.findByUserId(artist.getId())
@@ -92,6 +98,55 @@ public class PaintingService {
 
 		painting = paintingRepository.save(painting);
 		log.info("Painting submitted: {} by artist: {}", painting.getId(), artist.getEmail());
+		return painting;
+	}
+
+	@Transactional(readOnly = true)
+	public Page<PaintingListDto> getMyListings(User artist, Pageable pageable) {
+		ArtistProfile artistProfile = artistProfileRepository.findByUserId(artist.getId())
+				.orElseThrow(() -> new BusinessException("Artist profile not found"));
+
+		return paintingRepository.findByArtistId(artistProfile.getId(), pageable)
+				.map(this::toPaintingListDto);
+	}
+
+	@Transactional(readOnly = true)
+	public List<CategoryResponse> getActiveCategories() {
+		return categoryRepository.findByIsActiveTrueOrderBySortOrder().stream()
+				.map(CategoryResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<MediumResponse> getActiveMediums() {
+		return mediumRepository.findByIsActiveTrue().stream()
+				.map(MediumResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<CountryResponse> getActiveCountries() {
+		return countryRepository.findByIsActiveTrueOrderByNameAsc().stream()
+				.map(CountryResponse::from)
+				.toList();
+	}
+
+	public Painting submitForReview(Long paintingId, User artist) {
+		Painting painting = paintingRepository.findById(paintingId)
+				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", paintingId));
+
+		if (!painting.getArtist().getUser().getId().equals(artist.getId())) {
+			throw new UnauthorizedException("You can only submit your own paintings for review");
+		}
+
+		if (painting.getStatus() != PaintingStatus.DRAFT) {
+			throw new BusinessException(
+					"Only paintings in DRAFT status can be submitted for review. Current status: " + painting.getStatus());
+		}
+
+		painting.setStatus(PaintingStatus.UNDER_REVIEW);
+		painting = paintingRepository.save(painting);
+		log.info("Painting {} submitted for review by artist: {}", paintingId, artist.getEmail());
 		return painting;
 	}
 
@@ -156,7 +211,7 @@ public class PaintingService {
 			);
 		}
 
-		String imageUrl = String.format("https://%s/%s/%s", "minio.artkezai.com", bucketName, storageKey);
+		String imageUrl = String.format("%s/%s", publicBaseUrl, storageKey);
 
 		PaintingImage image = PaintingImage.builder()
 				.storageKey(storageKey)
@@ -254,7 +309,7 @@ public class PaintingService {
 		return toPaintingDetailDto(savedPainting);
 	}
 
-	private PaintingListDto toPaintingListDto(Painting painting) {
+	public PaintingListDto toPaintingListDto(Painting painting) {
 		Optional<PaintingImage> primaryImage = painting.getImages().stream()
 				.filter(PaintingImage::getIsPrimary)
 				.findFirst();

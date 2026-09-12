@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { Sora, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import QueryClientWrapper from '@/components/providers/QueryClientWrapper';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
@@ -44,9 +42,7 @@ export default function RootLayout({
       <body className="font-inter">
         <ThemeProvider>
           <QueryClientWrapper>
-            <Header />
-            <main className="pt-24 sm:pt-28">{children}</main>
-            <Footer />
+            {children}
           </QueryClientWrapper>
         </ThemeProvider>
       </body>

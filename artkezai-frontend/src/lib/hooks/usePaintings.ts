@@ -28,7 +28,6 @@ export const useSubmitPainting = () => {
   return useMutation({
     mutationFn: (req: SubmitPaintingRequest) => paintingsApi.submitPainting(req),
     onSuccess: () => {
-      toast.success('Painting submitted successfully');
       queryClient.invalidateQueries({ queryKey: ['paintings'] });
     },
     onError: (error: any) => {
@@ -96,6 +95,21 @@ export const useUpdatePainting = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Failed to update painting');
+    },
+  });
+};
+
+export const useSubmitForReview = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (paintingId: string) => paintingsApi.submitForReview(paintingId),
+    onSuccess: () => {
+      toast.success('Painting submitted for review');
+      queryClient.invalidateQueries({ queryKey: ['my-listings'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error || 'Failed to submit painting for review');
     },
   });
 };
