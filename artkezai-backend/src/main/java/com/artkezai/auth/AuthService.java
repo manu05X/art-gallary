@@ -5,11 +5,13 @@ import com.artkezai.auth.dto.ForgotPasswordRequest;
 import com.artkezai.auth.dto.LoginRequest;
 import com.artkezai.auth.dto.RegisterRequest;
 import com.artkezai.auth.dto.ResetPasswordRequest;
+import com.artkezai.artist.ArtistService;
 import com.artkezai.common.exception.BusinessException;
 import com.artkezai.common.exception.ResourceNotFoundException;
 import com.artkezai.notification.EmailService;
 import com.artkezai.user.User;
 import com.artkezai.user.UserRepository;
+import com.artkezai.user.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +32,7 @@ public class AuthService {
 	private final JwtService jwtService;
 	private final PasswordEncoder passwordEncoder;
 	private final EmailService emailService;
+	private final ArtistService artistService;
 
 	@Value("${artkezai.frontend-url:http://localhost:3000}")
 	private String frontendUrl;
@@ -51,6 +54,10 @@ public class AuthService {
 
 		user = userRepository.save(user);
 		log.info("New user registered: {}", user.getEmail());
+
+		if (user.getRole() == UserRole.ARTIST) {
+			artistService.createArtistProfile(user);
+		}
 
 		String token = jwtService.generateToken(user);
 		return buildAuthResponse(user, token);

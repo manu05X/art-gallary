@@ -50,12 +50,12 @@ public class PaintingController {
 	}
 
 	@GetMapping
-	public ResponseEntity<ApiResponse<Page<PaintingListDto>>> getGallery(
+	public ResponseEntity<ApiResponse<PagedResponse<PaintingListDto>>> getGallery(
 			@ModelAttribute GalleryFilterRequest filter,
 			@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		log.info("Get gallery request with filters");
 		Page<PaintingListDto> paintings = paintingService.getGallery(filter, pageable);
-		return ResponseEntity.ok(ApiResponse.ok(paintings));
+		return ResponseEntity.ok(ApiResponse.ok(PagedResponse.from(paintings)));
 	}
 
 	@GetMapping("/my-listings")
