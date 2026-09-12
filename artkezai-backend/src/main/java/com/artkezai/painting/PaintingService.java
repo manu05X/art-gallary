@@ -46,8 +46,11 @@ public class PaintingService {
 	private final ArtistProfileRepository artistProfileRepository;
 	private final MinioClient minioClient;
 
-	@Value("${minio.bucket-name:artkezai}")
+	@Value("${minio.bucket}")
 	private String bucketName;
+
+	@Value("${minio.public-base-url}")
+	private String publicBaseUrl;
 
 	public Painting submitPainting(SubmitPaintingRequest request, User artist) {
 		ArtistProfile artistProfile = artistProfileRepository.findByUserId(artist.getId())
@@ -156,7 +159,7 @@ public class PaintingService {
 			);
 		}
 
-		String imageUrl = String.format("https://%s/%s/%s", "minio.artkezai.com", bucketName, storageKey);
+		String imageUrl = String.format("%s/%s", publicBaseUrl, storageKey);
 
 		PaintingImage image = PaintingImage.builder()
 				.storageKey(storageKey)
