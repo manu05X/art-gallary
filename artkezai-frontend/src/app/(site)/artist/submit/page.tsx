@@ -1,43 +1,99 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Upload, X, ImagePlus } from 'lucide-react';
-import { useSubmitPainting, useUploadImage, useCategories, useMediums, useCountries } from '@/lib/hooks/usePaintings';
+import {
+  useSubmitPainting,
+  useUpdatePainting,
+  useUploadImage,
+  useCategories,
+  useMediums,
+  useCountries,
+  usePaintingById,
+} from '@/lib/hooks/usePaintings';
+import { useAuthStore } from '@/lib/store/authStore';
 import { SubmitPaintingRequest } from '@/types';
 import WorkspacePageHeader from '@/components/workspace/WorkspacePageHeader';
 import ArtworkFormSection from '@/components/workspace/ArtworkFormSection';
 import toast from 'react-hot-toast';
 
+const emptyForm: SubmitPaintingRequest = {
+  title: '',
+  description: '',
+  price: 0,
+  currency: 'USD',
+  mediumId: 0,
+  categoryId: 0,
+  countryId: 0,
+  widthCm: 0,
+  heightCm: 0,
+  yearCreated: new Date().getFullYear(),
+  orientation: 'Landscape',
+};
+
 export default function SubmitPaintingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('id') || undefined;
+  const isEditMode = !!editId;
+  const { user } = useAuthStore();
+
   const { data: categories = [] } = useCategories();
   const { data: mediums = [] } = useMediums();
   const { data: countries = [] } = useCountries();
 
+  const {
+    data: existingPainting,
+    isLoading: isLoadingPainting,
+    isError: isPaintingLoadError,
+  } = usePaintingById(editId);
+
   const { mutateAsync: submitPainting, isPending: isSubmitting } = useSubmitPainting();
+  const { mutateAsync: updatePainting, isPending: isUpdating } = useUpdatePainting();
   const { mutateAsync: uploadImage } = useUploadImage();
 
-  const [formData, setFormData] = useState<SubmitPaintingRequest>({
-    title: '',
-    description: '',
-    price: 0,
-    currency: 'USD',
-    mediumId: 0,
-    categoryId: 0,
-    countryId: 0,
-    widthCm: 0,
-    heightCm: 0,
-    yearCreated: new Date().getFullYear(),
-    orientation: 'Landscape',
-  });
+  const [formData, setFormData] = useState<SubmitPaintingRequest>(emptyForm);
+  const [hasPrefilled, setHasPrefilled] = useState(false);
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   // Additive UI-only state — does not alter the create→upload sequencing below.
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
-  const isBusy = isSubmitting || uploadProgress !== null;
+  const isBusy = isSubmitting || isUpdating || uploadProgress !== null;
+
+  // Prefill the form once the existing painting AND the reference country list
+  // (needed to resolve countryId from countryCode — the detail endpoint returns
+  // country name/code, not the numeric id used for editing) have both loaded.
+  useEffect(() => {
+    if (!isEditMode || hasPrefilled || !existingPainting || countries.length === 0) {
+      return;
+    }
+
+    const matchedCountry = countries.find((c) => c.code === existingPainting.countryCode);
+
+    setFormData({
+      title: existingPainting.title,
+      description: existingPainting.description || '',
+      price: existingPainting.price,
+      currency: existingPainting.currency,
+      mediumId: Number(existingPainting.mediumId) || 0,
+      categoryId: Number(existingPainting.categoryId) || 0,
+      countryId: matchedCountry ? Number(matchedCountry.id) : 0,
+      widthCm: existingPainting.width || 0,
+      heightCm: existingPainting.height || 0,
+      yearCreated: existingPainting.yearCreated || new Date().getFullYear(),
+      orientation: existingPainting.orientation || 'Landscape',
+    });
+    setHasPrefilled(true);
+  }, [isEditMode, hasPrefilled, existingPainting, countries]);
+
+  // artist.id round-trips as a JSON number even though the frontend type says
+  // string, and user.id is stored as String(userId) — compare as strings so
+  // the real owner isn't wrongly denied.
+  const isOwner =
+    !isEditMode || !existingPainting || !user || String(existingPainting.artist?.id) === String(user.id);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -86,11 +142,38 @@ export default function SubmitPaintingPage() {
     if (!formData.mediumId) errors.mediumId = 'Select a medium.';
     if (!formData.countryId) errors.countryId = 'Select a country of origin.';
     if (!formData.price || formData.price <= 0) errors.price = 'Enter a price greater than 0.';
-    if (selectedFiles.length === 0) errors.images = 'Upload at least one image of the artwork.';
+    // Create mode requires at least one image; edit mode already has existing
+    // images on the painting, so new ones here are optional additions.
+    if (!isEditMode && selectedFiles.length === 0) {
+      errors.images = 'Upload at least one image of the artwork.';
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       toast.error('Please review the highlighted fields.');
+      return;
+    }
+
+    if (isEditMode) {
+      try {
+        await updatePainting({ paintingId: editId as string, data: formData });
+
+        if (selectedFiles.length > 0) {
+          setUploadProgress({ current: 0, total: selectedFiles.length });
+          let uploaded = 0;
+          for (const file of selectedFiles) {
+            await uploadImage({ paintingId: editId as string, file });
+            uploaded += 1;
+            setUploadProgress({ current: uploaded, total: selectedFiles.length });
+          }
+        }
+
+        router.push('/artist/listings');
+      } catch {
+        // Mutation hooks surface the request-specific error toast.
+      } finally {
+        setUploadProgress(null);
+      }
       return;
     }
 
@@ -114,12 +197,54 @@ export default function SubmitPaintingPage() {
     }
   };
 
+  // Deliberate loading state — never flash an empty create form while the
+  // existing artwork is still being fetched/prefilled in edit mode.
+  if (isEditMode && (isLoadingPainting || (!hasPrefilled && !isPaintingLoadError))) {
+    return (
+      <div>
+        <WorkspacePageHeader eyebrow="Artist Workspace" title="Edit Artwork" />
+        <div className="bg-white rounded-lg shadow p-16 text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand mx-auto mb-4"></div>
+          <p className="font-inter text-sm text-gray-600">Loading your artwork…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEditMode && isPaintingLoadError) {
+    return (
+      <div>
+        <WorkspacePageHeader eyebrow="Artist Workspace" title="Edit Artwork" />
+        <div className="bg-[#fbe4e4] border border-[#f3c9c9] rounded-lg p-6">
+          <p className="text-[#9c1f1f]">
+            We couldn&apos;t load this painting. It may not exist, or may have been removed.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEditMode && !isOwner) {
+    return (
+      <div>
+        <WorkspacePageHeader eyebrow="Artist Workspace" title="Edit Artwork" />
+        <div className="bg-[#fbe4e4] border border-[#f3c9c9] rounded-lg p-6">
+          <p className="text-[#9c1f1f]">You don&apos;t have permission to edit this painting.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <WorkspacePageHeader
         eyebrow="Artist Workspace"
-        title="Submit a Painting"
-        description="Prepare your work for curatorial review — every detail here shapes how it's presented in the gallery."
+        title={isEditMode ? 'Edit Artwork' : 'Submit a Painting'}
+        description={
+          isEditMode
+            ? 'Update the details of this artwork. Existing images are preserved.'
+            : "Prepare your work for curatorial review — every detail here shapes how it's presented in the gallery."
+        }
       />
 
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 sm:p-8 max-w-3xl">
@@ -159,12 +284,37 @@ export default function SubmitPaintingPage() {
 
         <ArtworkFormSection
           title="Artwork Imagery"
-          description="The first image becomes the cover shown throughout the gallery."
+          description={
+            isEditMode
+              ? 'Existing images stay as they are; anything added here is appended.'
+              : 'The first image becomes the cover shown throughout the gallery.'
+          }
         >
           <div>
+            {isEditMode && existingPainting && existingPainting.allImages.length > 0 && (
+              <div className="mb-5">
+                <p className="font-inter text-xs text-gray-500 mb-2">
+                  {existingPainting.allImages.length} existing image
+                  {existingPainting.allImages.length === 1 ? '' : 's'}
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {existingPainting.allImages.map((img) => (
+                    <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden bg-workspace">
+                      <img src={img.url} alt={existingPainting.title} className="w-full h-full object-cover" />
+                      {img.isPrimary && (
+                        <span className="absolute top-2 left-2 badge badge-primary">Cover</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-accent transition">
               <Upload size={32} className="mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-600 mb-4">Drag and drop images or click to select</p>
+              <p className="text-sm text-gray-600 mb-4">
+                {isEditMode ? 'Add more images (optional)' : 'Drag and drop images or click to select'}
+              </p>
               <input
                 type="file"
                 multiple
@@ -190,13 +340,13 @@ export default function SubmitPaintingPage() {
             {previewUrls.length > 0 && (
               <>
                 <p className="font-inter text-xs text-gray-500 mt-4 mb-2">
-                  {previewUrls.length} image{previewUrls.length === 1 ? '' : 's'} selected
+                  {previewUrls.length} new image{previewUrls.length === 1 ? '' : 's'} selected
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {previewUrls.map((url, idx) => (
                     <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-workspace">
                       <img src={url} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
-                      {idx === 0 && (
+                      {idx === 0 && !isEditMode && (
                         <span className="absolute top-2 left-2 badge badge-primary">Cover</span>
                       )}
                       <button
@@ -213,7 +363,7 @@ export default function SubmitPaintingPage() {
               </>
             )}
 
-            {previewUrls.length === 0 && !fieldErrors.images && (
+            {previewUrls.length === 0 && !fieldErrors.images && !isEditMode && (
               <p className="flex items-center gap-2 font-inter text-xs text-gray-400 mt-3">
                 <ImagePlus size={14} /> No images selected yet.
               </p>
@@ -391,8 +541,12 @@ export default function SubmitPaintingPage() {
           >
             {uploadProgress
               ? 'Uploading images…'
-              : isSubmitting
-              ? 'Submitting…'
+              : isSubmitting || isUpdating
+              ? isEditMode
+                ? 'Saving…'
+                : 'Submitting…'
+              : isEditMode
+              ? 'Save Changes'
               : 'Submit Painting'}
           </button>
         </div>

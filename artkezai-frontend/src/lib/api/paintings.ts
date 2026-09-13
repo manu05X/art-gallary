@@ -41,6 +41,15 @@ export const paintingsApi = {
     return response;
   },
 
+  // GET /api/paintings/{id} has no ownership/status restriction on the backend
+  // (same endpoint the public detail page would hit by numeric id) — used here
+  // to prefill the edit form. The actual edit is only ever enforced by the
+  // backend's ownership check on PATCH.
+  getPaintingById: async (paintingId: string): Promise<PaintingDto> => {
+    const response = await apiClient.get<never, PaintingDto>(`/paintings/${paintingId}`);
+    return response;
+  },
+
   submitPainting: async (req: SubmitPaintingRequest): Promise<PaintingCreateResponse> => {
     const response = await apiClient.post<SubmitPaintingRequest, PaintingCreateResponse>('/paintings', req);
     return response;

@@ -22,6 +22,15 @@ export const usePainting = (slug: string) => {
   });
 };
 
+export const usePaintingById = (paintingId?: string) => {
+  return useQuery({
+    queryKey: ['painting-by-id', paintingId],
+    queryFn: () => paintingsApi.getPaintingById(paintingId as string),
+    enabled: !!paintingId,
+    staleTime: 0, // always fetch fresh when opening the edit form
+  });
+};
+
 export const useSubmitPainting = () => {
   const queryClient = useQueryClient();
 
@@ -92,6 +101,7 @@ export const useUpdatePainting = () => {
     onSuccess: () => {
       toast.success('Painting updated successfully');
       queryClient.invalidateQueries({ queryKey: ['paintings'] });
+      queryClient.invalidateQueries({ queryKey: ['my-listings'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Failed to update painting');
