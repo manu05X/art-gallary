@@ -3,6 +3,7 @@ package com.artkezai.order;
 import com.artkezai.artist.dto.ArtistOrderResponse;
 import com.artkezai.common.exception.BusinessException;
 import com.artkezai.common.exception.ResourceNotFoundException;
+import com.artkezai.common.exception.UnauthorizedException;
 import com.artkezai.notification.EmailService;
 import com.artkezai.offer.Offer;
 import com.artkezai.offer.OfferRepository;
@@ -15,6 +16,7 @@ import com.artkezai.payment.Payment;
 import com.artkezai.payment.PaymentRepository;
 import com.artkezai.payment.PaymentStatus;
 import com.artkezai.user.User;
+import com.artkezai.user.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -105,10 +107,22 @@ public class OrderService {
 				.map(this::toArtistOrderResponse);
 	}
 
+	// Phase 2.13: previously had no ownership check at all — any authenticated
+	// BUYER could fetch any order by id (an IDOR), exposing another buyer's
+	// shipping name/address/city/country. Mirrors the ownership check
+	// PaymentService.createPaymentIntent already uses for the same Order
+	// entity, just never applied here. ADMIN may view any order by design.
 	@Transactional(readOnly = true)
-	public OrderDto getOrder(Long orderId) {
+	public OrderDto getOrder(Long orderId, User requester) {
 		Order order = orderRepository.findById(orderId)
 				.orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+
+		boolean isOwner = order.getBuyer().getId().equals(requester.getId());
+		boolean isAdmin = requester.getRole() == UserRole.ADMIN;
+		if (!isOwner && !isAdmin) {
+			throw new UnauthorizedException("You can only view your own orders");
+		}
+
 		return toOrderDto(order);
 	}
 
