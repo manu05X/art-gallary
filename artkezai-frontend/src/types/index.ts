@@ -150,6 +150,7 @@ export interface GalleryFilters {
   maxPrice?: number;
   orientation?: string;
   search?: string;
+  artistId?: string | number;
 }
 
 export interface ArtistProfile {
@@ -173,6 +174,39 @@ export interface ArtistProfile {
 export interface ArtistProfileDto extends ArtistProfile {
   story?: string;
   storyImages?: string[];
+}
+
+// Mirrors the real GET /api/artists (list) response — ArtistListResponse.java.
+// Deliberately minimal: no painting/follower/sales counts, since the backend
+// doesn't compute or expose any (see Phase 2.9 report).
+export interface ArtistSummary {
+  id: number;
+  displayName: string;
+  slug: string;
+  bio: string | null;
+  profilePhotoUrl: string | null;
+  countryName: string | null;
+}
+
+// Mirrors GET /api/artists/{slug} — ArtistDetailResponse.java. Also the
+// shape returned by GET/PUT/POST /api/artists/me (Phase 2.11) — the backend
+// reuses the same DTO since the field set is identical, only the audience
+// (self vs. public) differs.
+export interface ArtistDetail extends ArtistSummary {
+  story: string | null;
+  websiteUrl: string | null;
+  instagram: string | null;
+}
+
+// Mirrors UpdateArtistProfileRequest.java — every field optional; only
+// fields actually present are applied server-side. Slug is not editable.
+export interface UpdateArtistProfileRequest {
+  displayName?: string;
+  bio?: string;
+  story?: string;
+  websiteUrl?: string;
+  instagram?: string;
+  countryId?: number;
 }
 
 export enum OfferStatus {
@@ -264,6 +298,23 @@ export interface OrderDto {
   createdAt: string;
   shippedAt?: string;
   deliveredAt?: string;
+}
+
+// Mirrors ArtistOrderResponse.java — an order on the current artist's own
+// painting, as returned by GET /api/artists/me/orders (Phase 2.12).
+// Deliberately narrower than OrderDto: no buyer name/id, no shipping
+// address/contact, no payment method/status — an artist doesn't need the
+// buyer's private information to see what sold.
+export interface ArtistOrderSummary {
+  id: number;
+  paintingId: number;
+  paintingTitle: string;
+  paintingSlug: string;
+  paintingThumbnailUrl: string | null;
+  totalPrice: number;
+  currency: string;
+  status: OrderStatus;
+  createdAt: string;
 }
 
 export interface CreateOrderRequest {

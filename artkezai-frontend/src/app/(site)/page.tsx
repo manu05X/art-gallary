@@ -1,527 +1,309 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
-import { Shield, Truck, CreditCard, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import AnimatedSection from '@/components/ui/AnimatedSection';
+import AnimatedText from '@/components/ui/AnimatedText';
+import PaintingCard from '@/components/gallery/PaintingCard';
+import { usePaintings } from '@/lib/hooks/usePaintings';
+import { PaintingListDto } from '@/types';
 
-/* ────────────────────────────────────────────────
-   CUSTOM CURSOR
-   ──────────────────────────────────────────────── */
-function CustomCursor() {
-  const [pos, setPos] = useState({ x: -100, y: -100 });
-  const [ring, setRing] = useState({ x: -100, y: -100 });
-  const [hovered, setHovered] = useState(false);
-  const ringRef = useRef({ x: -100, y: -100 });
-  const rafRef = useRef<number>(0);
+// Same convention as the gallery page: a painting with no uploaded image
+// yet still needs a visual — a neutral stock stand-in, never a fake painting.
+const FALLBACK_PAINTING_IMAGE = 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=1200&q=80';
 
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      setPos({ x: e.clientX, y: e.clientY });
-    };
-    const onEnter = () => setHovered(true);
-    const onLeave = () => setHovered(false);
-
-    window.addEventListener('mousemove', onMove);
-    document.querySelectorAll('a, button').forEach((el) => {
-      el.addEventListener('mouseenter', onEnter);
-      el.addEventListener('mouseleave', onLeave);
-    });
-
-    const lerp = () => {
-      ringRef.current.x += (pos.x - ringRef.current.x) * 0.12;
-      ringRef.current.y += (pos.y - ringRef.current.y) * 0.12;
-      setRing({ x: ringRef.current.x, y: ringRef.current.y });
-      rafRef.current = requestAnimationFrame(lerp);
-    };
-    rafRef.current = requestAnimationFrame(lerp);
-
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [pos.x, pos.y]);
-
-  return (
-    <>
-      {/* Dot */}
-      <div
-        className="fixed z-[9999] pointer-events-none rounded-full bg-[var(--color-gold)] transition-transform duration-100"
-        style={{
-          left: pos.x - 4,
-          top: pos.y - 4,
-          width: 8,
-          height: 8,
-          transform: hovered ? 'scale(0)' : 'scale(1)',
-        }}
-      />
-      {/* Ring */}
-      <div
-        className="fixed z-[9998] pointer-events-none rounded-full border border-[var(--color-gold)] transition-all duration-200"
-        style={{
-          left: ring.x - (hovered ? 24 : 16),
-          top: ring.y - (hovered ? 24 : 16),
-          width: hovered ? 48 : 32,
-          height: hovered ? 48 : 32,
-          opacity: hovered ? 0.6 : 0.4,
-        }}
-      />
-    </>
-  );
+interface ArtistSummary {
+  name: string;
+  slug: string;
+  country: string;
+  image: string;
 }
 
 /* ────────────────────────────────────────────────
-   GRAIN OVERLAY
+   HERO — editorial split: manifesto text + one real
+   painting presented as a museum wall label. Falls
+   back to a text-only composition if no approved
+   artwork with an image exists yet.
    ──────────────────────────────────────────────── */
-function GrainOverlay() {
+function Hero({ painting, totalCount }: { painting: PaintingListDto | null; totalCount: number }) {
   return (
-    <div
-      className="fixed inset-0 z-[9990] pointer-events-none opacity-[0.035]"
-      style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        backgroundRepeat: 'repeat',
-        backgroundSize: '128px 128px',
-      }}
-    />
-  );
-}
-
-/* ────────────────────────────────────────────────
-   HERO — Cosmos-style orbital animation
-
-   Pure CSS animation approach (no imperative animate() API):
-   1. Cards start CLUSTERED AT CENTER via CSS custom property offsets
-   2. `.burst` class triggers @keyframes that fly them outward
-   3. After burst completes → swap to `.drift` class for gentle perpetual float
-
-   This avoids the framer-motion v10 bug where animate() on motion.div
-   elements silently fails because it conflicts with the component's
-   internal transform management.
-   ──────────────────────────────────────────────── */
-
-const CARDS = [
-  // lp/tp = final position (% of viewport), w/h = size, rot = tilt degrees
-  // driftX/driftY = float amplitude, driftDur = float period, stagger = burst delay
-  { src: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=500&q=80', w: 168, h: 222, lp: 3,  tp: 6,  rot: -34, driftX: 5,   driftY: 10,  driftDur: 4.6, stagger: 0.00 },
-  { src: 'https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=500&q=80', w: 145, h: 192, lp: 24, tp: 2,  rot: -6,  driftX: -4,  driftY: 8,   driftDur: 5.2, stagger: 0.05 },
-  { src: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=500&q=80', w: 152, h: 200, lp: 57, tp: 1,  rot: 9,   driftX: 6,   driftY: -11, driftDur: 4.9, stagger: 0.10 },
-  { src: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=500&q=80', w: 158, h: 208, lp: 74, tp: 7,  rot: -27, driftX: -5,  driftY: 9,   driftDur: 5.5, stagger: 0.05 },
-  { src: 'https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=500&q=80', w: 175, h: 232, lp: 83, tp: 35, rot: 22,  driftX: 7,   driftY: -12, driftDur: 4.3, stagger: 0.10 },
-  { src: 'https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=500&q=80', w: 162, h: 214, lp: 64, tp: 63, rot: -16, driftX: -6,  driftY: 8,   driftDur: 5.0, stagger: 0.05 },
-  { src: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=500&q=80', w: 148, h: 196, lp: 40, tp: 70, rot: 19,  driftX: 5,   driftY: -10, driftDur: 4.7, stagger: 0.10 },
-  { src: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=500&q=80', w: 155, h: 205, lp: 20, tp: 72, rot: -9,  driftX: -4,  driftY: 11,  driftDur: 5.4, stagger: 0.05 },
-  { src: 'https://images.unsplash.com/photo-1579783901586-d88db74b4fe4?w=500&q=80', w: 165, h: 218, lp: 2,  tp: 32, rot: -21, driftX: 6,   driftY: -9,  driftDur: 4.9, stagger: 0.10 },
-  { src: 'https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=500&q=80', w: 160, h: 212, lp: 3,  tp: 60, rot: 14,  driftX: -5,  driftY: 10,  driftDur: 5.3, stagger: 0.05 },
-];
-
-function HeroSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const [phase, setPhase] = useState<'init' | 'burst' | 'drift'>('init');
-  const [offsets, setOffsets] = useState<{ x: string; y: string }[]>([]);
-  const currentYear = new Date().getFullYear();
-
-  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end start'] });
-  const textY       = useTransform(scrollYProgress, [0, 1], [0, 160]);
-  const textOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
-
-  // Calculate offsets from each card's position to viewport center
-  useEffect(() => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-
-    const computed = CARDS.map((c) => {
-      // Card center in px
-      const cardCenterX = (c.lp / 100) * vw + c.w / 2;
-      const cardCenterY = (c.tp / 100) * vh + c.h / 2;
-      // Offset to move card TO viewport center
-      const ox = vw / 2 - cardCenterX;
-      const oy = vh / 2 - cardCenterY;
-      return { x: `${ox}px`, y: `${oy}px` };
-    });
-
-    setOffsets(computed);
-
-    // Small delay then trigger burst
-    const t1 = setTimeout(() => setPhase('burst'), 150);
-    // After burst animation completes (~1.7s), switch to drift
-    const t2 = setTimeout(() => setPhase('drift'), 1900);
-
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
-
-  const lines = [
-    { text: 'Your space',   gold: false },
-    { text: 'for original', gold: false },
-    { text: 'art.',         gold: true  },
-  ];
-
-  const TEXT_START = 1.5;
-
-  return (
-    <section
-      ref={sectionRef}
-      className="relative min-h-screen bg-[var(--color-dark)]"
-      style={{ cursor: 'none', overflow: 'clip' }}
-    >
-      {/* ── LAYER 1: Orbital painting cards ── */}
-      {CARDS.map((c, i) => (
-        <div
-          key={i}
-          className={`orbital-card absolute overflow-hidden cursor-pointer rounded-[var(--ios-radius-xl)] ${phase}`}
-          style={{
-            left:           `${c.lp}%`,
-            top:            `${c.tp}%`,
-            width:          c.w,
-            height:         c.h,
-            zIndex:         1,
-            boxShadow:      'var(--ios-shadow-lg)',
-            border:         '1px solid var(--ios-glass-border)',
-            '--offset-x':   offsets[i]?.x || '0px',
-            '--offset-y':   offsets[i]?.y || '0px',
-            '--card-rot':   `${c.rot}deg`,
-            '--stagger':    `${c.stagger}s`,
-            '--drift-x':    `${c.driftX}px`,
-            '--drift-y':    `${c.driftY}px`,
-            '--drift-dur':  `${c.driftDur}s`,
-            '--drift-delay': `${i * 0.3}s`,
-          } as React.CSSProperties}
-        >
-          <Image
-            src={c.src}
-            alt="Painting"
-            fill
-            className="object-cover"
-            sizes={`${c.w}px`}
-            priority={i < 6}
-          />
-        </div>
-      ))}
-
-      {/* ── LAYER 2: Top/bottom fades ── */}
-      <div className="absolute inset-x-0 top-0 h-24 pointer-events-none bg-gradient-to-b from-[var(--color-dark)] to-transparent" style={{ zIndex: 3 }} />
-      <div className="absolute inset-x-0 bottom-0 h-24 pointer-events-none bg-gradient-to-t from-[var(--color-dark)] to-transparent" style={{ zIndex: 3 }} />
-
-      {/* ── LAYER 10: Center text ── */}
-      <motion.div
-        style={{ y: textY, opacity: textOpacity, zIndex: 10 }}
-        className="absolute inset-0 flex flex-col items-center justify-center text-center px-6"
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: TEXT_START }}
-          className="flex items-center gap-4 mb-10"
-        >
-          <div className="w-10 h-px bg-[var(--color-gold)]/50" />
-          <span className="font-inter text-[10px] uppercase tracking-[0.18em] text-[var(--color-gold)] font-semibold">
-            Original Paintings · Est. {currentYear}
-          </span>
-          <div className="w-10 h-px bg-[var(--color-gold)]/50" />
-        </motion.div>
-
-        <h1 className="font-playfair leading-[0.98] pointer-events-none select-none">
-          {lines.map((line, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 44, filter: 'blur(14px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: 1.1, delay: TEXT_START + 0.2 + i * 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className={`block ${
-                line.gold
-                  ? 'text-[var(--color-gold)] text-[clamp(48px,7.5vw,106px)] font-semibold'
-                  : 'text-[var(--color-cream)] text-[clamp(48px,7.5vw,106px)] font-semibold'
-              }`}
-            >
-              {line.text}
-            </motion.div>
-          ))}
-        </h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: TEXT_START + 0.9 }}
-          className="font-inter text-[15px] text-[var(--color-muted)] leading-relaxed max-w-sm mt-8 mb-12 pointer-events-none"
-        >
-          Discover, offer, and own original paintings from independent artists in 38 countries.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: TEXT_START + 1.1 }}
-          className="flex flex-col sm:flex-row gap-4"
-        >
-          <Link
-            href="/gallery"
-            className="group ios-button-primary flex items-center justify-center gap-2 font-inter text-[11px] uppercase tracking-[0.08em] px-9 py-4"
-          >
-            Enter the Gallery
-            <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
-          </Link>
-          <Link
-            href="/auth/register"
-            className="ios-button-secondary flex items-center justify-center font-inter text-[11px] uppercase tracking-[0.08em] px-9 py-4"
-          >
-            Join Free
-          </Link>
-        </motion.div>
-      </motion.div>
-
-      {/* ── Scroll indicator ── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: TEXT_START + 1.4 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none"
-        style={{ zIndex: 10 }}
-      >
-        <span className="font-inter text-[9px] uppercase tracking-[0.16em] text-[var(--color-subtle)]">Scroll</span>
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-px h-10 bg-gradient-to-b from-[var(--color-gold)]/50 to-transparent"
-        />
-      </motion.div>
-    </section>
-  );
-}
-
-/* ────────────────────────────────────────────────
-   MARQUEE STRIP
-   ──────────────────────────────────────────────── */
-function MarqueeStrip() {
-  const text = 'ORIGINAL PAINTINGS \u00A0·\u00A0 CERTIFICATE OF AUTHENTICITY \u00A0·\u00A0 WORLDWIDE ARTISTS \u00A0·\u00A0 CURATED SELECTION \u00A0·\u00A0 SECURE PAYMENTS \u00A0·\u00A0 ';
-  return (
-    <section className="bg-[var(--color-gold)] py-3.5 overflow-hidden">
-      <motion.div
-        animate={{ x: ['0%', '-50%'] }}
-        transition={{ duration: 24, repeat: Infinity, ease: 'linear' }}
-        className="flex whitespace-nowrap"
-      >
-        {[...Array(6)].map((_, i) => (
-          <span key={i} className="font-inter text-[11px] uppercase tracking-[0.2em] text-[var(--color-dark)] font-medium">
-            {text}
-          </span>
-        ))}
-      </motion.div>
-    </section>
-  );
-}
-
-/* ────────────────────────────────────────────────
-   EDITORIAL INTRO
-   ──────────────────────────────────────────────── */
-function EditorialSection() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-100px' });
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
-
-  return (
-    <section ref={ref} className="py-32 px-6 border-b border-[var(--color-border)] overflow-hidden">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-        {/* Left — pull quote */}
-        <motion.div
-          initial={{ opacity: 0, x: -60 }}
-          animate={inView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <div className="font-playfair text-[80px] lg:text-[110px] leading-none text-[var(--color-gold)]/10 font-bold select-none mb-4">
-            "
+    <section className="relative bg-dark border-b border-border overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-6 py-16 sm:py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-12 lg:gap-16 items-center">
+        {/* Text */}
+        <div className="order-2 lg:order-1">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-10 h-px bg-gold/50" />
+            <span className="font-inter text-[10px] uppercase tracking-[0.18em] text-gold font-semibold">
+              Original Paintings Marketplace
+            </span>
           </div>
-          <blockquote className="font-playfair italic text-3xl lg:text-4xl text-[var(--color-cream)] leading-[1.4] -mt-12">
-            Art should not live behind gallery walls that only a few can enter.
-          </blockquote>
-          <div className="w-12 h-px bg-[var(--color-gold)] mt-8 mb-4" />
-          <p className="font-inter text-[11px] uppercase tracking-widest text-[var(--color-muted)]">
-            — The Artkezai Manifesto
-          </p>
-        </motion.div>
 
-        {/* Right — painting stack */}
-        <motion.div
-          initial={{ opacity: 0, x: 60 }}
-          animate={inView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="relative h-[520px]"
-          style={{ perspective: '1800px', transformStyle: 'preserve-3d' }}
-        >
-          <div
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none"
-            style={{
-              width: '390px',
-              height: '74px',
-              background:
-                'radial-gradient(ellipse at center, rgba(8, 12, 24, 0.45) 0%, rgba(8, 12, 24, 0.28) 50%, transparent 82%)',
-              filter: 'blur(2.5px)',
-              zIndex: 0,
-            }}
+          <AnimatedText
+            as="h1"
+            text="Collect original art, directly from the artist."
+            className="font-playfair leading-[1.04] text-[clamp(36px,5.2vw,64px)] font-semibold text-cream mb-8"
           />
 
-          {[
-            { src: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&q=80', rotate: -7, x: 0, y: 28 },
-            { src: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=600&q=80', rotate: 1.5, x: 26, y: 8 },
-            { src: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=600&q=80', rotate: -2.5, x: 54, y: 18 },
-          ].map((p, i) => (
-            (() => {
-              const isActive = hoveredCard === i;
+          <AnimatedSection delay={0.3}>
+            <p className="font-inter text-[15px] text-muted leading-relaxed max-w-md mb-10">
+              A curated marketplace connecting independent painters directly with collectors
+              around the world.
+              {totalCount > 0 && (
+                <>
+                  {' '}
+                  <span className="text-gold">{totalCount.toLocaleString()}</span> original{' '}
+                  {totalCount === 1 ? 'work' : 'works'} currently live in the collection.
+                </>
+              )}
+            </p>
 
-              return (
-                <div
-                  key={i}
-                  className="absolute w-64 h-80 overflow-hidden border border-[var(--ios-glass-border)] rounded-[var(--ios-radius-xl)] transition-all duration-500 ease-out"
-                  onMouseEnter={() => setHoveredCard(i)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  style={{
-                    transform: isActive
-                      ? `rotate(${p.rotate}deg) translateX(${p.x}px) translateY(${p.y - 20}px) translateZ(92px) scale(1.06)`
-                      : `rotate(${p.rotate}deg) translateX(${p.x}px) translateY(${p.y}px) translateZ(0px) scale(1)`,
-                    zIndex: isActive ? 90 : 20 + i,
-                    left: i * 54,
-                    boxShadow: isActive
-                      ? '0 42px 90px rgba(8, 12, 24, 0.52), var(--ios-shadow-lg)'
-                      : '0 26px 52px rgba(8, 12, 24, 0.36), var(--ios-shadow-sm)',
-                    filter: isActive ? 'saturate(1.08)' : 'saturate(0.94)',
-                  }}
-                >
-                  <Image src={p.src} alt="Painting" fill className="object-cover" sizes="256px" />
-                </div>
-              );
-            })()
-          ))}
-          <div className="absolute bottom-0 right-0 bg-[var(--color-surface)] border border-[var(--ios-glass-border)] rounded-[18px] px-6 py-4 z-40 ios-glass pointer-events-none">
-            <p className="font-playfair text-2xl text-[var(--color-gold)]">2,400+</p>
-            <p className="font-inter text-[10px] uppercase tracking-widest text-[var(--color-muted)] mt-0.5">Original works</p>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-/* ────────────────────────────────────────────────
-   FEATURED GALLERY — Asymmetric masonry grid
-   ──────────────────────────────────────────────── */
-const paintings = [
-  { title: 'Amber Reverie', artist: 'Elena Morozova', country: 'Russia', price: 1200, medium: 'Oil on Canvas', category: 'abstract', slug: 'amber-reverie', image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600&q=80', tall: true },
-  { title: 'Blue Solitude', artist: 'Marcus Weber', country: 'Germany', price: 890, medium: 'Acrylic', category: 'abstract', slug: 'fractured-light', image: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=600&q=80', tall: false },
-  { title: 'Morning Light', artist: 'Yuki Tanaka', country: 'Japan', price: 2400, medium: 'Watercolour', category: 'landscape', slug: 'twilight-over-the-valley', image: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=600&q=80', tall: false },
-  { title: 'Silent Echo', artist: 'Omar Hassan', country: 'Egypt', price: 1750, medium: 'Mixed Media', category: 'abstract', slug: 'urban-pulse', image: 'https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=600&q=80', tall: true },
-  { title: 'The Observer', artist: 'Chen Wei', country: 'China', price: 3200, medium: 'Oil on Board', category: 'portrait', slug: 'silent-conversation', image: 'https://images.unsplash.com/photo-1579783901586-d88db74b4fe4?w=600&q=80', tall: false },
-  { title: 'Crimson Fields', artist: 'Isabella Chen', country: 'Taiwan', price: 380, medium: 'Watercolour', category: 'landscape', slug: 'the-red-door', image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&q=80', tall: false },
-];
-
-function PaintingCard({ painting, delay = 0 }: { painting: typeof paintings[number]; delay?: number }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
-  const [hovered, setHovered] = useState(false);
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 50 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.8, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-    >
-      <Link href={`/painting/${painting.slug}`}>
-        <div
-          className="group relative overflow-hidden bg-[var(--color-surface)] border border-[var(--ios-glass-border)] rounded-[var(--ios-radius-xl)] cursor-pointer shadow-[var(--ios-shadow-sm)] hover:shadow-[var(--ios-shadow-lg)] transition-shadow duration-300"
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
-          <div className="relative aspect-[4/5] p-3 pb-5 border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]">
-            <div className="relative h-full overflow-hidden rounded-[14px] border border-[var(--color-border)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.42),0_8px_20px_rgba(17,22,36,0.16)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_10px_22px_rgba(0,0,0,0.42)]">
-              <Image
-                src={painting.image}
-                alt={painting.title}
-                fill
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              />
-              {/* Warm glow on hover */}
-              <div
-                className="absolute inset-0 transition-opacity duration-500"
-                style={{
-                  background: 'radial-gradient(ellipse at 50% 80%, rgba(201,168,76,0.12) 0%, transparent 70%)',
-                  opacity: hovered ? 1 : 0,
-                }}
-              />
-              {/* Hover info overlay */}
-              <div
-                className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--color-dark)]/95 to-transparent p-5 transition-all duration-500"
-                style={{ opacity: hovered ? 1 : 0, transform: hovered ? 'translateY(0)' : 'translateY(8px)' }}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link
+                href="/gallery"
+                className="group ios-button-primary flex items-center justify-center gap-2 font-inter text-[11px] uppercase tracking-[0.08em] px-9 py-4"
               >
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="font-inter text-[10px] uppercase tracking-widest text-[var(--color-muted)]">{painting.medium}</p>
-                    <p className="font-playfair text-lg text-[var(--color-cream)] mt-0.5">{painting.title}</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-[var(--color-gold)]">
-                    <span className="font-inter text-xs uppercase tracking-widest">View</span>
-                    <ArrowUpRight size={14} />
-                  </div>
+                Explore the Gallery
+                <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link
+                href="/auth/register"
+                className="ios-button-secondary flex items-center justify-center font-inter text-[11px] uppercase tracking-[0.08em] px-9 py-4"
+              >
+                Join as an Artist
+              </Link>
+            </div>
+          </AnimatedSection>
+        </div>
+
+        {/* Artwork */}
+        <AnimatedSection direction="right" delay={0.15} className="order-1 lg:order-2">
+          {painting ? (
+            <Link href={`/painting/${painting.slug}`} className="group block relative">
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[var(--ios-radius-xl)] border border-[var(--ios-glass-border)] shadow-[var(--ios-shadow-lg)]">
+                <Image
+                  src={painting.primaryImageUrl || FALLBACK_PAINTING_IMAGE}
+                  alt={painting.title}
+                  fill
+                  priority
+                  className="object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.04]"
+                  sizes="(max-width: 1024px) 100vw, 45vw"
+                />
+                {/* Wall label — mobile: inline overlay */}
+                <div className="absolute inset-x-0 bottom-0 lg:hidden bg-gradient-to-t from-black/85 to-transparent p-5 pt-14">
+                  <p className="font-inter text-[10px] uppercase tracking-widest text-muted">{painting.artistName}</p>
+                  <p className="font-playfair text-lg text-cream mt-0.5">{painting.title}</p>
+                  <p className="font-inter text-sm text-gold mt-1">
+                    {painting.currency} {painting.price.toLocaleString()}
+                  </p>
                 </div>
               </div>
+              {/* Wall label — desktop: offset card */}
+              <div className="hidden lg:block ios-glass rounded-[18px] px-6 py-4 absolute -bottom-6 -left-6 max-w-[78%]">
+                <p className="font-inter text-[10px] uppercase tracking-widest text-muted">{painting.artistName}</p>
+                <p className="font-playfair text-lg text-cream mt-0.5 truncate">{painting.title}</p>
+                <div className="flex items-center justify-between mt-1.5 gap-3">
+                  <p className="font-inter text-sm text-gold">
+                    {painting.currency} {painting.price.toLocaleString()}
+                  </p>
+                  <span className="flex items-center gap-1 text-gold font-inter text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                    View <ArrowUpRight size={12} />
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <div className="relative aspect-[4/5] w-full rounded-[var(--ios-radius-xl)] border border-[var(--ios-glass-border)] bg-surface flex items-center justify-center">
+              <p className="font-playfair text-lg text-muted text-center px-8">
+                New work is being curated for the gallery.
+              </p>
             </div>
-            <div className="absolute left-1/2 bottom-2 -translate-x-1/2 w-16 h-[3px] rounded-full bg-[var(--color-border)]" />
-          </div>
-
-          {/* Card footer */}
-          <div className="p-4 flex items-start justify-between">
-            <div>
-              <h3 className="font-playfair text-[15px] text-[var(--color-cream)] leading-snug">{painting.title}</h3>
-              <p className="font-inter text-[10px] uppercase tracking-[0.2em] text-[var(--color-muted)] mt-1">{painting.artist}</p>
-            </div>
-            <p className="font-inter text-sm text-[var(--color-gold)] font-medium whitespace-nowrap">${painting.price.toLocaleString()}</p>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
+          )}
+        </AnimatedSection>
+      </div>
+    </section>
   );
 }
 
-function FeaturedGallery() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
-
+/* ────────────────────────────────────────────────
+   THE COLLECTION — real approved paintings, newest
+   first. Loading / error / empty handled explicitly.
+   ──────────────────────────────────────────────── */
+function CollectionSection({
+  paintings,
+  isLoading,
+  isError,
+  refetch,
+}: {
+  paintings: PaintingListDto[];
+  isLoading: boolean;
+  isError: boolean;
+  refetch: () => void;
+}) {
   return (
-    <section className="py-32 px-6">
+    <section className="py-24 sm:py-28 px-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div ref={ref} className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-14 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7 }}
-          >
+        <AnimatedSection className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
+          <div>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-px bg-[var(--color-gold)]" />
-              <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[var(--color-gold)]">The Collection</span>
+              <div className="w-8 h-px bg-gold" />
+              <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-gold">The Collection</span>
             </div>
-            <h2 className="font-playfair text-5xl lg:text-6xl text-[var(--color-cream)] leading-tight">
-              Discover<br />Original Works
+            <h2 className="font-playfair text-4xl lg:text-5xl text-cream leading-tight">
+              Recently added to<br />the gallery.
             </h2>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={inView ? { opacity: 1 } : {}}
-            transition={{ duration: 0.7, delay: 0.2 }}
+          </div>
+          <Link
+            href="/gallery"
+            className="group flex items-center gap-2 font-inter text-[11px] uppercase tracking-widest text-gold hover:text-gold-hover transition-colors"
           >
-            <Link
-              href="/gallery"
-              className="group flex items-center gap-2 font-inter text-[11px] uppercase tracking-widest text-[var(--color-gold)] hover:text-[#d4b55a] transition-colors"
-            >
-              View all paintings
-              <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-            </Link>
-          </motion.div>
-        </div>
+            View all in the Gallery
+            <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+          </Link>
+        </AnimatedSection>
 
-        {/* Asymmetric grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {paintings.map((p, i) => (
-            <PaintingCard key={p.slug} painting={p} delay={i * 0.08} />
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="aspect-[3/4] rounded-[var(--ios-radius-xl)] skeleton" />
+            ))}
+          </div>
+        ) : isError ? (
+          <div className="card-surface p-16 text-center">
+            <p className="font-playfair text-2xl text-cream mb-2">Something went wrong</p>
+            <p className="font-inter text-sm text-muted mb-6">We couldn&apos;t load the collection. Please try again.</p>
+            <button
+              onClick={() => refetch()}
+              className="font-inter text-[11px] uppercase tracking-[0.12em] text-gold border border-gold px-6 py-2.5 hover:bg-gold hover:text-dark transition-all duration-300"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : paintings.length === 0 ? (
+          <div className="card-surface p-16 text-center">
+            <p className="font-playfair text-2xl text-cream mb-2">No original works are live yet</p>
+            <p className="font-inter text-sm text-muted mb-6">
+              Approved paintings will appear here as artists join the collection.
+            </p>
+            <Link
+              href="/auth/register"
+              className="inline-block font-inter text-[11px] uppercase tracking-[0.12em] text-gold border border-gold px-6 py-2.5 hover:bg-gold hover:text-dark transition-all duration-300"
+            >
+              Submit Your Work
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paintings.map((painting, i) => (
+              <AnimatedSection key={painting.id} delay={i * 0.06}>
+                <PaintingCard
+                  id={painting.id}
+                  title={painting.title}
+                  slug={painting.slug}
+                  price={painting.price}
+                  currency={painting.currency}
+                  primaryImageUrl={painting.primaryImageUrl || FALLBACK_PAINTING_IMAGE}
+                  thumbnailUrl={painting.thumbnailUrl || undefined}
+                  artist={{
+                    displayName: painting.artistName,
+                    slug: painting.artistSlug,
+                    country: painting.countryName || '',
+                  }}
+                  medium={painting.mediumName || ''}
+                  category={painting.categoryName || ''}
+                  isOfferEnabled={painting.isOfferEnabled}
+                />
+              </AnimatedSection>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────
+   MANIFESTO — brand voice pull-quote + one real
+   painting. No fabricated statistics.
+   ──────────────────────────────────────────────── */
+function ManifestoSection({ image }: { image: string | null }) {
+  return (
+    <section className="py-24 sm:py-28 px-6 border-y border-border overflow-x-hidden">
+      <div className={`max-w-7xl mx-auto grid grid-cols-1 ${image ? 'lg:grid-cols-2' : ''} gap-16 items-center`}>
+        <AnimatedSection direction="left">
+          <div className="font-playfair text-[80px] lg:text-[100px] leading-none text-gold/10 font-bold select-none mb-2">
+            &ldquo;
+          </div>
+          <blockquote className="font-playfair italic text-3xl lg:text-4xl text-cream leading-[1.4] -mt-10">
+            Original art, made accessible — one independent artist at a time.
+          </blockquote>
+          <div className="w-12 h-px bg-gold mt-8 mb-4" />
+          <p className="font-inter text-[11px] uppercase tracking-widest text-muted">— The Artkezai Manifesto</p>
+        </AnimatedSection>
+
+        {image && (
+          <AnimatedSection direction="right" delay={0.15}>
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[var(--ios-radius-xl)] border border-[var(--ios-glass-border)] shadow-[var(--ios-shadow-lg)]">
+              <Image src={image} alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 45vw" />
+            </div>
+          </AnimatedSection>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────
+   THE ARTISTS — real names/countries derived from
+   real painting data, not a fabricated roster.
+   ──────────────────────────────────────────────── */
+function ArtistsSection({ artists }: { artists: ArtistSummary[] }) {
+  return (
+    <section className="py-24 sm:py-28 px-6">
+      <div className="max-w-7xl mx-auto">
+        <AnimatedSection className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-px bg-gold" />
+              <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-gold">The Artists</span>
+            </div>
+            <h2 className="font-playfair text-4xl lg:text-5xl text-cream leading-tight">
+              The people behind<br />the paintings.
+            </h2>
+          </div>
+          <Link
+            href="/artists"
+            className="group flex items-center gap-2 font-inter text-[11px] uppercase tracking-widest text-gold hover:text-gold-hover transition-colors"
+          >
+            View all artists
+            <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+          </Link>
+        </AnimatedSection>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+          {artists.map((artist, i) => (
+            <AnimatedSection key={artist.slug} delay={i * 0.08}>
+              <Link
+                href={`/artists/${artist.slug}`}
+                className="group block bg-surface border border-[var(--ios-glass-border)] rounded-[var(--ios-radius-xl)] overflow-hidden shadow-[var(--ios-shadow-sm)] hover:shadow-[var(--ios-shadow-lg)] transition-shadow duration-300"
+              >
+                <div className="relative aspect-[3/4] overflow-hidden">
+                  <Image
+                    src={artist.image}
+                    alt={artist.name}
+                    fill
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    sizes="(max-width: 1024px) 50vw, 25vw"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-playfair text-base text-cream truncate">{artist.name}</h3>
+                  {artist.country && (
+                    <p className="font-inter text-[10px] uppercase tracking-widest text-muted mt-1">{artist.country}</p>
+                  )}
+                </div>
+              </Link>
+            </AnimatedSection>
           ))}
         </div>
       </div>
@@ -530,67 +312,45 @@ function FeaturedGallery() {
 }
 
 /* ────────────────────────────────────────────────
-   HOW IT WORKS — Pinned steps
+   PROCESS — three honest steps, no unverified
+   fulfillment/shipping promises.
    ──────────────────────────────────────────────── */
-function HowItWorks() {
+function ProcessSection() {
   const steps = [
-    { num: '01', title: 'Discover', desc: 'Browse hundreds of original paintings, filtered by medium, category, price, and artist origin. Every work is authentic.' },
-    { num: '02', title: 'Offer or Buy', desc: 'Purchase instantly or make an offer. Our team negotiates on your behalf and ensures fair terms for both collector and artist.' },
-    { num: '03', title: "It's Yours", desc: 'Your painting ships with insurance, a Certificate of Authenticity, and live tracking. We arrange every detail personally.' },
+    { num: '01', title: 'Discover', desc: 'Browse original paintings by category, medium, price, and origin. Every listing is reviewed before it appears in the gallery.' },
+    { num: '02', title: 'Offer or Buy', desc: 'Purchase at the listed price, or send the artist an offer directly.' },
+    { num: '03', title: 'Own It', desc: 'Once accepted, the piece is yours — arranged directly with the artist.' },
   ];
 
   return (
-    <section className="py-32 px-6 border-t border-[var(--color-border)] bg-[var(--color-dark)]">
+    <section className="py-24 sm:py-28 px-6 border-t border-border bg-dark">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-24">
+        <AnimatedSection className="mb-16">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-px bg-[var(--color-gold)]" />
-            <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[var(--color-gold)]">The Process</span>
+            <div className="w-8 h-px bg-gold" />
+            <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-gold">The Process</span>
           </div>
-          <h2 className="font-playfair text-5xl lg:text-7xl text-[var(--color-cream)] leading-tight max-w-xl">
+          <h2 className="font-playfair text-4xl lg:text-6xl text-cream leading-tight max-w-xl">
             Three steps to owning original art.
           </h2>
-        </div>
+        </AnimatedSection>
 
-        {/* Steps */}
-        <div className="space-y-0 divide-y divide-[var(--color-border)]">
-          {steps.map((step, i) => {
-            const ref = useRef(null);
-            const inView = useInView(ref, { once: true, margin: '-80px' });
-            return (
-              <motion.div
-                key={step.num}
-                ref={ref}
-                initial={{ opacity: 0, y: 40 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8, delay: i * 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="group grid grid-cols-[80px_1fr_auto] lg:grid-cols-[120px_1fr_200px] items-center gap-8 lg:gap-16 py-10 hover:bg-[var(--color-surface)]/40 transition-colors duration-300 cursor-default px-4"
-              >
-                {/* Number */}
-                <span className="font-playfair text-5xl lg:text-6xl font-bold text-[var(--color-border)] group-hover:text-[var(--color-gold)]/30 transition-colors duration-500 leading-none">
-                  {step.num}
-                </span>
-                {/* Title + desc */}
+        <div className="divide-y divide-border">
+          {steps.map((step, i) => (
+            <AnimatedSection key={step.num} delay={i * 0.08}>
+              <div className="grid grid-cols-[56px_1fr] sm:grid-cols-[100px_1fr] items-baseline gap-6 sm:gap-12 py-8">
+                <span className="font-playfair text-4xl sm:text-5xl font-bold text-border leading-none">{step.num}</span>
                 <div>
-                  <h3 className="font-playfair text-2xl lg:text-3xl text-[var(--color-cream)] mb-2">{step.title}</h3>
-                  <p className="font-inter text-[14px] text-[var(--color-muted)] leading-relaxed max-w-lg">{step.desc}</p>
+                  <h3 className="font-playfair text-2xl text-cream mb-2">{step.title}</h3>
+                  <p className="font-inter text-[14px] text-muted leading-relaxed max-w-lg">{step.desc}</p>
                 </div>
-                {/* Arrow */}
-                <ArrowUpRight
-                  size={24}
-                  className="text-[var(--color-border)] group-hover:text-[var(--color-gold)] transition-colors duration-300 opacity-0 group-hover:opacity-100 hidden lg:block"
-                />
-              </motion.div>
-            );
-          })}
+              </div>
+            </AnimatedSection>
+          ))}
         </div>
 
-        <div className="mt-16 flex gap-4">
-          <Link
-            href="/how-it-works"
-            className="font-inter text-[11px] uppercase tracking-widest text-[var(--color-gold)] hover:text-[#d4b55a] transition-colors"
-          >
+        <div className="mt-12">
+          <Link href="/how-it-works" className="font-inter text-[11px] uppercase tracking-widest text-gold hover:text-gold-hover transition-colors">
             Learn more about the process →
           </Link>
         </div>
@@ -600,237 +360,43 @@ function HowItWorks() {
 }
 
 /* ────────────────────────────────────────────────
-   ARTIST SPOTLIGHT — Horizontal scroll
+   CLOSING CTA
    ──────────────────────────────────────────────── */
-function ArtistSpotlight() {
-  const artists = [
-    { name: 'Elena Morozova', country: 'Russia', specialty: 'Abstract · Oil', paintings: 9, image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80' },
-    { name: 'James Whitfield', country: 'United States', specialty: 'Landscape · Watercolour', paintings: 12, image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80' },
-    { name: 'Priya Sharma', country: 'India', specialty: 'Portrait · Mixed Media', paintings: 7, image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80' },
-    { name: 'Omar Hassan', country: 'Egypt', specialty: 'Abstract · Mixed Media', paintings: 14, image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80' },
-    { name: 'Yuki Tanaka', country: 'Japan', specialty: 'Landscape · Acrylic', paintings: 18, image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80' },
-  ];
-
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
-
+function ClosingCTA({ image }: { image: string | null }) {
   return (
-    <section className="py-32 border-t border-[var(--color-border)] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6">
-        <div ref={ref} className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7 }}
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-px bg-[var(--color-gold)]" />
-              <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[var(--color-gold)]">The Artists</span>
-            </div>
-            <h2 className="font-playfair text-5xl lg:text-6xl text-[var(--color-cream)] leading-tight">
-              The hands<br />behind the work.
-            </h2>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={inView ? { opacity: 1 } : {}}
-            transition={{ duration: 0.7, delay: 0.2 }}
-          >
-            <Link
-              href="/artists"
-              className="group flex items-center gap-2 font-inter text-[11px] uppercase tracking-widest text-[var(--color-gold)] hover:text-[#d4b55a] transition-colors"
-            >
-              Meet all artists
-              <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-            </Link>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Horizontal scroll row */}
-      <div className="flex gap-5 px-6 overflow-x-auto pb-4 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
-        {artists.map((a, i) => (
-          <motion.div
-            key={a.name}
-            initial={{ opacity: 0, x: 40 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.7, delay: i * 0.1 }}
-            className="group flex-shrink-0 w-64 bg-[var(--color-surface)] border border-[var(--ios-glass-border)] rounded-[var(--ios-radius-xl)] overflow-hidden cursor-pointer hover:border-[var(--color-gold)]/30 shadow-[var(--ios-shadow-sm)] hover:shadow-[var(--ios-shadow-lg)] transition-all duration-300"
-          >
-            <div className="relative h-72 overflow-hidden">
-              <Image
-                src={a.image}
-                alt={a.name}
-                fill
-                className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
-                sizes="256px"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-surface)]/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            </div>
-            <div className="p-5">
-              <h3 className="font-playfair text-xl text-[var(--color-cream)]">{a.name}</h3>
-              <p className="font-inter text-[10px] uppercase tracking-widest text-[var(--color-muted)] mt-1.5">{a.country}</p>
-              <p className="font-inter text-[11px] text-[var(--color-gold)] mt-3">{a.specialty}</p>
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-[var(--color-border)]">
-                <span className="font-inter text-[11px] text-[var(--color-subtle)]">{a.paintings} paintings</span>
-                <ArrowUpRight size={14} className="text-[var(--color-border)] group-hover:text-[var(--color-gold)] transition-colors" />
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ────────────────────────────────────────────────
-   TESTIMONIALS
-   ──────────────────────────────────────────────── */
-function Testimonials() {
-  const quotes = [
-    { quote: "I found a painting I'd been searching for my entire life. The process was seamless — like having a private curator.", name: 'Catherine M.', role: 'Collector · London', initials: 'CM' },
-    { quote: "As an emerging artist, Artkezai gave me access to collectors I never could have reached on my own. The 85% payout is extraordinary.", name: 'Kenji Watanabe', role: 'Artist · Kyoto', initials: 'KW' },
-    { quote: "The certificate of authenticity and the personal shipping coordination made me feel completely secure buying art online for the first time.", name: 'Amélie Rousseau', role: 'Collector · Paris', initials: 'AR' },
-  ];
-
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
-
-  return (
-    <section ref={ref} className="py-32 px-6 bg-[var(--color-surface)] border-y border-[var(--color-border)]">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-8 h-px bg-[var(--color-gold)]" />
-            <span className="font-inter text-[10px] uppercase tracking-[0.4em] text-[var(--color-gold)]">Voices</span>
-            <div className="w-8 h-px bg-[var(--color-gold)]" />
+    <section className="relative py-32 sm:py-40 px-6 overflow-hidden bg-dark border-t border-border">
+      {image && (
+        <>
+          <div className="absolute inset-0 opacity-[0.14]">
+            <Image src={image} alt="" fill className="object-cover" sizes="100vw" />
           </div>
-          <h2 className="font-playfair text-5xl text-[var(--color-cream)]">What collectors say.</h2>
+          <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/85 to-dark" />
+        </>
+      )}
+
+      <AnimatedSection className="relative z-10 max-w-3xl mx-auto text-center">
+        <h2 className="font-playfair text-5xl lg:text-7xl text-cream leading-[1.02] mb-6">
+          Begin your <span className="text-gold">collection.</span>
+        </h2>
+        <p className="font-inter text-[15px] text-muted leading-relaxed mb-10 max-w-lg mx-auto">
+          Original paintings from independent artists around the world.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            href="/gallery"
+            className="group ios-button-primary flex items-center justify-center gap-2 font-inter text-[11px] uppercase tracking-[0.08em] px-10 py-5"
+          >
+            Explore the Gallery
+            <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+          </Link>
+          <Link
+            href="/auth/register"
+            className="ios-button-secondary flex items-center justify-center font-inter text-[11px] uppercase tracking-[0.08em] px-10 py-5"
+          >
+            Join as an Artist
+          </Link>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--color-border)]">
-          {quotes.map((q, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 40 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.7, delay: i * 0.15 }}
-              className="bg-[var(--color-surface)] p-10 group hover:bg-[var(--color-surface)]/80 transition-colors duration-300"
-            >
-              <div className="font-playfair text-5xl text-[var(--color-gold)]/20 leading-none mb-6 group-hover:text-[var(--color-gold)]/40 transition-colors duration-300">"</div>
-              <p className="font-inter text-[15px] text-[var(--color-muted)] leading-8 mb-8 italic">"{q.quote}"</p>
-              <div className="flex items-center gap-4 pt-6 border-t border-[var(--color-border)]">
-                <div className="w-10 h-10 bg-[var(--color-gold)]/10 border border-[var(--color-gold)]/20 flex items-center justify-center">
-                  <span className="font-playfair text-xs text-[var(--color-gold)]">{q.initials}</span>
-                </div>
-                <div>
-                  <p className="font-inter text-sm text-[var(--color-cream)]">{q.name}</p>
-                  <p className="font-inter text-[10px] uppercase tracking-widest text-[var(--color-subtle)] mt-0.5">{q.role}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ────────────────────────────────────────────────
-   TRUST STRIP
-   ──────────────────────────────────────────────── */
-function TrustStrip() {
-  const items = [
-    { icon: Shield, title: 'Certificate of Authenticity', desc: 'Every painting ships with a signed COA from the artist.' },
-    { icon: Truck, title: 'Shipping Arranged', desc: 'We coordinate insured, professional art shipping worldwide.' },
-    { icon: CreditCard, title: 'Secure Payments', desc: 'Stripe-protected checkout or bank wire transfer.' },
-  ];
-
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
-
-  return (
-    <section ref={ref} className="py-20 px-6 border-t border-[var(--color-border)] bg-[var(--color-dark)]">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--color-border)]">
-        {items.map((item, i) => {
-          const Icon = item.icon;
-          return (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: i * 0.1 }}
-              className="bg-[var(--color-dark)] flex items-start gap-5 p-8 group hover:bg-[var(--color-surface)]/50 transition-colors duration-300"
-            >
-              <Icon size={20} className="text-[var(--color-gold)] flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-playfair text-lg text-[var(--color-cream)] mb-1">{item.title}</h4>
-                <p className="font-inter text-sm text-[var(--color-muted)] leading-relaxed">{item.desc}</p>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-/* ────────────────────────────────────────────────
-   CTA SECTION
-   ──────────────────────────────────────────────── */
-function CTASection() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
-
-  return (
-    <section ref={ref} className="relative py-40 px-6 overflow-hidden bg-[var(--color-dark)] border-t border-[var(--color-border)]">
-      {/* Background painting */}
-      <div className="absolute inset-0 opacity-10">
-        <Image
-          src="https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=1600&q=80"
-          alt=""
-          fill
-          className="object-cover"
-          sizes="100vw"
-        />
-      </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-dark)] via-[var(--color-dark)]/80 to-[var(--color-dark)]" />
-
-      <div className="relative z-10 max-w-4xl mx-auto text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.9, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-8 h-px bg-[var(--color-gold)]" />
-            <span className="font-inter text-[10px] uppercase tracking-[0.14em] text-[var(--color-gold)] font-semibold">Begin</span>
-            <div className="w-8 h-px bg-[var(--color-gold)]" />
-          </div>
-          <h2 className="font-playfair text-6xl lg:text-8xl text-[var(--color-cream)] leading-[0.98] mb-6">
-            Your collection<br />
-            <span className="text-[var(--color-gold)] font-semibold">starts here.</span>
-          </h2>
-          <p className="font-inter text-[15px] text-[var(--color-muted)] leading-relaxed mb-12 max-w-lg mx-auto">
-            Hundreds of original paintings. Independent artists from 38 countries. Yours to discover, offer, and own.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/gallery"
-              className="group ios-button-primary flex items-center justify-center gap-2 font-inter text-[11px] uppercase tracking-[0.08em] px-10 py-5"
-            >
-              Enter the Gallery
-              <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link
-              href="/auth/register"
-              className="ios-button-secondary flex items-center justify-center font-inter text-[11px] uppercase tracking-[0.08em] px-10 py-5"
-            >
-              Create Account
-            </Link>
-          </div>
-        </motion.div>
-      </div>
+      </AnimatedSection>
     </section>
   );
 }
@@ -839,19 +405,45 @@ function CTASection() {
    PAGE ROOT
    ──────────────────────────────────────────────── */
 export default function HomePage() {
+  const { data: galleryPage, isLoading, isError, refetch } = usePaintings({}, 1, 'newest');
+
+  const paintings = galleryPage?.data ?? [];
+  const totalCount = galleryPage?.totalCount ?? 0;
+
+  const heroPainting = paintings.find((p) => p.primaryImageUrl) ?? paintings[0] ?? null;
+  const collectionPaintings = paintings.slice(0, 6);
+
+  const artistMap = new Map<string, ArtistSummary>();
+  paintings.forEach((p) => {
+    if (!artistMap.has(p.artistSlug)) {
+      artistMap.set(p.artistSlug, {
+        name: p.artistName,
+        slug: p.artistSlug,
+        country: p.countryName || '',
+        image: p.primaryImageUrl || FALLBACK_PAINTING_IMAGE,
+      });
+    }
+  });
+  const artists = Array.from(artistMap.values()).slice(0, 4);
+
+  const manifestoImage =
+    paintings.slice(1).find((p) => p.primaryImageUrl)?.primaryImageUrl ?? heroPainting?.primaryImageUrl ?? null;
+  const closingImage =
+    paintings.slice(2).find((p) => p.primaryImageUrl)?.primaryImageUrl ?? heroPainting?.primaryImageUrl ?? null;
+
   return (
     <>
-      <CustomCursor />
-      <GrainOverlay />
-      <HeroSection />
-      <MarqueeStrip />
-      <EditorialSection />
-      <FeaturedGallery />
-      <HowItWorks />
-      <ArtistSpotlight />
-      <Testimonials />
-      <TrustStrip />
-      <CTASection />
+      <Hero painting={heroPainting} totalCount={totalCount} />
+      <CollectionSection
+        paintings={collectionPaintings}
+        isLoading={isLoading}
+        isError={isError}
+        refetch={refetch}
+      />
+      <ManifestoSection image={manifestoImage} />
+      {artists.length >= 2 && <ArtistsSection artists={artists} />}
+      <ProcessSection />
+      <ClosingCTA image={closingImage} />
     </>
   );
 }

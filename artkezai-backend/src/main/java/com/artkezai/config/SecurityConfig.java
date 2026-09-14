@@ -43,6 +43,14 @@ public class SecurityConfig {
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(authz -> authz
+						// Artist + Admin — declared before the broader "GET /api/artists/**
+						// -> permitAll" public rule below, since authorizeHttpRequests
+						// matches in declaration order and the first match wins. Left in
+						// the old order, every method under /api/artists/me/** (including
+						// GET) would silently fall through to permitAll instead of the
+						// role check (Phase 2.12 finding).
+						.requestMatchers("/api/artists/me/**").hasAnyRole("ARTIST", "ADMIN")
+
 						// Public endpoints
 						.requestMatchers(HttpMethod.GET, "/api/paintings/**").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/artists/**").permitAll()
@@ -64,7 +72,6 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.POST, "/api/paintings/{id}/submit").hasAnyRole("ARTIST", "ADMIN")
 						.requestMatchers(HttpMethod.POST, "/api/paintings/{id}/images").hasAnyRole("ARTIST", "ADMIN")
 						.requestMatchers(HttpMethod.DELETE, "/api/paintings/{id}/images/**").hasAnyRole("ARTIST", "ADMIN")
-						.requestMatchers("/api/artists/me/**").hasAnyRole("ARTIST", "ADMIN")
 
 						// Admin only
 						.requestMatchers("/api/admin/**").hasRole("ADMIN")

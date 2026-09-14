@@ -57,10 +57,21 @@ public class OrderController {
 		return ResponseEntity.ok(ApiResponse.ok(orders));
 	}
 
+	// Phase 2.13: was missing both a caller identity and any ownership check —
+	// any authenticated BUYER could fetch any order by id. SecurityConfig's
+	// "/api/orders/** -> BUYER, ADMIN" already excludes ARTIST and
+	// unauthenticated callers; this adds the object-level check the coarse
+	// role gate can't express (a BUYER may only see their own order).
 	@GetMapping("/{id}")
-	public ResponseEntity<ApiResponse<OrderDto>> getOrder(@PathVariable Long id) {
-		log.info("Get order: {}", id);
-		OrderDto order = orderService.getOrder(id);
+	public ResponseEntity<ApiResponse<OrderDto>> getOrder(@PathVariable Long id, Authentication authentication) {
+		if (authentication == null || !authentication.isAuthenticated()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(ApiResponse.error("Not authenticated"));
+		}
+
+		User user = (User) authentication.getPrincipal();
+		log.info("Get order: {} requested by: {}", id, user.getEmail());
+		OrderDto order = orderService.getOrder(id, user);
 		return ResponseEntity.ok(ApiResponse.ok(order));
 	}
 

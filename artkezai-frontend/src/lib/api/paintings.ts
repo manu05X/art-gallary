@@ -29,6 +29,7 @@ export const paintingsApi = {
     if (filters.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
     if (filters.orientation) params.append('orientation', filters.orientation);
     if (filters.search) params.append('keyword', filters.search);
+    if (filters.artistId !== undefined) params.append('artistId', filters.artistId.toString());
     params.append('page', Math.max(page - 1, 0).toString());
     params.append('sortBy', sort);
 
@@ -38,6 +39,15 @@ export const paintingsApi = {
 
   getPaintingBySlug: async (slug: string): Promise<PaintingDto> => {
     const response = await apiClient.get<never, PaintingDto>(`/paintings/slug/${slug}`);
+    return response;
+  },
+
+  // GET /api/paintings/{id} has no ownership/status restriction on the backend
+  // (same endpoint the public detail page would hit by numeric id) — used here
+  // to prefill the edit form. The actual edit is only ever enforced by the
+  // backend's ownership check on PATCH.
+  getPaintingById: async (paintingId: string): Promise<PaintingDto> => {
+    const response = await apiClient.get<never, PaintingDto>(`/paintings/${paintingId}`);
     return response;
   },
 

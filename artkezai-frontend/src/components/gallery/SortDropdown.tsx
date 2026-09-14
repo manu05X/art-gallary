@@ -8,11 +8,13 @@ interface SortDropdownProps {
   onChange: (sort: string) => void;
 }
 
+// Only sorts the backend genuinely implements (see toBackendSort in
+// gallery/page.tsx) — no "Featured" option, since there is no backend
+// featured algorithm and pretending otherwise would be misleading.
 const options = [
   { value: 'newest', label: 'Newest' },
   { value: 'price-low', label: 'Price: Low to High' },
   { value: 'price-high', label: 'Price: High to Low' },
-  { value: 'featured', label: 'Featured' },
 ];
 
 export function SortDropdown({ value, onChange }: SortDropdownProps) {
@@ -36,7 +38,7 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border font-inter text-[11px] uppercase tracking-[0.12em] text-muted hover:text-cream hover:border-gold transition-all duration-300"
+        className="ios-pill flex items-center gap-2 px-4 py-2.5 font-inter text-[11px] uppercase tracking-[0.1em] whitespace-nowrap text-muted hover:text-cream transition-colors duration-300"
       >
         {selectedLabel}
         <ChevronDown
@@ -46,7 +48,7 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-1 w-52 bg-dark border border-border z-20">
+        <div className="absolute top-full right-0 mt-2 w-52 bg-dark border border-border rounded-[14px] shadow-[var(--ios-shadow-lg)] z-30 py-2">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -54,7 +56,7 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
                 onChange(opt.value);
                 setIsOpen(false);
               }}
-              className={`w-full text-left px-4 py-2.5 font-inter text-[11px] uppercase tracking-[0.1em] transition-colors duration-300 ${
+              className={`w-full text-left px-4 py-2 font-inter text-[13px] transition-colors duration-200 ${
                 value === opt.value
                   ? 'text-gold bg-surface'
                   : 'text-muted hover:text-cream hover:bg-surface'
