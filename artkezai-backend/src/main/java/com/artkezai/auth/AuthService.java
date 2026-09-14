@@ -38,6 +38,24 @@ public class AuthService {
 	private String frontendUrl;
 
 	public AuthResponse register(RegisterRequest request) {
+		// Public self-registration may only ever create BUYER or ARTIST
+		// accounts — an allow-list, not a deny-list, so a future new
+		// UserRole value defaults to rejected here rather than silently
+		// permitted. RegisterRequest.role has no enum-value constraint
+		// (Jakarta Validation can't express "one of, from a subset of an
+		// existing enum" without a custom annotation), so this service-level
+		// guard is the sole enforcement point — deliberately placed here
+		// rather than only in the controller, so it still holds if this
+		// method is ever called from anywhere else. A missing/null role
+		// preserves the existing BUYER default (matches the users table's
+		// own NOT NULL DEFAULT 'BUYER'); previously an explicit
+		// {"role":null} reached the DB and crashed with an uncaught
+		// constraint-violation 500 — now normalized the same as "omitted".
+		UserRole requestedRole = request.getRole() != null ? request.getRole() : UserRole.BUYER;
+		if (requestedRole != UserRole.BUYER && requestedRole != UserRole.ARTIST) {
+			throw new BusinessException("Self-registration is only available for buyer or artist accounts");
+		}
+
 		if (userRepository.existsByEmail(request.getEmail())) {
 			throw new BusinessException("Email already registered");
 		}
@@ -47,7 +65,7 @@ public class AuthService {
 				.passwordHash(passwordEncoder.encode(request.getPassword()))
 				.firstName(request.getFirstName())
 				.lastName(request.getLastName())
-				.role(request.getRole())
+				.role(requestedRole)
 				.isActive(true)
 				.isEmailVerified(false)
 				.build();
