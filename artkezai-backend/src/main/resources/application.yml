@@ -66,14 +66,22 @@ minio:
 
 # ── Stripe ───────────────────────────────────────────────
 stripe:
-  secret-key: ${STRIPE_SECRET_KEY:sk_test_REPLACE_WITH_YOUR_TEST_KEY}
+  # No insecure fallback (Phase 2.16 — same class of issue Phase 2.15a fixed
+  # for webhook-secret): a placeholder default here would be a real, literal
+  # secret key checked into source. Phase 2.16 wires this into Stripe.apiKey
+  # for genuine PaymentIntent calls, so a missing value must not silently
+  # fall back to a known-fake key — Spring fails to start instead.
+  secret-key: ${STRIPE_SECRET_KEY}
+  # publishable-key is, by Stripe's own design, meant to be public (shipped
+  # to the browser) — a placeholder default here is not the same class of
+  # risk as secret-key/webhook-secret, so it's intentionally left as-is.
   publishable-key: ${STRIPE_PUBLISHABLE_KEY:pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY}
-  # No insecure fallback here (unlike secret-key/publishable-key above): a
-  # placeholder default would be a real, literal secret checked into source
-  # that could verify forged webhook signatures if STRIPE_WEBHOOK_SECRET is
-  # ever left unset in a running environment. With no default, Spring fails
-  # to start the application at all when this property can't be resolved —
-  # fail closed, not fail open.
+  # No insecure fallback here (unlike publishable-key above): a placeholder
+  # default would be a real, literal secret checked into source that could
+  # verify forged webhook signatures if STRIPE_WEBHOOK_SECRET is ever left
+  # unset in a running environment. With no default, Spring fails to start
+  # the application at all when this property can't be resolved — fail
+  # closed, not fail open.
   webhook-secret: ${STRIPE_WEBHOOK_SECRET}
   currency: usd
 
