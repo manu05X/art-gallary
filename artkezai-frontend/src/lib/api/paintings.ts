@@ -29,6 +29,7 @@ export const paintingsApi = {
     if (filters.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
     if (filters.orientation) params.append('orientation', filters.orientation);
     if (filters.search) params.append('keyword', filters.search);
+    if (filters.artistId !== undefined) params.append('artistId', filters.artistId.toString());
     params.append('page', Math.max(page - 1, 0).toString());
     params.append('sortBy', sort);
 

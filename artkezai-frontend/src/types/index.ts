@@ -150,6 +150,7 @@ export interface GalleryFilters {
   maxPrice?: number;
   orientation?: string;
   search?: string;
+  artistId?: string | number;
 }
 
 export interface ArtistProfile {
@@ -173,6 +174,25 @@ export interface ArtistProfile {
 export interface ArtistProfileDto extends ArtistProfile {
   story?: string;
   storyImages?: string[];
+}
+
+// Mirrors the real GET /api/artists (list) response — ArtistListResponse.java.
+// Deliberately minimal: no painting/follower/sales counts, since the backend
+// doesn't compute or expose any (see Phase 2.9 report).
+export interface ArtistSummary {
+  id: number;
+  displayName: string;
+  slug: string;
+  bio: string | null;
+  profilePhotoUrl: string | null;
+  countryName: string | null;
+}
+
+// Mirrors GET /api/artists/{slug} — ArtistDetailResponse.java.
+export interface ArtistDetail extends ArtistSummary {
+  story: string | null;
+  websiteUrl: string | null;
+  instagram: string | null;
 }
 
 export enum OfferStatus {
