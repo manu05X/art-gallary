@@ -14,4 +14,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
 	Page<Order> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+	// Artist-scoped orders (Phase 2.12): orders for paintings this artist
+	// owns, via the existing Order -> Painting -> ArtistProfile chain. Scoped
+	// server-side by the artist's own profile id — never a client-supplied id.
+	Page<Order> findByPainting_Artist_IdOrderByCreatedAtDesc(Long artistId, Pageable pageable);
+
 }

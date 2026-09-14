@@ -31,6 +31,16 @@ export const useMyArtistProfile = () => {
   });
 };
 
+// Phase 2.12: the artist-scoped replacement for the dashboard's old direct
+// call to ordersApi.getAllOrders (admin-wide, always 403'd for ARTIST).
+export const useMyArtistOrders = (page: number = 1) => {
+  return useQuery({
+    queryKey: ['my-artist-orders', page],
+    queryFn: () => artistsApi.getMyOrders(page),
+    staleTime: 1000 * 60,
+  });
+};
+
 // Invalidates the public artist directory and this artist's own public
 // detail page (keyed by slug, which doesn't change) so neither shows stale
 // data within the same session after a save — see Phase 2.11 report.

@@ -1,43 +1,72 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { ordersApi } from '@/lib/api/orders';
 import { useMyListings } from '@/lib/hooks/usePaintings';
+import { useMyArtistOrders } from '@/lib/hooks/useArtists';
 import { PaintingStatus } from '@/types';
-import { BarChart3, ShoppingBag, Eye, CheckCircle } from 'lucide-react';
+import { BarChart3, FileEdit, ShoppingBag, Eye } from 'lucide-react';
 
 export default function ArtistDashboardPage() {
-  const { data: listings } = useMyListings(1);
-  const { data: orders } = useQuery({
-    queryKey: ['artist-orders'],
-    queryFn: () => ordersApi.getAllOrders(1),
-  });
+  const { data: listings, isLoading: isListingsLoading, isError: isListingsError, refetch: refetchListings } = useMyListings(1);
+  const { data: orders, isLoading: isOrdersLoading, isError: isOrdersError, refetch: refetchOrders } = useMyArtistOrders(1);
+
+  const isLoading = isListingsLoading || isOrdersLoading;
+  const isError = isListingsError || isOrdersError;
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="rounded-lg p-6 bg-gray-100 animate-pulse h-[104px]" />
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="bg-white rounded-lg shadow p-16 text-center">
+        <p className="font-playfair text-xl text-brand mb-2">Couldn&apos;t load your dashboard</p>
+        <p className="font-inter text-sm text-gray-600 mb-6">Please try again.</p>
+        <button
+          onClick={() => {
+            refetchListings();
+            refetchOrders();
+          }}
+          className="btn btn-secondary"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   const allListings = listings?.data || [];
-  const allOrders = orders?.data || [];
 
+  // Approved/Draft counts reflect the loaded page of listings (page 1, size
+  // 20) — the same client-side count already used by /artist/listings'
+  // status tabs, not a separate aggregate query.
   const stats = [
     {
-      label: 'Total Paintings',
-      value: listings?.totalCount || 0,
+      label: 'Total Listings',
+      value: listings?.totalCount ?? 0,
       icon: BarChart3,
       color: 'bg-blue-100 text-blue-700',
     },
     {
-      label: 'Approved Paintings',
+      label: 'Approved',
       value: allListings.filter((p) => p.status === PaintingStatus.APPROVED).length,
       icon: Eye,
       color: 'bg-green-100 text-green-700',
     },
     {
-      label: 'Sold',
-      value: allListings.filter((p) => p.status === PaintingStatus.SOLD).length,
-      icon: CheckCircle,
-      color: 'bg-accent/20 text-accent',
+      label: 'Draft',
+      value: allListings.filter((p) => p.status === PaintingStatus.DRAFT).length,
+      icon: FileEdit,
+      color: 'bg-gray-200 text-gray-700',
     },
     {
       label: 'Orders',
-      value: allOrders.length,
+      value: orders?.totalCount ?? 0,
       icon: ShoppingBag,
       color: 'bg-purple-100 text-purple-700',
     },

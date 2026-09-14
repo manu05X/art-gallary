@@ -2,9 +2,11 @@ package com.artkezai.artist;
 
 import com.artkezai.artist.dto.ArtistDetailResponse;
 import com.artkezai.artist.dto.ArtistListResponse;
+import com.artkezai.artist.dto.ArtistOrderResponse;
 import com.artkezai.artist.dto.UpdateArtistProfileRequest;
 import com.artkezai.common.response.ApiResponse;
 import com.artkezai.common.response.PagedResponse;
+import com.artkezai.order.OrderService;
 import com.artkezai.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ArtistController {
 
 	private final ArtistService artistService;
+	private final OrderService orderService;
 
 	@GetMapping
 	public ResponseEntity<ApiResponse<PagedResponse<ArtistListResponse>>> listArtists(
@@ -54,6 +57,27 @@ public class ArtistController {
 		log.info("Get my profile request from: {}", user.getEmail());
 		ArtistProfile profile = artistService.getMyProfile(user);
 		return ResponseEntity.ok(ApiResponse.ok(artistService.toDetailResponse(profile)));
+	}
+
+	// Phase 2.12: replaces the artist dashboard's previous direct call to the
+	// admin-only GET /api/orders. Scoped strictly to the caller's own artist
+	// profile — there is no artist-id parameter to request someone else's
+	// orders. See Phase 2.12 report for why /api/orders itself was not
+	// simply opened up to ARTIST (it is unscoped, admin-wide order data).
+	@GetMapping("/me/orders")
+	public ResponseEntity<ApiResponse<PagedResponse<ArtistOrderResponse>>> getMyOrders(
+			@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+			Authentication authentication) {
+		if (authentication == null || !authentication.isAuthenticated()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(ApiResponse.error("Not authenticated"));
+		}
+
+		User user = (User) authentication.getPrincipal();
+		log.info("Get my orders request from: {}", user.getEmail());
+		ArtistProfile profile = artistService.getMyProfile(user);
+		Page<ArtistOrderResponse> orders = orderService.getArtistOrders(profile.getId(), pageable);
+		return ResponseEntity.ok(ApiResponse.ok(PagedResponse.from(orders)));
 	}
 
 	@PutMapping("/me")

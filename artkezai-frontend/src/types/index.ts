@@ -300,6 +300,23 @@ export interface OrderDto {
   deliveredAt?: string;
 }
 
+// Mirrors ArtistOrderResponse.java — an order on the current artist's own
+// painting, as returned by GET /api/artists/me/orders (Phase 2.12).
+// Deliberately narrower than OrderDto: no buyer name/id, no shipping
+// address/contact, no payment method/status — an artist doesn't need the
+// buyer's private information to see what sold.
+export interface ArtistOrderSummary {
+  id: number;
+  paintingId: number;
+  paintingTitle: string;
+  paintingSlug: string;
+  paintingThumbnailUrl: string | null;
+  totalPrice: number;
+  currency: string;
+  status: OrderStatus;
+  createdAt: string;
+}
+
 export interface CreateOrderRequest {
   paintingId: number;
   offerId?: number;

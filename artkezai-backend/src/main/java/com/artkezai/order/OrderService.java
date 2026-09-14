@@ -1,5 +1,6 @@
 package com.artkezai.order;
 
+import com.artkezai.artist.dto.ArtistOrderResponse;
 import com.artkezai.common.exception.BusinessException;
 import com.artkezai.common.exception.ResourceNotFoundException;
 import com.artkezai.notification.EmailService;
@@ -95,6 +96,15 @@ public class OrderService {
 				.map(this::toOrderDto);
 	}
 
+	// Phase 2.12: orders on the given artist's own paintings — scoped by the
+	// artist profile id resolved server-side from the caller's identity
+	// (see ArtistController), never a client-supplied id.
+	@Transactional(readOnly = true)
+	public Page<ArtistOrderResponse> getArtistOrders(Long artistId, Pageable pageable) {
+		return orderRepository.findByPainting_Artist_IdOrderByCreatedAtDesc(artistId, pageable)
+				.map(this::toArtistOrderResponse);
+	}
+
 	@Transactional(readOnly = true)
 	public OrderDto getOrder(Long orderId) {
 		Order order = orderRepository.findById(orderId)
@@ -158,6 +168,25 @@ public class OrderService {
 				.trackingUrl(order.getTrackingUrl())
 				.shippedAt(order.getShippedAt())
 				.deliveredAt(order.getDeliveredAt())
+				.createdAt(order.getCreatedAt())
+				.build();
+	}
+
+	private ArtistOrderResponse toArtistOrderResponse(Order order) {
+		Optional<String> thumbnailUrl = order.getPainting().getImages().stream()
+				.filter(img -> img.getIsPrimary() || img.getThumbnailUrl() != null)
+				.findFirst()
+				.map(img -> img.getThumbnailUrl() != null ? img.getThumbnailUrl() : img.getUrl());
+
+		return ArtistOrderResponse.builder()
+				.id(order.getId())
+				.paintingId(order.getPainting().getId())
+				.paintingTitle(order.getPainting().getTitle())
+				.paintingSlug(order.getPainting().getSlug())
+				.paintingThumbnailUrl(thumbnailUrl.orElse(null))
+				.totalPrice(order.getTotalPrice())
+				.currency(order.getCurrency())
+				.status(order.getStatus())
 				.createdAt(order.getCreatedAt())
 				.build();
 	}

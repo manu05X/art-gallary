@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api';
-import { ArtistSummary, ArtistDetail, UpdateArtistProfileRequest, PagedResponse } from '@/types';
+import { ArtistSummary, ArtistDetail, ArtistOrderSummary, UpdateArtistProfileRequest, PagedResponse } from '@/types';
 
 export const artistsApi = {
   // GET /api/artists returns artists with >= 1 APPROVED painting (Phase
@@ -26,6 +26,17 @@ export const artistsApi = {
   // the NOT NULL displayName, with whatever was omitted).
   updateMyProfile: async (req: UpdateArtistProfileRequest): Promise<ArtistDetail> => {
     const response = await apiClient.put<UpdateArtistProfileRequest, ArtistDetail>('/artists/me', req);
+    return response;
+  },
+
+  // Phase 2.12: replaces the artist dashboard's previous direct call to the
+  // admin-only /api/orders (which 403'd for ARTIST, and would have been a
+  // data leak across artists had it been opened up). Scoped server-side to
+  // the caller's own artist profile.
+  getMyOrders: async (page: number = 1): Promise<PagedResponse<ArtistOrderSummary>> => {
+    const response = await apiClient.get<never, PagedResponse<ArtistOrderSummary>>(
+      `/artists/me/orders?page=${Math.max(page - 1, 0)}`
+    );
     return response;
   },
 
