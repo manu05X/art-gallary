@@ -1,6 +1,7 @@
 package com.artkezai.common.exception;
 
 import com.artkezai.common.response.ApiResponse;
+import com.stripe.exception.SignatureVerificationException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,22 @@ public class GlobalExceptionHandler {
 		return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
 				.body(ApiResponse.error(ex.getMessage()));
+	}
+
+	// Phase 2.15: Stripe webhook signature failures (missing header,
+	// malformed header, wrong signature, tampered payload) all surface as
+	// this exception from Webhook.constructEvent. Deliberately does NOT log
+	// ex.getMessage() — Stripe's own message can echo back header content,
+	// which is attacker-controlled on a forged request — only a static,
+	// safe description. Must be its own handler so this never falls into
+	// the generic 500 handler below.
+	@ExceptionHandler(SignatureVerificationException.class)
+	public ResponseEntity<ApiResponse<?>> handleSignatureVerificationException(
+			SignatureVerificationException ex, WebRequest request) {
+		log.warn("Rejected Stripe webhook request: signature verification failed");
+		return ResponseEntity
+				.status(HttpStatus.BAD_REQUEST)
+				.body(ApiResponse.error("Invalid webhook signature"));
 	}
 
 	@ExceptionHandler(BusinessException.class)

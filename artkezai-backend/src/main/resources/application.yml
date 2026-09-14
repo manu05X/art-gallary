@@ -68,7 +68,13 @@ minio:
 stripe:
   secret-key: ${STRIPE_SECRET_KEY:sk_test_REPLACE_WITH_YOUR_TEST_KEY}
   publishable-key: ${STRIPE_PUBLISHABLE_KEY:pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY}
-  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_REPLACE_WITH_YOUR_WEBHOOK_SECRET}
+  # No insecure fallback here (unlike secret-key/publishable-key above): a
+  # placeholder default would be a real, literal secret checked into source
+  # that could verify forged webhook signatures if STRIPE_WEBHOOK_SECRET is
+  # ever left unset in a running environment. With no default, Spring fails
+  # to start the application at all when this property can't be resolved —
+  # fail closed, not fail open.
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
   currency: usd
 
 # ── App ──────────────────────────────────────────────────
