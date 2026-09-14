@@ -1,8 +1,11 @@
 package com.artkezai.artist;
 
+import com.artkezai.artist.dto.ArtistDetailResponse;
+import com.artkezai.artist.dto.ArtistListResponse;
 import com.artkezai.common.exception.BusinessException;
 import com.artkezai.common.exception.ResourceNotFoundException;
 import com.artkezai.common.util.SlugUtil;
+import com.artkezai.painting.PaintingStatus;
 import com.artkezai.user.User;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -49,9 +52,42 @@ public class ArtistService {
 				.orElseThrow(() -> new BusinessException("Artist profile not found for user"));
 	}
 
+	// Public directory eligibility (Phase 2.10): an artist appears here once
+	// they have at least one APPROVED painting. isVerified is a separate,
+	// currently workflow-less trust attribute — see Phase 2.10 report — and
+	// is intentionally not the gate for this list.
 	@Transactional(readOnly = true)
 	public Page<ArtistProfile> listArtists(Pageable pageable) {
-		return artistProfileRepository.findByIsVerifiedTrue(pageable);
+		return artistProfileRepository.findDistinctByPaintings_Status(PaintingStatus.APPROVED, pageable);
+	}
+
+	// Entity -> DTO mapping happens here, inside the open Hibernate session,
+	// so the lazy `country` association resolves safely before the profile
+	// (and its lazy `user`/`paintings` associations) would otherwise leave
+	// the transaction and fail to serialize.
+	public ArtistListResponse toListResponse(ArtistProfile profile) {
+		return ArtistListResponse.builder()
+				.id(profile.getId())
+				.displayName(profile.getDisplayName())
+				.slug(profile.getSlug())
+				.bio(profile.getBio())
+				.profilePhotoUrl(profile.getProfilePhotoUrl())
+				.countryName(profile.getCountry() != null ? profile.getCountry().getName() : null)
+				.build();
+	}
+
+	public ArtistDetailResponse toDetailResponse(ArtistProfile profile) {
+		return ArtistDetailResponse.builder()
+				.id(profile.getId())
+				.displayName(profile.getDisplayName())
+				.slug(profile.getSlug())
+				.bio(profile.getBio())
+				.story(profile.getStory())
+				.profilePhotoUrl(profile.getProfilePhotoUrl())
+				.websiteUrl(profile.getWebsiteUrl())
+				.instagram(profile.getInstagram())
+				.countryName(profile.getCountry() != null ? profile.getCountry().getName() : null)
+				.build();
 	}
 
 	public ArtistProfile updateProfile(User user, ArtistProfile profileData) {

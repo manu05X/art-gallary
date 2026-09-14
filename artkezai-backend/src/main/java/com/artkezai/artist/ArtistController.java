@@ -1,6 +1,9 @@
 package com.artkezai.artist;
 
+import com.artkezai.artist.dto.ArtistDetailResponse;
+import com.artkezai.artist.dto.ArtistListResponse;
 import com.artkezai.common.response.ApiResponse;
+import com.artkezai.common.response.PagedResponse;
 import com.artkezai.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,18 +26,19 @@ public class ArtistController {
 	private final ArtistService artistService;
 
 	@GetMapping
-	public ResponseEntity<ApiResponse<Page<ArtistProfile>>> listArtists(
+	public ResponseEntity<ApiResponse<PagedResponse<ArtistListResponse>>> listArtists(
 			@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		log.info("List artists request");
 		Page<ArtistProfile> artists = artistService.listArtists(pageable);
-		return ResponseEntity.ok(ApiResponse.ok(artists));
+		Page<ArtistListResponse> response = artists.map(artistService::toListResponse);
+		return ResponseEntity.ok(ApiResponse.ok(PagedResponse.from(response)));
 	}
 
 	@GetMapping("/{slug}")
-	public ResponseEntity<ApiResponse<ArtistProfile>> getArtistProfile(@PathVariable String slug) {
+	public ResponseEntity<ApiResponse<ArtistDetailResponse>> getArtistProfile(@PathVariable String slug) {
 		log.info("Get artist profile: {}", slug);
 		ArtistProfile artist = artistService.getArtistBySlug(slug);
-		return ResponseEntity.ok(ApiResponse.ok(artist));
+		return ResponseEntity.ok(ApiResponse.ok(artistService.toDetailResponse(artist)));
 	}
 
 	@GetMapping("/me")
