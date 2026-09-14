@@ -2,9 +2,11 @@ package com.artkezai.artist;
 
 import com.artkezai.artist.dto.ArtistDetailResponse;
 import com.artkezai.artist.dto.ArtistListResponse;
+import com.artkezai.artist.dto.UpdateArtistProfileRequest;
 import com.artkezai.common.response.ApiResponse;
 import com.artkezai.common.response.PagedResponse;
 import com.artkezai.user.User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -42,7 +44,7 @@ public class ArtistController {
 	}
 
 	@GetMapping("/me")
-	public ResponseEntity<ApiResponse<ArtistProfile>> getMyProfile(Authentication authentication) {
+	public ResponseEntity<ApiResponse<ArtistDetailResponse>> getMyProfile(Authentication authentication) {
 		if (authentication == null || !authentication.isAuthenticated()) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
 					.body(ApiResponse.error("Not authenticated"));
@@ -51,12 +53,12 @@ public class ArtistController {
 		User user = (User) authentication.getPrincipal();
 		log.info("Get my profile request from: {}", user.getEmail());
 		ArtistProfile profile = artistService.getMyProfile(user);
-		return ResponseEntity.ok(ApiResponse.ok(profile));
+		return ResponseEntity.ok(ApiResponse.ok(artistService.toDetailResponse(profile)));
 	}
 
 	@PutMapping("/me")
-	public ResponseEntity<ApiResponse<ArtistProfile>> updateMyProfile(
-			@RequestBody ArtistProfile profileData,
+	public ResponseEntity<ApiResponse<ArtistDetailResponse>> updateMyProfile(
+			@Valid @RequestBody UpdateArtistProfileRequest request,
 			Authentication authentication) {
 		if (authentication == null || !authentication.isAuthenticated()) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -65,12 +67,12 @@ public class ArtistController {
 
 		User user = (User) authentication.getPrincipal();
 		log.info("Update my profile request from: {}", user.getEmail());
-		ArtistProfile profile = artistService.updateProfile(user, profileData);
-		return ResponseEntity.ok(ApiResponse.ok(profile, "Profile updated"));
+		ArtistProfile profile = artistService.updateProfile(user, request);
+		return ResponseEntity.ok(ApiResponse.ok(artistService.toDetailResponse(profile), "Profile updated"));
 	}
 
 	@PostMapping("/me/photo")
-	public ResponseEntity<ApiResponse<ArtistProfile>> uploadProfilePhoto(
+	public ResponseEntity<ApiResponse<ArtistDetailResponse>> uploadProfilePhoto(
 			@RequestParam MultipartFile file,
 			Authentication authentication) throws Exception {
 		if (authentication == null || !authentication.isAuthenticated()) {
@@ -81,7 +83,7 @@ public class ArtistController {
 		User user = (User) authentication.getPrincipal();
 		log.info("Upload profile photo from: {}", user.getEmail());
 		ArtistProfile profile = artistService.uploadProfilePhoto(user, file);
-		return ResponseEntity.ok(ApiResponse.ok(profile, "Profile photo uploaded"));
+		return ResponseEntity.ok(ApiResponse.ok(artistService.toDetailResponse(profile), "Profile photo uploaded"));
 	}
 
 }

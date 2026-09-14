@@ -188,11 +188,25 @@ export interface ArtistSummary {
   countryName: string | null;
 }
 
-// Mirrors GET /api/artists/{slug} — ArtistDetailResponse.java.
+// Mirrors GET /api/artists/{slug} — ArtistDetailResponse.java. Also the
+// shape returned by GET/PUT/POST /api/artists/me (Phase 2.11) — the backend
+// reuses the same DTO since the field set is identical, only the audience
+// (self vs. public) differs.
 export interface ArtistDetail extends ArtistSummary {
   story: string | null;
   websiteUrl: string | null;
   instagram: string | null;
+}
+
+// Mirrors UpdateArtistProfileRequest.java — every field optional; only
+// fields actually present are applied server-side. Slug is not editable.
+export interface UpdateArtistProfileRequest {
+  displayName?: string;
+  bio?: string;
+  story?: string;
+  websiteUrl?: string;
+  instagram?: string;
+  countryId?: number;
 }
 
 export enum OfferStatus {
