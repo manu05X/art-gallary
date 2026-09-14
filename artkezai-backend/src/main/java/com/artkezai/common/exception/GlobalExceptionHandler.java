@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -53,6 +54,34 @@ public class GlobalExceptionHandler {
 		return ResponseEntity
 				.status(HttpStatus.BAD_REQUEST)
 				.body(ApiResponse.error("Invalid webhook signature"));
+	}
+
+	// Phase 2.17: org.springframework.security.access.AccessDeniedException —
+	// the exception Spring Security's method-security interceptor throws
+	// when an authenticated user fails a @PreAuthorize check (e.g. an
+	// ARTIST hitting a @PreAuthorize("hasRole('BUYER')") endpoint). This is
+	// a distinct denial path from the SecurityConfig filter-chain's own URL
+	// matchers (".requestMatchers(...).hasRole(...)"), which are intercepted
+	// earlier by Spring Security's own ExceptionTranslationFilter and never
+	// reach this class at all — those already correctly return 403 via
+	// Spring Boot's default AccessDeniedHandler and are unaffected by this
+	// change. @PreAuthorize denials, by contrast, are thrown from inside
+	// the controller method invocation itself and propagate as an ordinary
+	// exception straight to @RestControllerAdvice, where — before this
+	// handler existed — they fell through to the generic Exception handler
+	// below and were misreported as a 500. Deliberately does not log
+	// ex.getMessage()/the authorization expression or stack trace — this is
+	// an expected, routine outcome of normal request handling, not an
+	// application failure, so it's logged at WARN with a static message
+	// only, matching the same rationale as the UnauthorizedException and
+	// SignatureVerificationException handlers above.
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<ApiResponse<?>> handleAccessDeniedException(
+			AccessDeniedException ex, WebRequest request) {
+		log.warn("Access denied: authenticated user lacks the required role/authority for this request");
+		return ResponseEntity
+				.status(HttpStatus.FORBIDDEN)
+				.body(ApiResponse.error("Access denied"));
 	}
 
 	@ExceptionHandler(BusinessException.class)
