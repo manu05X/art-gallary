@@ -3,6 +3,7 @@ package com.artkezai.payment;
 import com.artkezai.common.response.ApiResponse;
 import com.artkezai.payment.dto.CreatePaymentIntentRequest;
 import com.artkezai.user.User;
+import com.stripe.exception.SignatureVerificationException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +33,21 @@ public class PaymentController {
 		return ResponseEntity.ok(ApiResponse.ok(intent));
 	}
 
+	// Phase 2.15: intentionally no @PreAuthorize / JWT here — Stripe calls
+	// this endpoint directly with no application session. It is public at
+	// the HTTP auth layer (see SecurityConfig) and instead authenticated
+	// cryptographically inside PaymentService.handleStripeWebhook, which
+	// verifies the raw body against the Stripe-Signature header before any
+	// DB mutation. `payload` is bound as a plain String — Spring's
+	// StringHttpMessageConverter reads the raw request bytes with no JSON
+	// parsing/reserialization, which is required for Stripe's signature
+	// check to see the exact bytes Stripe signed.
 	@PostMapping("/webhook")
-	public ResponseEntity<ApiResponse<String>> handleStripeWebhook(@RequestBody String payload) {
-		log.info("Stripe webhook received");
-		// In a real implementation, validate Stripe signature and process event
+	public ResponseEntity<ApiResponse<String>> handleStripeWebhook(
+			@RequestBody String payload,
+			@RequestHeader(value = "Stripe-Signature", required = false) String sigHeader)
+			throws SignatureVerificationException {
+		paymentService.handleStripeWebhook(payload, sigHeader);
 		return ResponseEntity.ok(ApiResponse.ok("Webhook received"));
 	}
 

@@ -9,7 +9,7 @@ import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/authStore';
 import { authApi } from '@/lib/api/auth';
 import { parseApiError } from '@/lib/api/utils';
-import { RegisterRequest, UserRole } from '@/types';
+import { RegisterRequest, RegistrableRole, UserRole } from '@/types';
 import toast from 'react-hot-toast';
 
 const HERO_IMAGE =
@@ -22,7 +22,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [role, setRole] = useState<UserRole>(UserRole.BUYER);
+  const [role, setRole] = useState<RegistrableRole>(UserRole.BUYER);
   const [focused, setFocused] = useState<string | null>(null);
   const [formData, setFormData] = useState<RegisterRequest>({
     firstName: '',
@@ -47,7 +47,7 @@ export default function RegisterPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleRoleChange = (newRole: UserRole) => {
+  const handleRoleChange = (newRole: RegistrableRole) => {
     setRole(newRole);
     setFormData({ ...formData, role: newRole });
   };
@@ -169,10 +169,12 @@ export default function RegisterPage() {
                 I am a
               </p>
               <div className="flex gap-0 border border-[var(--color-border)] rounded-[14px] overflow-hidden">
-                {[
-                  { label: 'Collector', value: UserRole.BUYER },
-                  { label: 'Artist', value: UserRole.ARTIST },
-                ].map((opt) => (
+                {(
+                  [
+                    { label: 'Collector', value: UserRole.BUYER },
+                    { label: 'Artist', value: UserRole.ARTIST },
+                  ] as { label: string; value: RegistrableRole }[]
+                ).map((opt) => (
                   <button
                     key={opt.value}
                     type="button"

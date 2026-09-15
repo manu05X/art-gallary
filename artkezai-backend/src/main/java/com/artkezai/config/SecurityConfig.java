@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 public class SecurityConfig {
 
 	private final JwtAuthFilter jwtAuthFilter;
+	private final ApiAuthenticationEntryPoint apiAuthenticationEntryPoint;
+	private final ApiAccessDeniedHandler apiAccessDeniedHandler;
 
 	// Comma-separated list of allowed origins — set ALLOWED_ORIGINS env var in production
 	@Value("${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,https://artkezai-frontend.vercel.app}")
@@ -42,6 +44,20 @@ public class SecurityConfig {
 				.csrf(csrf -> csrf.disable())
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				// Phase 2.19: without this, Spring Security has no
+				// AuthenticationEntryPoint registered (no httpBasic/formLogin
+				// to implicitly provide one either), so it falls back to its
+				// own Http403ForbiddenEntryPoint — every anonymous request
+				// denied by the rules below came back as an empty-body 403
+				// instead of 401. This restores the conventional distinction
+				// (unauthenticated -> 401, authenticated-wrong-role -> 403)
+				// for filter-chain-level denials only; @PreAuthorize denials
+				// and their own AccessDeniedException handling in
+				// GlobalExceptionHandler (Phase 2.17) are untouched.
+				.exceptionHandling(handling -> handling
+						.authenticationEntryPoint(apiAuthenticationEntryPoint)
+						.accessDeniedHandler(apiAccessDeniedHandler)
+				)
 				.authorizeHttpRequests(authz -> authz
 						// Artist + Admin — declared before the broader "GET /api/artists/**
 						// -> permitAll" public rule below, since authorizeHttpRequests

@@ -22,12 +22,20 @@ export interface AuthResponse {
   token: string;
 }
 
+// Public self-registration may only ever create BUYER or ARTIST accounts —
+// narrowed from the full UserRole so the type system itself rules out
+// {"role": "ADMIN"} here, without touching UserRole (used broadly across
+// auth-domain types where the full 3-value enum is correct). The real
+// enforcement is server-side (AuthService.register, Phase 2.14) — this is
+// belt-and-suspenders on the one call site that ever sends this shape.
+export type RegistrableRole = UserRole.BUYER | UserRole.ARTIST;
+
 export interface RegisterRequest {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
-  role: UserRole;
+  role: RegistrableRole;
 }
 
 export interface LoginRequest {

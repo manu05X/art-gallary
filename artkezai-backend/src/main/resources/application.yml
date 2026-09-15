@@ -66,9 +66,23 @@ minio:
 
 # ── Stripe ───────────────────────────────────────────────
 stripe:
-  secret-key: ${STRIPE_SECRET_KEY:sk_test_REPLACE_WITH_YOUR_TEST_KEY}
+  # No insecure fallback (Phase 2.16 — same class of issue Phase 2.15a fixed
+  # for webhook-secret): a placeholder default here would be a real, literal
+  # secret key checked into source. Phase 2.16 wires this into Stripe.apiKey
+  # for genuine PaymentIntent calls, so a missing value must not silently
+  # fall back to a known-fake key — Spring fails to start instead.
+  secret-key: ${STRIPE_SECRET_KEY}
+  # publishable-key is, by Stripe's own design, meant to be public (shipped
+  # to the browser) — a placeholder default here is not the same class of
+  # risk as secret-key/webhook-secret, so it's intentionally left as-is.
   publishable-key: ${STRIPE_PUBLISHABLE_KEY:pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY}
-  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_REPLACE_WITH_YOUR_WEBHOOK_SECRET}
+  # No insecure fallback here (unlike publishable-key above): a placeholder
+  # default would be a real, literal secret checked into source that could
+  # verify forged webhook signatures if STRIPE_WEBHOOK_SECRET is ever left
+  # unset in a running environment. With no default, Spring fails to start
+  # the application at all when this property can't be resolved — fail
+  # closed, not fail open.
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
   currency: usd
 
 # ── App ──────────────────────────────────────────────────
@@ -76,6 +90,31 @@ app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
   mail-from: ${MAIL_FROM:noreply@artkezai.com}
   mail-from-name: Artkezai Gallery
+
+  # Phase 2.21: rate limiting for POST /api/auth/login and
+  # POST /api/auth/register only. Each bucket refills "greedily" — tokens
+  # trickle back continuously over the window rather than all at once, so a
+  # legitimate user who mistypes a password a couple of times is never fully
+  # locked out for the whole window.
+  #
+  # login: keyed per (client address + normalized email). 5 attempts, fully
+  # refilling over 60s (~1 every 12s) — generous enough for a genuine user
+  # retyping a forgotten password a few times, tight enough to make online
+  # credential brute force against one account impractical.
+  #
+  # register: keyed per client address alone. 3 attempts per 5 minutes — a
+  # real person registers once; this mainly exists to blunt automated
+  # signup/spam scripts hammering the endpoint, while still tolerating a
+  # shared-IP household/office registering a couple of accounts back to back.
+  rate-limit:
+    login:
+      capacity: ${AUTH_LOGIN_RATE_CAPACITY:5}
+      refill-tokens: ${AUTH_LOGIN_RATE_REFILL_TOKENS:5}
+      refill-period-seconds: ${AUTH_LOGIN_RATE_REFILL_SECONDS:60}
+    register:
+      capacity: ${AUTH_REGISTER_RATE_CAPACITY:3}
+      refill-tokens: ${AUTH_REGISTER_RATE_REFILL_TOKENS:3}
+      refill-period-seconds: ${AUTH_REGISTER_RATE_REFILL_SECONDS:300}
 
 # ── Actuator (health check for Render) ───────────────────
 management:
