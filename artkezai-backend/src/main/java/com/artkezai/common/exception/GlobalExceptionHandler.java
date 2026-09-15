@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,28 @@ public class GlobalExceptionHandler {
 		return ResponseEntity
 				.status(HttpStatus.NOT_FOUND)
 				.body(ApiResponse.error(ex.getMessage()));
+	}
+
+	// Phase 2.18: org.springframework.web.servlet.resource.NoResourceFoundException
+	// — thrown by Spring MVC's own DispatcherServlet/ResourceHttpRequestHandler
+	// when a request matches no controller mapping and no static resource
+	// (i.e. a genuinely nonexistent route, such as a typo'd or fake URL).
+	// Distinct from this app's own ResourceNotFoundException above, which
+	// means "a real entity your request named doesn't exist" (e.g. order id
+	// 999999) — that case was already correctly handled and is untouched.
+	// Before this handler existed, an unmatched route fell through to the
+	// generic Exception handler below and was misreported as a 500 (found
+	// during Phase 2.17 testing). A missing route is routine, expected
+	// client behavior — not an application failure — so this logs at DEBUG
+	// with a static message only, never the requested path (which could
+	// otherwise echo attacker-supplied input into the logs on every probe).
+	@ExceptionHandler(NoResourceFoundException.class)
+	public ResponseEntity<ApiResponse<?>> handleNoResourceFoundException(
+			NoResourceFoundException ex, WebRequest request) {
+		log.debug("No matching route for this request");
+		return ResponseEntity
+				.status(HttpStatus.NOT_FOUND)
+				.body(ApiResponse.error("Resource not found"));
 	}
 
 	@ExceptionHandler(UnauthorizedException.class)
@@ -82,6 +105,21 @@ public class GlobalExceptionHandler {
 		return ResponseEntity
 				.status(HttpStatus.FORBIDDEN)
 				.body(ApiResponse.error("Access denied"));
+	}
+
+	// Phase 2.21: thrown by AuthRateLimiterService when the login or register
+	// bucket for a given key is exhausted. Deliberately does not log the
+	// bucket key (client address / normalized email) or echo it back in the
+	// response — only that a limit was hit. Retry-After is derived from the
+	// limiter's own computed wait time, not a hardcoded value.
+	@ExceptionHandler(TooManyRequestsException.class)
+	public ResponseEntity<ApiResponse<?>> handleTooManyRequestsException(
+			TooManyRequestsException ex, WebRequest request) {
+		log.warn("Rate limit exceeded for an auth request");
+		return ResponseEntity
+				.status(HttpStatus.TOO_MANY_REQUESTS)
+				.header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+				.body(ApiResponse.error("Too many requests. Please try again later."));
 	}
 
 	@ExceptionHandler(BusinessException.class)

@@ -7,6 +7,7 @@ import com.artkezai.auth.dto.RegisterRequest;
 import com.artkezai.auth.dto.ResetPasswordRequest;
 import com.artkezai.common.response.ApiResponse;
 import com.artkezai.user.User;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,16 +27,37 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
 	private final AuthService authService;
+	private final AuthRateLimiterService rateLimiterService;
+
+	// Phase 2.21: no trusted-proxy / forwarded-header configuration exists
+	// anywhere in this app (no server.forward-headers-strategy, no trusted
+	// proxy list) — confirmed by repo-wide audit. Reading X-Forwarded-For or
+	// X-Real-IP here would let any client set its own rate-limit key by
+	// simply sending a different header value on every request, trivially
+	// bypassing the limiter. The server-observed TCP peer address is used
+	// instead, exactly as instructed when no trusted proxy resolution
+	// exists — a deliberate choice, not an oversight.
+	private String clientAddress(HttpServletRequest request) {
+		return request.getRemoteAddr();
+	}
 
 	@PostMapping("/register")
 	public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+		// Rate limiting for this endpoint happens in
+		// AuthRegisterRateLimitInterceptor.preHandle(), which runs before
+		// @Valid — see that class for why. Not repeated here.
 		log.info("Register request for email: {}", request.getEmail());
 		AuthResponse response = authService.register(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response, "Registration successful"));
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
+	public ResponseEntity<ApiResponse<AuthResponse>> login(
+			@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+		// Consumed unconditionally, before authService even looks up the user —
+		// a failed attempt (wrong password, unknown email) must still burn
+		// capacity, otherwise brute force is unthrottled.
+		rateLimiterService.checkLogin(clientAddress(httpRequest), request.getEmail());
 		log.info("Login request for email: {}", request.getEmail());
 		AuthResponse response = authService.login(request);
 		return ResponseEntity.ok(ApiResponse.ok(response, "Login successful"));
