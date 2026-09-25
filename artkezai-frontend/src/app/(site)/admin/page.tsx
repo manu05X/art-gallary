@@ -34,7 +34,7 @@ export default function AdminDashboardPage() {
 
   const pendingReviewCount = paintingsList.filter((p) => p.status === PaintingStatus.UNDER_REVIEW).length;
   const activeOffersCount = offersList.length;
-  const pendingPaymentsCount = ordersList.filter((o) => pendingPaymentStatuses.includes(o.paymentStatus)).length;
+  const pendingPaymentsCount = ordersList.filter((o) => o.paymentStatus !== null && pendingPaymentStatuses.includes(o.paymentStatus)).length;
   const totalOrdersCount = ordersList.length;
 
   const stats = [

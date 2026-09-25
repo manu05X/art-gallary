@@ -2,6 +2,8 @@
 
 import { useAllOffers } from '@/lib/hooks/useOffers';
 import { OfferStatusBadge } from '@/components/offer/OfferStatusBadge';
+import { OfferResponseActions } from '@/components/admin/OfferResponseActions';
+import { OfferStatus } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -55,7 +57,7 @@ export default function AdminOffersPage() {
 
                 <div className="flex-1">
                   <Link
-                    href="/gallery"
+                    href={offer.paintingSlug ? `/painting/${offer.paintingSlug}` : '/gallery'}
                     className="text-lg font-semibold text-brand hover:text-accent transition"
                   >
                     {offer.paintingTitle}
@@ -73,6 +75,12 @@ export default function AdminOffersPage() {
                       Counter: ${offer.counterAmount.toLocaleString()} {offer.currency}
                     </p>
                   )}
+
+                  {offer.buyerMessage && (
+                    <p className="text-sm text-gray-600 mt-2 italic">&ldquo;{offer.buyerMessage}&rdquo;</p>
+                  )}
+
+                  {offer.status === OfferStatus.SUBMITTED && <OfferResponseActions offer={offer} />}
                 </div>
               </div>
             </div>

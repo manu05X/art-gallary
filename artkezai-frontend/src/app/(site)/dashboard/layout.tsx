@@ -8,17 +8,28 @@ import { ShoppingBag, MessageSquare, Settings } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
   const { isAuthenticated } = useAuthStore();
+  const [hasHydrated, setHasHydrated] = useState(false);
+
+  // Wait for the persisted session to load before deciding the user is
+  // signed out; otherwise a reload or deep link bounces through the login page.
+  useEffect(() => {
+    const unsubscribe = useAuthStore.persist.onFinishHydration(() => setHasHydrated(true));
+
+    if (useAuthStore.persist.hasHydrated()) {
+      setHasHydrated(true);
+    }
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
-    setMounted(true);
-    if (!isAuthenticated) {
+    if (hasHydrated && !isAuthenticated) {
       router.push('/auth/login');
     }
-  }, [isAuthenticated, router]);
+  }, [hasHydrated, isAuthenticated, router]);
 
-  if (!mounted || !isAuthenticated) {
+  if (!hasHydrated || !isAuthenticated) {
     return null;
   }
 

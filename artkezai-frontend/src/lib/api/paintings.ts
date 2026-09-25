@@ -95,6 +95,10 @@ export const paintingsApi = {
     return response;
   },
 
+  deletePainting: async (paintingId: string): Promise<void> => {
+    await apiClient.delete(`/paintings/${paintingId}`);
+  },
+
   submitForReview: async (paintingId: string): Promise<PaintingCreateResponse> => {
     const response = await apiClient.post<never, PaintingCreateResponse>(`/paintings/${paintingId}/submit`);
     return response;

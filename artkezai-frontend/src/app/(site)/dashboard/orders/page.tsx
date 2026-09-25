@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { ordersApi } from '@/lib/api/orders';
-import { OrderStatus, PaymentStatus } from '@/types';
+import { OrderStatus, PaymentMethod, PaymentStatus } from '@/types';
 
 export default function MyOrdersPage() {
   const { data, isLoading, error } = useQuery({
@@ -62,6 +62,7 @@ export default function MyOrdersPage() {
       [OrderStatus.DELIVERED]: 'badge-success',
       [OrderStatus.CLOSED]: 'badge-gray',
       [OrderStatus.REFUNDED]: 'badge-gray',
+      [OrderStatus.CANCELLED]: 'badge-gray',
     };
     return config[status];
   };
@@ -96,9 +97,11 @@ export default function MyOrdersPage() {
                 </Link>
 
                 <div className="flex flex-wrap items-center gap-3 mt-2">
-                  <span className={`badge ${getPaymentStatusBadge(order.paymentStatus)}`}>
-                    {order.paymentStatus}
-                  </span>
+                  {order.paymentStatus && (
+                    <span className={`badge ${getPaymentStatusBadge(order.paymentStatus)}`}>
+                      {order.paymentStatus}
+                    </span>
+                  )}
                   <span className={`badge ${getOrderStatusBadge(order.status)}`}>
                     {order.status}
                   </span>
@@ -113,7 +116,7 @@ export default function MyOrdersPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Payment Method</p>
-                    <p className="text-sm font-medium text-gray-800">{order.paymentMethod}</p>
+                    <p className="text-sm font-medium text-gray-800">{order.paymentMethod ?? 'Not chosen yet'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Ordered</p>
@@ -128,6 +131,32 @@ export default function MyOrdersPage() {
                     </div>
                   )}
                 </div>
+
+                {order.status === OrderStatus.PENDING_PAYMENT && !order.paymentMethod && (
+                  <p className="mt-4 text-sm text-gray-700">
+                    This painting is reserved for your accepted offer.{' '}
+                    <Link href="/dashboard/offers" className="text-accent font-semibold hover:underline">
+                      Complete checkout from My Offers →
+                    </Link>
+                  </p>
+                )}
+
+                {order.status === OrderStatus.PENDING_PAYMENT &&
+                  order.paymentMethod === PaymentMethod.ONLINE &&
+                  order.paymentStatus !== PaymentStatus.SUCCEEDED && (
+                    <Link href={`/dashboard/orders/${order.id}/pay`} className="btn btn-primary text-sm mt-4 inline-block">
+                      Pay Now
+                    </Link>
+                  )}
+
+                {order.status === OrderStatus.PENDING_PAYMENT &&
+                  order.paymentMethod === PaymentMethod.BANK_TRANSFER && (
+                    <p className="mt-4 text-sm text-gray-700">
+                      {order.paymentStatus === PaymentStatus.INITIATED
+                        ? 'The gallery will send you bank transfer instructions by message.'
+                        : 'Bank transfer instructions have been sent. The order is marked paid once the gallery confirms receipt.'}
+                    </p>
+                  )}
               </div>
             </div>
           </div>

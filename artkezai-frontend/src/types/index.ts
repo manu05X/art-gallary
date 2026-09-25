@@ -230,10 +230,13 @@ export interface OfferDto {
   id: number;
   paintingId: number;
   paintingTitle: string;
+  paintingSlug?: string;
   paintingThumbnailUrl?: string;
   buyerName: string;
   offerAmount: number;
   counterAmount?: number;
+  // Set once the offer is ACCEPTED: the price the buyer checks out at.
+  agreedAmount?: number;
   buyerMessage?: string;
   adminMessage?: string;
   currency: string;
@@ -269,6 +272,8 @@ export enum OrderStatus {
   DELIVERED = 'DELIVERED',
   CLOSED = 'CLOSED',
   REFUNDED = 'REFUNDED',
+  // Reservation released because payment never completed in time.
+  CANCELLED = 'CANCELLED',
 }
 
 export enum PaymentMethod {
@@ -289,13 +294,18 @@ export interface OrderDto {
   id: number;
   paintingId: number;
   paintingTitle: string;
+  paintingSlug?: string;
+  paymentId: number | null;
+  offerId: number | null;
   paintingThumbnailUrl?: string;
   buyerId: number;
   buyerName: string;
   totalPrice: number;
   currency: string;
-  paymentMethod: PaymentMethod;
-  paymentStatus: PaymentStatus;
+  // Both are null for an order reserved by an accepted offer until the buyer
+  // completes checkout.
+  paymentMethod: PaymentMethod | null;
+  paymentStatus: PaymentStatus | null;
   status: OrderStatus;
   shippingName: string;
   shippingAddress1: string;
@@ -350,7 +360,8 @@ export interface PaymentIntentResponse {
 }
 
 export interface UpdateShippingRequest {
-  trackingNumber: string;
+  status?: OrderStatus.SHIPPING_IN_PROGRESS | OrderStatus.SHIPPED | OrderStatus.DELIVERED;
+  trackingNumber?: string;
   trackingUrl?: string;
 }
 

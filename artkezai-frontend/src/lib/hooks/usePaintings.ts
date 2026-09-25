@@ -1,5 +1,6 @@
 'use client';
 
+import { parseApiError } from '@/lib/api/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { paintingsApi } from '@/lib/api/paintings';
 import { SubmitPaintingRequest, GalleryFilters } from '@/types';
@@ -105,6 +106,21 @@ export const useUpdatePainting = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || 'Failed to update painting');
+    },
+  });
+};
+
+export const useDeletePainting = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (paintingId: string) => paintingsApi.deletePainting(paintingId),
+    onSuccess: () => {
+      toast.success('Painting deleted');
+      queryClient.invalidateQueries({ queryKey: ['my-listings'] });
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error, 'Failed to delete painting').message);
     },
   });
 };

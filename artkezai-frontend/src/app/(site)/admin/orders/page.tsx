@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ordersApi } from '@/lib/api/orders';
 import Image from 'next/image';
 import Link from 'next/link';
+import { OrderAdminActions } from '@/components/admin/OrderAdminActions';
 
 export default function AdminOrdersPage() {
   const { data, isLoading, error } = useQuery({
@@ -58,7 +59,7 @@ export default function AdminOrdersPage() {
 
                 <div className="flex-1">
                   <Link
-                    href="/gallery"
+                    href={order.paintingSlug ? `/painting/${order.paintingSlug}` : '/gallery'}
                     className="text-lg font-semibold text-brand hover:text-accent transition"
                   >
                     {order.paintingTitle}
@@ -77,9 +78,19 @@ export default function AdminOrdersPage() {
                     </div>
                     <div>
                       <p className="text-gray-600">Payment</p>
-                      <p className="font-semibold text-gray-800">{order.paymentStatus}</p>
+                      <p className="font-semibold text-gray-800">
+                        {order.paymentMethod ? `${order.paymentMethod} · ${order.paymentStatus}` : 'Awaiting buyer checkout'}
+                      </p>
                     </div>
                   </div>
+
+                  {order.shippingName && (
+                    <p className="text-sm text-gray-600 mt-3">
+                      Ship to {order.shippingName}, {order.shippingCity}, {order.shippingCountry}
+                    </p>
+                  )}
+
+                  <OrderAdminActions order={order} />
                 </div>
               </div>
             </div>

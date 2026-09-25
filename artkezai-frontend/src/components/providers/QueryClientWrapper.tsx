@@ -3,6 +3,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { ReactNode } from 'react';
+import SessionManager from '@/components/providers/SessionManager';
+import LiveNotifications from '@/components/providers/LiveNotifications';
+import Analytics from '@/components/providers/Analytics';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,6 +22,9 @@ export default function QueryClientWrapper({ children }: { children: ReactNode }
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      <SessionManager />
+      <LiveNotifications />
+      <Analytics />
       <Toaster
         position="top-right"
         toastOptions={{

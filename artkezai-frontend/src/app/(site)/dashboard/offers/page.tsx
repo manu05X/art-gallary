@@ -2,13 +2,14 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMyOffers, useWithdrawOffer } from '@/lib/hooks/useOffers';
+import { useAcceptCounterOffer, useMyOffers, useWithdrawOffer } from '@/lib/hooks/useOffers';
 import { OfferStatusBadge } from '@/components/offer/OfferStatusBadge';
 import { OfferStatus } from '@/types';
 
 export default function MyOffersPage() {
   const { data, isLoading, error } = useMyOffers();
   const { mutate: withdrawOffer, isPending } = useWithdrawOffer();
+  const { mutate: acceptCounter, isPending: isAccepting } = useAcceptCounterOffer();
 
   if (isLoading) {
     return (
@@ -62,7 +63,7 @@ export default function MyOffersPage() {
 
               <div className="flex-1">
                 <Link
-                  href="/gallery"
+                  href={offer.paintingSlug ? `/painting/${offer.paintingSlug}` : '/gallery'}
                   className="text-lg font-semibold text-brand hover:text-accent transition"
                 >
                   {offer.paintingTitle}
@@ -87,11 +88,34 @@ export default function MyOffersPage() {
                   <p className="text-sm text-gray-600 mt-2 italic">"{offer.buyerMessage}"</p>
                 )}
 
+                {offer.status === OfferStatus.ACCEPTED && offer.paintingSlug && (
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <p className="text-sm text-green-700">
+                      Agreed price: ${(offer.agreedAmount ?? offer.offerAmount).toLocaleString()} {offer.currency}
+                    </p>
+                    <Link
+                      href={`/painting/${offer.paintingSlug}?offerId=${offer.id}`}
+                      className="btn btn-primary text-sm"
+                    >
+                      Complete Purchase
+                    </Link>
+                  </div>
+                )}
+
                 {(offer.status === OfferStatus.SUBMITTED || offer.status === OfferStatus.COUNTERED) && (
                   <div className="flex gap-3 mt-4">
+                    {offer.status === OfferStatus.COUNTERED && (
+                      <button
+                        onClick={() => acceptCounter(offer.id)}
+                        disabled={isAccepting || isPending}
+                        className="btn btn-primary text-sm disabled:opacity-50"
+                      >
+                        Accept Counter Offer
+                      </button>
+                    )}
                     <button
                       onClick={() => withdrawOffer(offer.id)}
-                      disabled={isPending}
+                      disabled={isPending || isAccepting}
                       className="btn btn-outline text-sm disabled:opacity-50"
                     >
                       Withdraw Offer

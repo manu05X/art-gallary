@@ -1,11 +1,12 @@
 'use client';
 
+import type React from 'react';
 import { motion } from 'framer-motion';
 
 interface AnimatedTextProps {
   text: string;
   className?: string;
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
   delay?: number;
 }
 

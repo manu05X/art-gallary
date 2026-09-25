@@ -1,5 +1,6 @@
 'use client';
 
+import { trackEvent } from '@/lib/analytics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { offersApi } from '@/lib/api/offers';
 import { MakeOfferRequest, RespondOfferRequest } from '@/types';
@@ -20,6 +21,7 @@ export const useMakeOffer = () => {
   return useMutation({
     mutationFn: (req: MakeOfferRequest) => offersApi.makeOffer(req),
     onSuccess: (data) => {
+      trackEvent('offer_submitted', { paintingId: data.paintingId });
       toast.success(`Offer of $${data.offerAmount} submitted!`);
       queryClient.invalidateQueries({ queryKey: ['my-offers'] });
     },
@@ -37,10 +39,26 @@ export const useRespondToOffer = () => {
       offersApi.respondToOffer(offerId, req),
     onSuccess: (data) => {
       toast.success(`Offer ${data.status.toLowerCase()}`);
-      queryClient.invalidateQueries({ queryKey: ['offers'] });
+      queryClient.invalidateQueries({ queryKey: ['all-offers'] });
     },
     onError: (error: any) => {
       toast.error(parseApiError(error, 'Failed to respond to offer').message);
+    },
+  });
+};
+
+export const useAcceptCounterOffer = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (offerId: number) => offersApi.acceptCounterOffer(offerId),
+    onSuccess: () => {
+      toast.success('Counter offer accepted. Complete your purchase to reserve the painting.');
+      queryClient.invalidateQueries({ queryKey: ['my-offers'] });
+      queryClient.invalidateQueries({ queryKey: ['my-orders'] });
+    },
+    onError: (error: any) => {
+      toast.error(parseApiError(error, 'Failed to accept counter offer').message);
     },
   });
 };
