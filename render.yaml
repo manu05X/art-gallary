@@ -8,8 +8,22 @@ services:
     plan: free
     healthCheckPath: /actuator/health
     envVars:
-      - key: DB_URL
-        sync: false          # set manually: jdbc:postgresql://<host>/<dbname>
+      # The JDBC URL is assembled from these (see application.yml), so it
+      # always points at the linked database. Do not also set DB_URL here or
+      # in the dashboard: an explicit DB_URL overrides them and goes stale if
+      # the database is recreated.
+      - key: DB_HOST
+        fromDatabase:
+          name: artkezai-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: artkezai-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: artkezai-db
+          property: database
       - key: DB_USER
         fromDatabase:
           name: artkezai-db
@@ -33,7 +47,19 @@ services:
       - key: MAIL_PASS
         sync: false
       - key: MINIO_ENDPOINT
-        sync: false          # leave blank to disable image upload on free tier
+        sync: false          # S3-compatible endpoint (MinIO, R2, S3); required for image upload
+      - key: MINIO_ACCESS_KEY
+        sync: false
+      - key: MINIO_SECRET_KEY
+        sync: false
+      - key: MINIO_BUCKET
+        sync: false
+      - key: MINIO_PUBLIC_URL
+        sync: false          # public base URL that serves objects from MINIO_BUCKET
+      - key: ADMIN_INITIAL_PASSWORD
+        sync: false          # 12+ chars; replaces the seed admin's published password on first start
+      - key: DEMO_ARTIST_PASSWORD
+        sync: false          # 12+ chars; keeps the demo artist logins working with a private password
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY
@@ -43,7 +69,7 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
 
-# ── Neon PostgreSQL (free tier) ───────────────────────────
+# ── Render PostgreSQL ────────────────────────────────────
 databases:
   - name: artkezai-db
     plan: free
