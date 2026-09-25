@@ -132,6 +132,13 @@ management:
   endpoint:
     health:
       show-details: never
+  health:
+    # Render uses /actuator/health to decide whether a deploy is good and
+    # whether to restart the instance. Mail is best-effort (EmailService logs
+    # and continues on failure), so an SMTP problem must not mark the whole
+    # app DOWN. The database check stays: without it the app cannot work.
+    mail:
+      enabled: false
 
 # ── Logging ──────────────────────────────────────────────
 logging:
