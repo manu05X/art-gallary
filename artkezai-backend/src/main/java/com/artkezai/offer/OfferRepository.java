@@ -14,4 +14,8 @@ public interface OfferRepository extends JpaRepository<Offer, Long> {
 
 	Page<Offer> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+	boolean existsByPaintingId(Long paintingId);
+
+	long countByStatusIn(java.util.Collection<OfferStatus> statuses);
+
 }

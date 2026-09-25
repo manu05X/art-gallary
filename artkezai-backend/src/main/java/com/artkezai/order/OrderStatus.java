@@ -7,5 +7,7 @@ public enum OrderStatus {
 	SHIPPED,
 	DELIVERED,
 	CLOSED,
-	REFUNDED
+	REFUNDED,
+	// Reservation released because payment never completed in time.
+	CANCELLED
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -22,5 +23,7 @@ public class ThreadDto {
 	private Long unreadCount;
 	private Long paintingId;
 	private LocalDateTime createdAt;
+	// Only populated by the thread-detail endpoint.
+	private List<MessageDto> messages;
 
 }

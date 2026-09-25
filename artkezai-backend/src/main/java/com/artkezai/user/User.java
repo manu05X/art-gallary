@@ -59,6 +59,9 @@ public class User implements UserDetails {
 
 	private LocalDateTime lastLoginAt;
 
+	// JWTs issued before this instant are rejected (logout, password reset).
+	private LocalDateTime tokensValidAfter;
+
 	@Column(nullable = false, updatable = false)
 	private LocalDateTime createdAt;
 

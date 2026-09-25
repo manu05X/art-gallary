@@ -18,10 +18,12 @@ public class OfferDto {
 	private Long id;
 	private Long paintingId;
 	private String paintingTitle;
+	private String paintingSlug;
 	private String paintingThumbnailUrl;
 	private String buyerName;
 	private BigDecimal offerAmount;
 	private BigDecimal counterAmount;
+	private BigDecimal agreedAmount;
 	private String buyerMessage;
 	private String adminMessage;
 	private String currency;

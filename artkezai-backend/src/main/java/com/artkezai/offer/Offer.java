@@ -74,4 +74,14 @@ public class Offer {
 		updatedAt = LocalDateTime.now();
 	}
 
+	// The price both sides agreed on: the admin's counter when the buyer
+	// accepted one, otherwise the buyer's own offer.
+	public BigDecimal getAgreedAmount() {
+		return counterAmount != null ? counterAmount : offerAmount;
+	}
+
+	public boolean isExpired() {
+		return expiresAt != null && expiresAt.isBefore(LocalDateTime.now());
+	}
+
 }

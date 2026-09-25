@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Service
@@ -124,10 +125,30 @@ public class AuthService {
 		}
 
 		user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+		// Sign out every existing session after a password change.
+		user.setTokensValidAfter(currentSecond());
 		user.setResetToken(null);
 		user.setResetTokenExpiry(null);
 		userRepository.save(user);
 		log.info("Password reset for user: {}", user.getEmail());
+	}
+
+	// Issues a fresh token for an already-authenticated user, so an active
+	// session can be extended before the current token expires.
+	public AuthResponse refresh(User user) {
+		return buildAuthResponse(user, jwtService.generateToken(user));
+	}
+
+	// Server-side logout: every token issued before now stops working, on all
+	// devices. JWT iat has second precision, so the cut-off is truncated too.
+	public void logout(User user) {
+		user.setTokensValidAfter(currentSecond());
+		userRepository.save(user);
+		log.info("User logged out: {}", user.getEmail());
+	}
+
+	private static LocalDateTime currentSecond() {
+		return LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
 	}
 
 	private AuthResponse buildAuthResponse(User user, String token) {

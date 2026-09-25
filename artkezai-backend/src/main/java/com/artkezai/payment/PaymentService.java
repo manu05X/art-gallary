@@ -1,9 +1,14 @@
 package com.artkezai.payment;
 
+import com.artkezai.notification.NotificationService;
 import com.artkezai.common.exception.BusinessException;
 import com.artkezai.common.exception.ResourceNotFoundException;
 import com.artkezai.order.Order;
 import com.artkezai.order.OrderRepository;
+import com.artkezai.order.OrderStatus;
+import com.artkezai.painting.Painting;
+import com.artkezai.painting.PaintingRepository;
+import com.artkezai.painting.PaintingStatus;
 import com.artkezai.payment.dto.CreatePaymentIntentRequest;
 import com.artkezai.user.User;
 import com.stripe.Stripe;
@@ -45,6 +50,8 @@ public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final OrderRepository orderRepository;
+	private final PaintingRepository paintingRepository;
+	private final NotificationService notificationService;
 
 	@Value("${stripe.publishable-key:pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY}")
 	private String stripePublishableKey;
@@ -155,7 +162,70 @@ public class PaymentService {
 		// same payment intent.
 		payment.setStatus(PaymentStatus.SUCCEEDED);
 		paymentRepository.save(payment);
+		markOrderPaid(payment);
 		log.info("Payment confirmed via Stripe: {}", paymentIntentId);
+	}
+
+	// Reconciles an online payment by asking Stripe directly, so an order
+	// still reaches PAID when the webhook is delayed or not configured
+	// (e.g. local development without the Stripe CLI). The webhook remains
+	// the primary path; this is only ever driven by the paying buyer.
+	public PaymentStatus syncStripePayment(Long orderId, User buyer) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+
+		if (!order.getBuyer().getId().equals(buyer.getId())) {
+			throw new BusinessException("You can only check payment for your own orders");
+		}
+
+		Payment payment = paymentRepository.findByOrderId(orderId)
+				.orElseThrow(() -> new BusinessException("Payment not found for order"));
+
+		if (payment.getPaymentMethod() != PaymentMethod.ONLINE || payment.getStripePaymentIntentId() == null
+				|| payment.getStatus() == PaymentStatus.SUCCEEDED) {
+			return payment.getStatus();
+		}
+
+		try {
+			PaymentIntent intent = PaymentIntent.retrieve(payment.getStripePaymentIntentId());
+			if ("succeeded".equals(intent.getStatus())) {
+				confirmStripePayment(intent.getId());
+			}
+		} catch (StripeException ex) {
+			log.error("Stripe PaymentIntent lookup failed for order: {} — {}", orderId, ex.getMessage());
+			throw new BusinessException("Unable to verify payment at this time. Please try again.");
+		}
+		return payment.getStatus();
+	}
+
+	// D1/D2: a successful payment is what moves the order to PAID and takes
+	// the painting off the market. Only a PENDING_PAYMENT order advances, so
+	// repeated webhook deliveries never rewind a shipped/delivered order.
+	private void markOrderPaid(Payment payment) {
+		Order order = payment.getOrder();
+		// The reservation was released before the money arrived; the painting
+		// may already belong to someone else, so it must not be marked SOLD.
+		if (order.getStatus() == OrderStatus.CANCELLED) {
+			log.error("Payment {} succeeded for cancelled order {} — refund required", payment.getId(), order.getId());
+			return;
+		}
+		if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
+			order.setStatus(OrderStatus.PAID);
+			orderRepository.save(order);
+		}
+
+		if (order.getStatus() == OrderStatus.PAID) {
+			notificationService.notifyUser(order.getBuyer(), "ORDER_PAID",
+					"Payment received for \"" + order.getPainting().getTitle() + "\"", "/dashboard/orders");
+			notificationService.notifyAdmins("ORDER_PAID",
+					"Order #" + order.getId() + " has been paid", "/admin/orders");
+		}
+
+		Painting painting = order.getPainting();
+		if (painting.getStatus() != PaintingStatus.SOLD) {
+			painting.setStatus(PaintingStatus.SOLD);
+			paintingRepository.save(painting);
+		}
 	}
 
 	// Phase 2.15: verifies the raw payload against the Stripe-Signature
@@ -240,10 +310,21 @@ public class PaymentService {
 		Payment payment = paymentRepository.findById(paymentId)
 				.orElseThrow(() -> new ResourceNotFoundException("Payment", "id", paymentId));
 
+		if (payment.getPaymentMethod() != PaymentMethod.BANK_TRANSFER) {
+			throw new BusinessException("This payment is not via bank transfer");
+		}
+
+		if (payment.getStatus() != PaymentStatus.INSTRUCTIONS_SENT
+				&& payment.getStatus() != PaymentStatus.AWAITING_TRANSFER) {
+			throw new BusinessException(
+					"Bank transfer can only be confirmed after instructions are sent. Current status: " + payment.getStatus());
+		}
+
 		payment.setStatus(PaymentStatus.CONFIRMED);
 		payment.setConfirmedByAdmin(admin);
 		payment.setConfirmedAt(LocalDateTime.now());
 		paymentRepository.save(payment);
+		markOrderPaid(payment);
 		log.info("Bank transfer confirmed for payment: {} by admin: {}", paymentId, admin.getEmail());
 	}
 

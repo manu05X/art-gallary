@@ -1,18 +1,20 @@
 package com.artkezai.order;
 
+import com.artkezai.notification.NotificationService;
 import com.artkezai.artist.dto.ArtistOrderResponse;
 import com.artkezai.common.exception.BusinessException;
 import com.artkezai.common.exception.ResourceNotFoundException;
 import com.artkezai.common.exception.UnauthorizedException;
 import com.artkezai.notification.EmailService;
 import com.artkezai.offer.Offer;
-import com.artkezai.offer.OfferRepository;
 import com.artkezai.order.dto.CreateOrderRequest;
 import com.artkezai.order.dto.OrderDto;
 import com.artkezai.order.dto.UpdateShippingRequest;
 import com.artkezai.painting.Painting;
 import com.artkezai.painting.PaintingRepository;
+import com.artkezai.painting.PaintingStatus;
 import com.artkezai.payment.Payment;
+import com.artkezai.payment.PaymentMethod;
 import com.artkezai.payment.PaymentRepository;
 import com.artkezai.payment.PaymentStatus;
 import com.artkezai.user.User;
@@ -25,7 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -33,17 +37,29 @@ import java.util.Optional;
 @Transactional
 public class OrderService {
 
+	private static final Set<OrderStatus> SHIPPING_STATUSES = EnumSet.of(
+			OrderStatus.SHIPPING_IN_PROGRESS, OrderStatus.SHIPPED, OrderStatus.DELIVERED);
+
 	private final OrderRepository orderRepository;
 	private final PaintingRepository paintingRepository;
-	private final OfferRepository offerRepository;
 	private final PaymentRepository paymentRepository;
 	private final EmailService emailService;
+	private final NotificationService notificationService;
 
 	public OrderDto createOrder(CreateOrderRequest request, User buyer) {
+		if (request.getOfferId() != null) {
+			return completeOfferCheckout(request, buyer);
+		}
+
 		Painting painting = paintingRepository.findById(request.getPaintingId())
 				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", request.getPaintingId()));
 
-		if (orderRepository.existsByPaintingId(painting.getId())) {
+		// D2: only live paintings can be bought.
+		if (painting.getStatus() != PaintingStatus.APPROVED) {
+			throw new BusinessException("This painting is not available for purchase");
+		}
+
+		if (orderRepository.existsByPaintingIdAndStatusNot(painting.getId(), OrderStatus.CANCELLED)) {
 			throw new BusinessException("This painting is already sold");
 		}
 
@@ -53,37 +69,90 @@ public class OrderService {
 				.totalPrice(painting.getPrice())
 				.currency(painting.getCurrency())
 				.status(OrderStatus.PENDING_PAYMENT)
-				.shippingName(request.getShippingName())
-				.shippingEmail(request.getShippingEmail())
-				.shippingPhone(request.getShippingPhone())
-				.shippingAddress1(request.getShippingAddress1())
-				.shippingAddress2(request.getShippingAddress2())
-				.shippingCity(request.getShippingCity())
-				.shippingState(request.getShippingState())
-				.shippingZip(request.getShippingZip())
-				.shippingCountry(request.getShippingCountry())
 				.build();
-
-		if (request.getOfferId() != null) {
-			Offer offer = offerRepository.findById(request.getOfferId())
-					.orElseThrow(() -> new ResourceNotFoundException("Offer", "id", request.getOfferId()));
-			order.setOffer(offer);
-		}
-
+		applyShipping(order, request);
 		order = orderRepository.save(order);
 
+		createPayment(order, request.getPaymentMethod());
+		emailService.sendOrderCreated(order);
+		log.info("Order created: {} by buyer: {}", order.getId(), buyer.getEmail());
+		return toOrderDto(order);
+	}
+
+	// D3/D4: accepting an offer creates the order straight away, priced at the
+	// agreed amount. This also reserves the painting, so nobody else can buy
+	// it at list price while the buyer completes checkout. Shipping details
+	// and the payment method are added later by completeOfferCheckout.
+	public Order createOrderForAcceptedOffer(Offer offer) {
+		Painting painting = offer.getPainting();
+
+		if (painting.getStatus() != PaintingStatus.APPROVED) {
+			throw new BusinessException("This painting is no longer available");
+		}
+
+		if (orderRepository.existsByPaintingIdAndStatusNot(painting.getId(), OrderStatus.CANCELLED)) {
+			throw new BusinessException("This painting already has an order");
+		}
+
+		Order order = Order.builder()
+				.painting(painting)
+				.buyer(offer.getBuyer())
+				.offer(offer)
+				.totalPrice(offer.getAgreedAmount())
+				.currency(offer.getCurrency())
+				.status(OrderStatus.PENDING_PAYMENT)
+				.build();
+		order = orderRepository.save(order);
+		log.info("Order {} created from accepted offer {}", order.getId(), offer.getId());
+		return order;
+	}
+
+	private OrderDto completeOfferCheckout(CreateOrderRequest request, User buyer) {
+		Order order = orderRepository.findByOfferId(request.getOfferId())
+				.orElseThrow(() -> new BusinessException("No order exists for this offer. The offer must be accepted first."));
+
+		if (!order.getBuyer().getId().equals(buyer.getId())) {
+			throw new UnauthorizedException("You can only check out your own offers");
+		}
+
+		if (!order.getPainting().getId().equals(request.getPaintingId())) {
+			throw new BusinessException("This offer is for a different painting");
+		}
+
+		if (order.getStatus() != OrderStatus.PENDING_PAYMENT || paymentRepository.findByOrderId(order.getId()).isPresent()) {
+			throw new BusinessException("Checkout has already been completed for this offer");
+		}
+
+		applyShipping(order, request);
+		order = orderRepository.save(order);
+
+		createPayment(order, request.getPaymentMethod());
+		emailService.sendOrderCreated(order);
+		log.info("Offer checkout completed for order: {} by buyer: {}", order.getId(), buyer.getEmail());
+		return toOrderDto(order);
+	}
+
+	private void applyShipping(Order order, CreateOrderRequest request) {
+		order.setShippingName(request.getShippingName());
+		order.setShippingEmail(request.getShippingEmail());
+		order.setShippingPhone(request.getShippingPhone());
+		order.setShippingAddress1(request.getShippingAddress1());
+		order.setShippingAddress2(request.getShippingAddress2());
+		order.setShippingCity(request.getShippingCity());
+		order.setShippingState(request.getShippingState());
+		order.setShippingZip(request.getShippingZip());
+		order.setShippingCountry(request.getShippingCountry());
+	}
+
+	private void createPayment(Order order, PaymentMethod paymentMethod) {
 		Payment payment = Payment.builder()
 				.order(order)
-				.paymentMethod(request.getPaymentMethod())
+				.paymentMethod(paymentMethod)
 				.status(PaymentStatus.INITIATED)
 				.amount(order.getTotalPrice())
 				.currency(order.getCurrency())
 				.build();
-
 		paymentRepository.save(payment);
-		emailService.sendOrderCreated(order);
-		log.info("Order created: {} by buyer: {}", order.getId(), buyer.getEmail());
-		return toOrderDto(order);
 	}
 
 	@Transactional(readOnly = true)
@@ -131,6 +200,14 @@ public class OrderService {
 				.orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
 
 		if (request.getStatus() != null) {
+			// Shipping updates only move a paid order through fulfilment.
+			// PAID itself is set by a confirmed payment, never by hand.
+			if (!SHIPPING_STATUSES.contains(request.getStatus())) {
+				throw new BusinessException("Shipping status must be one of " + SHIPPING_STATUSES);
+			}
+			if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
+				throw new BusinessException("Shipping can only be updated after the order is paid");
+			}
 			order.setStatus(request.getStatus());
 
 			if (request.getStatus() == OrderStatus.SHIPPED) {
@@ -150,6 +227,9 @@ public class OrderService {
 
 		order = orderRepository.save(order);
 		emailService.sendShippingUpdate(order);
+		notificationService.notifyUser(order.getBuyer(), "SHIPPING_UPDATE",
+				"\"" + order.getPainting().getTitle() + "\" is now " + order.getStatus().name().toLowerCase().replace('_', ' '),
+				"/dashboard/orders");
 		log.info("Order shipping updated: {}", orderId);
 		return toOrderDto(order);
 	}
@@ -166,6 +246,9 @@ public class OrderService {
 				.id(order.getId())
 				.paintingId(order.getPainting().getId())
 				.paintingTitle(order.getPainting().getTitle())
+				.paintingSlug(order.getPainting().getSlug())
+				.paymentId(payment.map(Payment::getId).orElse(null))
+				.offerId(order.getOffer() != null ? order.getOffer().getId() : null)
 				.paintingThumbnailUrl(thumbnailUrl.orElse(null))
 				.buyerId(order.getBuyer().getId())
 				.buyerName(order.getBuyer().getFirstName() + " " + order.getBuyer().getLastName())

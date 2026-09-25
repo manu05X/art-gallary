@@ -1,5 +1,6 @@
 package com.artkezai.painting;
 
+import com.artkezai.notification.NotificationService;
 import com.artkezai.artist.ArtistProfile;
 import com.artkezai.artist.ArtistProfileRepository;
 import com.artkezai.common.exception.BusinessException;
@@ -14,7 +15,11 @@ import com.artkezai.painting.dto.UpdatePaintingRequest;
 import com.artkezai.painting.dto.CategoryResponse;
 import com.artkezai.painting.dto.CountryResponse;
 import com.artkezai.painting.dto.MediumResponse;
+import com.artkezai.messaging.ThreadRepository;
+import com.artkezai.offer.OfferRepository;
+import com.artkezai.order.OrderRepository;
 import com.artkezai.user.User;
+import com.artkezai.user.UserRole;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
@@ -49,6 +54,10 @@ public class PaintingService {
 	private final PaintingImageRepository paintingImageRepository;
 	private final ArtistProfileRepository artistProfileRepository;
 	private final MinioClient minioClient;
+	private final OfferRepository offerRepository;
+	private final OrderRepository orderRepository;
+	private final ThreadRepository threadRepository;
+	private final NotificationService notificationService;
 
 	@Value("${minio.bucket}")
 	private String bucketName;
@@ -140,13 +149,16 @@ public class PaintingService {
 			throw new UnauthorizedException("You can only submit your own paintings for review");
 		}
 
-		if (painting.getStatus() != PaintingStatus.DRAFT) {
+		if (!isEditableByArtist(painting)) {
 			throw new BusinessException(
-					"Only paintings in DRAFT status can be submitted for review. Current status: " + painting.getStatus());
+					"Only draft or rejected paintings can be submitted for review. Current status: " + painting.getStatus());
 		}
 
 		painting.setStatus(PaintingStatus.UNDER_REVIEW);
+		painting.setRejectionReason(null);
 		painting = paintingRepository.save(painting);
+		notificationService.notifyAdmins("PAINTING_SUBMITTED",
+				"\"" + painting.getTitle() + "\" is waiting for review", "/admin/moderation");
 		log.info("Painting {} submitted for review by artist: {}", paintingId, artist.getEmail());
 		return painting;
 	}
@@ -157,6 +169,13 @@ public class PaintingService {
 
 		if (!painting.getArtist().getUser().getId().equals(artist.getId())) {
 			throw new UnauthorizedException("You can only update your own paintings");
+		}
+
+		// D7: once a painting is under review, live or sold, the artist can no
+		// longer change it; edits would otherwise go live without moderation.
+		if (!isEditableByArtist(painting)) {
+			throw new BusinessException(
+					"Only draft or rejected paintings can be edited. Current status: " + painting.getStatus());
 		}
 
 		// Partial update: only fields actually present in the request are applied.
@@ -192,12 +211,59 @@ public class PaintingService {
 		return painting;
 	}
 
+	// Artists may delete their own draft or rejected paintings; admins may
+	// delete any painting that has not been sold. A painting with offers or
+	// orders is part of the transaction history and cannot be deleted.
+	public void deletePainting(Long paintingId, User requester) {
+		Painting painting = paintingRepository.findById(paintingId)
+				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", paintingId));
+
+		boolean isAdmin = requester.getRole() == UserRole.ADMIN;
+		if (!isAdmin) {
+			if (!painting.getArtist().getUser().getId().equals(requester.getId())) {
+				throw new UnauthorizedException("You can only delete your own paintings");
+			}
+			if (!isEditableByArtist(painting)) {
+				throw new BusinessException(
+						"Only draft or rejected paintings can be deleted. Current status: " + painting.getStatus());
+			}
+		} else if (painting.getStatus() == PaintingStatus.SOLD) {
+			throw new BusinessException("Sold paintings cannot be deleted");
+		}
+
+		if (offerRepository.existsByPaintingId(paintingId) || orderRepository.existsByPaintingId(paintingId)) {
+			throw new BusinessException("This painting has offers or orders and cannot be deleted");
+		}
+
+		List<String> storageKeys = painting.getImages().stream().map(PaintingImage::getStorageKey).toList();
+		threadRepository.detachPainting(paintingId);
+		paintingRepository.delete(painting);
+
+		for (String key : storageKeys) {
+			try {
+				minioClient.removeObject(RemoveObjectArgs.builder().bucket(bucketName).object(key).build());
+			} catch (Exception ex) {
+				log.warn("Painting {} deleted but image object {} could not be removed: {}", paintingId, key, ex.getMessage());
+			}
+		}
+		log.info("Painting {} deleted by {}", paintingId, requester.getEmail());
+	}
+
+	private boolean isEditableByArtist(Painting painting) {
+		return painting.getStatus() == PaintingStatus.DRAFT || painting.getStatus() == PaintingStatus.REJECTED;
+	}
+
 	public PaintingImage uploadImage(Long paintingId, MultipartFile file, User artist) throws Exception {
 		Painting painting = paintingRepository.findById(paintingId)
 				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", paintingId));
 
 		if (!painting.getArtist().getUser().getId().equals(artist.getId())) {
 			throw new UnauthorizedException("You can only upload images for your own paintings");
+		}
+
+		if (!isEditableByArtist(painting)) {
+			throw new BusinessException(
+					"Images can only be changed on draft or rejected paintings. Current status: " + painting.getStatus());
 		}
 
 		String storageKey = "paintings/" + paintingId + "/" + UUID.randomUUID() + "-" + file.getOriginalFilename();
@@ -238,7 +304,15 @@ public class PaintingService {
 			throw new UnauthorizedException("You can only delete images from your own paintings");
 		}
 
+		if (!isEditableByArtist(painting)) {
+			throw new BusinessException(
+					"Images can only be changed on draft or rejected paintings. Current status: " + painting.getStatus());
+		}
+
+		// The image must belong to this painting, otherwise an artist could
+		// delete another artist's image by pairing it with their own painting.
 		PaintingImage image = paintingImageRepository.findById(imageId)
+				.filter(img -> img.getPainting().getId().equals(paintingId))
 				.orElseThrow(() -> new ResourceNotFoundException("PaintingImage", "id", imageId));
 
 		minioClient.removeObject(
@@ -291,24 +365,36 @@ public class PaintingService {
 		return paintingRepository.findAll(spec, pageable).map(this::toPaintingListDto);
 	}
 
-	@Transactional(readOnly = true)
-	public PaintingDetailDto getPainting(Long id) {
+	public PaintingDetailDto getPainting(Long id, User viewer) {
 		Painting painting = paintingRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Painting", "id", id));
-
-		painting.setViewCount(painting.getViewCount() + 1);
-		Painting savedPainting = paintingRepository.save(painting);
-		return toPaintingDetailDto(savedPainting);
+		return toVisibleDetail(painting, viewer, "id", id);
 	}
 
-	@Transactional(readOnly = true)
-	public PaintingDetailDto getPaintingBySlug(String slug) {
+	public PaintingDetailDto getPaintingBySlug(String slug, User viewer) {
 		Painting painting = paintingRepository.findBySlug(slug)
 				.orElseThrow(() -> new ResourceNotFoundException("Painting", "slug", slug));
+		return toVisibleDetail(painting, viewer, "slug", slug);
+	}
+
+	// D5: only live (APPROVED) and SOLD paintings are public. Drafts, pending
+	// and rejected paintings are visible to their own artist and to admins
+	// only; everyone else gets the same 404 as a missing painting, so the
+	// endpoint does not reveal that an unpublished painting exists.
+	private PaintingDetailDto toVisibleDetail(Painting painting, User viewer, String field, Object value) {
+		boolean isPublic = painting.getStatus() == PaintingStatus.APPROVED
+				|| painting.getStatus() == PaintingStatus.SOLD;
+		if (!isPublic) {
+			boolean isAdmin = viewer != null && viewer.getRole() == UserRole.ADMIN;
+			boolean isOwner = viewer != null && painting.getArtist().getUser().getId().equals(viewer.getId());
+			if (!isAdmin && !isOwner) {
+				throw new ResourceNotFoundException("Painting", field, value);
+			}
+			return toPaintingDetailDto(painting);
+		}
 
 		painting.setViewCount(painting.getViewCount() + 1);
-		Painting savedPainting = paintingRepository.save(painting);
-		return toPaintingDetailDto(savedPainting);
+		return toPaintingDetailDto(paintingRepository.save(painting));
 	}
 
 	public PaintingListDto toPaintingListDto(Painting painting) {
