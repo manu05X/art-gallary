@@ -49,6 +49,10 @@ public class JwtService {
 		return claims.get("userId", Long.class);
 	}
 
+	public Date extractIssuedAt(String token) {
+		return getClaimsFromToken(token).getIssuedAt();
+	}
+
 	public boolean isTokenValid(String token) {
 		try {
 			Jwts.parser()

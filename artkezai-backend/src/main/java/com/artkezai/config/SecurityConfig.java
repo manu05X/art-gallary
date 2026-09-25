@@ -77,6 +77,14 @@ public class SecurityConfig {
 						.requestMatchers("/api/auth/**").permitAll()
 						.requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
 						.requestMatchers("/actuator/health").permitAll()
+						// WebSocket handshake; the JWT is checked on the STOMP CONNECT
+						// frame by WebSocketAuthInterceptor.
+						.requestMatchers("/ws/**").permitAll()
+
+						// Artist view of offers on their own paintings — declared before
+						// the broader /api/offers/** rule, which would otherwise match first
+						// and deny every artist with 403.
+						.requestMatchers(HttpMethod.GET, "/api/offers/received").hasAnyRole("ARTIST", "ADMIN")
 
 						// Buyer + Admin
 						.requestMatchers("/api/offers/**").hasAnyRole("BUYER", "ADMIN")
@@ -88,6 +96,7 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.POST, "/api/paintings/{id}/submit").hasAnyRole("ARTIST", "ADMIN")
 						.requestMatchers(HttpMethod.POST, "/api/paintings/{id}/images").hasAnyRole("ARTIST", "ADMIN")
 						.requestMatchers(HttpMethod.DELETE, "/api/paintings/{id}/images/**").hasAnyRole("ARTIST", "ADMIN")
+						.requestMatchers(HttpMethod.DELETE, "/api/paintings/{id}").hasAnyRole("ARTIST", "ADMIN")
 
 						// Admin only
 						.requestMatchers("/api/admin/**").hasRole("ADMIN")

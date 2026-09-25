@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingCart, Zap, MessageSquare, Shield } from 'lucide-react';
 import AnimatedSection from '@/components/ui/AnimatedSection';
@@ -14,7 +15,9 @@ import { useBuyNowCheckout } from '@/lib/hooks/useCheckout';
 import { useMakeOffer } from '@/lib/hooks/useOffers';
 import { useCreateThread } from '@/lib/hooks/useMessages';
 import { parseApiError } from '@/lib/api/utils';
-import { PaymentMethod } from '@/types';
+import { offersApi } from '@/lib/api/offers';
+import { trackEvent } from '@/lib/analytics';
+import { OfferStatus, PaintingStatus, PaymentMethod } from '@/types';
 import toast from 'react-hot-toast';
 
 const FALLBACK_PAINTING_IMAGE = 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=1200&q=80';
@@ -29,9 +32,20 @@ function artistInitials(name: string): string {
     .slice(0, 2);
 }
 
-export default function PaintingPage({ params }: { params: { slug: string } }) {
+export default function PaintingPage() {
+  const params = useParams<{ slug: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, user } = useAuthStore();
+  // Arriving from "Complete Purchase" on an accepted offer: check out at the
+  // agreed price instead of the list price.
+  const offerIdParam = Number(searchParams.get('offerId')) || null;
+  const { data: acceptedOffer } = useQuery({
+    queryKey: ['offer', offerIdParam],
+    queryFn: () => offersApi.getOffer(offerIdParam as number),
+    enabled: !!offerIdParam && isAuthenticated && user?.role === 'buyer',
+  });
+  const checkoutOffer = acceptedOffer?.status === OfferStatus.ACCEPTED ? acceptedOffer : null;
   const { data: painting, isLoading: isPaintingLoading, isError: isPaintingError } = usePainting(params.slug);
   const { data: relatedPage } = usePaintings(
     {
@@ -84,14 +98,21 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
     setShowCheckout(true);
   };
 
+  useEffect(() => {
+    if (checkoutOffer) {
+      setShowCheckout(true);
+    }
+  }, [checkoutOffer]);
+
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!painting) return;
 
     try {
-      const result = await buyNowMutation.mutateAsync({
+      const order = await buyNowMutation.mutateAsync({
         paintingId: Number(painting.id),
+        offerId: checkoutOffer?.id,
         shippingName: checkoutData.shippingName,
         shippingEmail: checkoutData.shippingEmail,
         shippingPhone: checkoutData.shippingPhone || undefined,
@@ -104,17 +125,15 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
         paymentMethod: checkoutData.paymentMethod,
       });
 
-      if (checkoutData.paymentMethod === PaymentMethod.ONLINE) {
-        toast.success('Order created. Payment intent is ready.');
-        if (result.paymentIntent?.clientSecret) {
-          toast.success(`Client secret generated: ${result.paymentIntent.clientSecret.slice(0, 14)}...`);
-        }
-      } else {
-        toast.success('Order created. Bank transfer instructions will be shared by gallery.');
-      }
-
       setShowCheckout(false);
-      router.push('/dashboard/orders');
+      trackEvent('order_created', { method: checkoutData.paymentMethod, offer: checkoutOffer ? 1 : 0 });
+      if (checkoutData.paymentMethod === PaymentMethod.ONLINE) {
+        toast.success('Order created. Complete your card payment.');
+        router.push(`/dashboard/orders/${order.id}/pay`);
+      } else {
+        toast.success('Order created. Bank transfer instructions will be shared by the gallery.');
+        router.push('/dashboard/orders');
+      }
     } catch (error: any) {
       toast.error(parseApiError(error, 'Failed to start checkout. Please try again.').message);
     }
@@ -358,6 +377,12 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
               </div>
 
               <div className="space-y-3">
+                {painting.status === PaintingStatus.SOLD ? (
+                  <p className="w-full text-center font-inter uppercase tracking-widest text-[12px] py-4 border border-border rounded-full text-muted">
+                    Sold
+                  </p>
+                ) : (
+                <>
                 <button
                   onClick={handleOpenCheckout}
                   className="w-full ios-button-primary font-inter uppercase tracking-widest text-[12px] py-4 flex items-center justify-center gap-2"
@@ -372,6 +397,8 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
                   <Zap size={16} />
                   Make an Offer
                 </button>
+                </>
+                )}
                 <button
                   onClick={handleOpenMessageGallery}
                   className="w-full border border-border text-muted font-inter text-[11px] uppercase tracking-widest py-3 hover:border-gold hover:text-gold transition-colors duration-300 flex items-center justify-center gap-2 rounded-full"
@@ -557,6 +584,11 @@ export default function PaintingPage({ params }: { params: { slug: string } }) {
             <h3 className="font-playfair text-2xl text-cream mb-2">Checkout</h3>
             <p className="font-inter text-sm text-muted mb-6">
               Complete your purchase for <span className="text-gold">{painting.title}</span>
+            </p>
+            <p className="font-inter text-sm text-cream mb-6">
+              Total: {painting.currency}{' '}
+              {(checkoutOffer?.agreedAmount ?? checkoutOffer?.counterAmount ?? checkoutOffer?.offerAmount ?? painting.price).toLocaleString()}
+              {checkoutOffer && <span className="text-muted"> (your accepted offer)</span>}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">

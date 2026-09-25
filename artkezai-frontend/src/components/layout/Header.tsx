@@ -1,5 +1,6 @@
 'use client';
 
+import { signOut } from '@/lib/auth/session';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -19,7 +20,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
 
   useEffect(() => {
     setMounted(true);
@@ -120,7 +121,7 @@ export default function Header() {
                     Dashboard
                   </Link>
                   <button
-                    onClick={logout}
+                    onClick={() => signOut()}
                     className="hidden lg:block font-inter text-[11px] uppercase tracking-[0.06em] px-5 py-2.5 ios-button-primary"
                   >
                     Logout
@@ -213,7 +214,7 @@ export default function Header() {
                     </Link>
                     <button
                       onClick={() => {
-                        logout();
+                        signOut();
                         setMenuOpen(false);
                       }}
                       className="font-inter text-sm ios-button-primary px-5 py-3 text-center"

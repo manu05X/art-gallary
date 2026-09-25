@@ -151,6 +151,20 @@ spring:
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
+  thymeleaf:
+    cache: true
+
+# No fallback in production: the local-dev secret above is public, and a
+# token signed with it would be accepted. Spring fails to start instead.
+jwt:
+  secret: ${JWT_SECRET}
+
+app:
+  # Used once by SeedAccountGuard to replace the seed admin's published
+  # default password. Leave unset to deactivate the seed admin instead.
+  admin-initial-password: ${ADMIN_INITIAL_PASSWORD:}
+  # Same for the three V8 demo artists; leave unset to deactivate them.
+  demo-artist-password: ${DEMO_ARTIST_PASSWORD:}
 
 logging:
   level:

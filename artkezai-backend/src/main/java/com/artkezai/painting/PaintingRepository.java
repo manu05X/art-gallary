@@ -17,4 +17,6 @@ public interface PaintingRepository extends JpaRepository<Painting, Long>, JpaSp
 
 	Page<Painting> findByArtistId(Long artistId, Pageable pageable);
 
+	long countByStatus(PaintingStatus status);
+
 }

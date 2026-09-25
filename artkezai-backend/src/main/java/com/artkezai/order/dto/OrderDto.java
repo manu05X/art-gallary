@@ -20,6 +20,9 @@ public class OrderDto {
 	private Long id;
 	private Long paintingId;
 	private String paintingTitle;
+	private String paintingSlug;
+	private Long paymentId;
+	private Long offerId;
 	private String paintingThumbnailUrl;
 	private Long buyerId;
 	private String buyerName;

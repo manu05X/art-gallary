@@ -43,6 +43,17 @@ export const authApi = {
     };
   },
 
+  // Exchanges a still-valid token for a fresh one.
+  refresh: async (): Promise<string> => {
+    const data = await apiClient.post<never, AuthPayload>('/auth/refresh');
+    return data.token;
+  },
+
+  // Revokes every token issued so far for this user, on all devices.
+  logout: async (): Promise<void> => {
+    await apiClient.post('/auth/logout');
+  },
+
   forgotPassword: async (email: string): Promise<void> => {
     await apiClient.post('/auth/forgot-password', { email });
   },

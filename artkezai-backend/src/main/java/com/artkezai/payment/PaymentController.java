@@ -33,6 +33,16 @@ public class PaymentController {
 		return ResponseEntity.ok(ApiResponse.ok(intent));
 	}
 
+	@PostMapping("/orders/{orderId}/sync")
+	@PreAuthorize("hasRole('BUYER')")
+	public ResponseEntity<ApiResponse<PaymentStatus>> syncPayment(
+			@PathVariable Long orderId,
+			Authentication authentication) {
+		User buyer = (User) authentication.getPrincipal();
+		log.info("Sync payment status for order: {} by: {}", orderId, buyer.getEmail());
+		return ResponseEntity.ok(ApiResponse.ok(paymentService.syncStripePayment(orderId, buyer)));
+	}
+
 	// Phase 2.15: intentionally no @PreAuthorize / JWT here — Stripe calls
 	// this endpoint directly with no application session. It is public at
 	// the HTTP auth layer (see SecurityConfig) and instead authenticated

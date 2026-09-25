@@ -69,9 +69,9 @@ public class OfferController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<ApiResponse<OfferDto>> getOffer(@PathVariable Long id) {
+	public ResponseEntity<ApiResponse<OfferDto>> getOffer(@PathVariable Long id, Authentication authentication) {
 		log.info("Get offer: {}", id);
-		OfferDto offer = offerService.getOffer(id);
+		OfferDto offer = offerService.getOffer(id, (User) authentication.getPrincipal());
 		return ResponseEntity.ok(ApiResponse.ok(offer));
 	}
 
@@ -85,7 +85,19 @@ public class OfferController {
 		return ResponseEntity.ok(ApiResponse.ok(offer, "Offer responded"));
 	}
 
+	@PostMapping("/{id}/accept")
+	@PreAuthorize("hasRole('BUYER')")
+	public ResponseEntity<ApiResponse<OfferDto>> acceptCounterOffer(
+			@PathVariable Long id,
+			Authentication authentication) {
+		User buyer = (User) authentication.getPrincipal();
+		log.info("Accept counter offer: {} by: {}", id, buyer.getEmail());
+		OfferDto offer = offerService.acceptCounterOffer(id, buyer);
+		return ResponseEntity.ok(ApiResponse.ok(offer, "Counter offer accepted"));
+	}
+
 	@PostMapping("/{id}/withdraw")
+	@PreAuthorize("hasRole('BUYER')")
 	public ResponseEntity<ApiResponse<OfferDto>> withdrawOffer(
 			@PathVariable Long id,
 			Authentication authentication) {

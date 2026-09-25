@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ImageOff } from 'lucide-react';
-import { useMyListings, useSubmitForReview } from '@/lib/hooks/usePaintings';
+import { useDeletePainting, useMyListings, useSubmitForReview } from '@/lib/hooks/usePaintings';
 import { PaintingStatus } from '@/types';
 import WorkspacePageHeader from '@/components/workspace/WorkspacePageHeader';
 
@@ -12,6 +12,7 @@ export default function MyListingsPage() {
   const [activeTab, setActiveTab] = useState<PaintingStatus>(PaintingStatus.APPROVED);
   const { data, isLoading, error } = useMyListings(1);
   const { mutate: submitForReview, isPending: isSubmitting } = useSubmitForReview();
+  const { mutate: deletePainting, isPending: isDeleting } = useDeletePainting();
 
   const allListings = data?.data || [];
   const filteredListings = allListings.filter((p) => p.status === activeTab);
@@ -138,7 +139,8 @@ export default function MyListingsPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  {painting.status === PaintingStatus.DRAFT && (
+                  {(painting.status === PaintingStatus.DRAFT ||
+                    painting.status === PaintingStatus.REJECTED) && (
                     <button
                       type="button"
                       onClick={() => submitForReview(painting.id)}
@@ -152,13 +154,28 @@ export default function MyListingsPage() {
                     View Painting
                   </Link>
                   {(painting.status === PaintingStatus.DRAFT ||
-                    painting.status === PaintingStatus.APPROVED) && (
+                    painting.status === PaintingStatus.REJECTED) && (
                     <Link
                       href={`/artist/submit?id=${painting.id}`}
                       className="font-inter text-sm font-semibold text-gray-500 hover:text-brand transition-colors"
                     >
                       Edit
                     </Link>
+                  )}
+                  {(painting.status === PaintingStatus.DRAFT ||
+                    painting.status === PaintingStatus.REJECTED) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`Delete "${painting.title}"? This cannot be undone.`)) {
+                          deletePainting(painting.id);
+                        }
+                      }}
+                      disabled={isDeleting}
+                      className="font-inter text-sm font-semibold text-red-600 hover:text-red-800 transition-colors disabled:opacity-50"
+                    >
+                      Delete
+                    </button>
                   )}
                 </div>
               </div>

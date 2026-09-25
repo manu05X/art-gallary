@@ -2,25 +2,12 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { ordersApi } from '@/lib/api/orders';
-import { paymentsApi } from '@/lib/api/payments';
-import { CreateOrderRequest, OrderDto, PaymentMethod, PaymentIntentResponse } from '@/types';
+import { CreateOrderRequest, OrderDto } from '@/types';
 
-export interface BuyNowResult {
-  order: OrderDto;
-  paymentIntent?: PaymentIntentResponse;
-}
-
+// Creates the order (Buy Now, or checkout of an accepted offer when offerId
+// is set). Card payment happens afterwards on /dashboard/orders/[id]/pay.
 export const useBuyNowCheckout = () => {
   return useMutation({
-    mutationFn: async (req: CreateOrderRequest): Promise<BuyNowResult> => {
-      const order = await ordersApi.createOrder(req);
-
-      if (req.paymentMethod === PaymentMethod.ONLINE) {
-        const paymentIntent = await paymentsApi.createPaymentIntent({ orderId: order.id });
-        return { order, paymentIntent };
-      }
-
-      return { order };
-    },
+    mutationFn: (req: CreateOrderRequest): Promise<OrderDto> => ordersApi.createOrder(req),
   });
 };

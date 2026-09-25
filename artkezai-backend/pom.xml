@@ -188,6 +188,17 @@
           </annotationProcessorPaths>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- The Byte Buddy bundled with Spring Boot 3.2 officially supports
+               class files up to Java 22. This lets Mockito mock classes when
+               tests run on a newer local JDK; it has no effect on Java 17
+               (Docker, CI). -->
+          <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>

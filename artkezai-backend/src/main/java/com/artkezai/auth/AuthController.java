@@ -77,6 +77,25 @@ public class AuthController {
 		return ResponseEntity.ok(ApiResponse.ok("Password reset successful"));
 	}
 
+	// /api/auth/** is permitAll at the filter level, so these two check the
+	// caller themselves, the same way /me does.
+	@PostMapping("/refresh")
+	public ResponseEntity<ApiResponse<AuthResponse>> refresh(Authentication authentication) {
+		if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Not authenticated"));
+		}
+		return ResponseEntity.ok(ApiResponse.ok(authService.refresh(user), "Token refreshed"));
+	}
+
+	@PostMapping("/logout")
+	public ResponseEntity<ApiResponse<String>> logout(Authentication authentication) {
+		if (authentication == null || !(authentication.getPrincipal() instanceof User user)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Not authenticated"));
+		}
+		authService.logout(user);
+		return ResponseEntity.ok(ApiResponse.ok("Logged out"));
+	}
+
 	@GetMapping("/me")
 	public ResponseEntity<ApiResponse<AuthResponse>> getCurrentUser(Authentication authentication) {
 		if (authentication == null || !authentication.isAuthenticated()) {

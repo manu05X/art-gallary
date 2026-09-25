@@ -25,6 +25,16 @@ export const offersApi = {
     return response;
   },
 
+  getOffer: async (offerId: number): Promise<OfferDto> => {
+    const response = await apiClient.get<never, OfferDto>(`/offers/${offerId}`);
+    return response;
+  },
+
+  acceptCounterOffer: async (offerId: number): Promise<OfferDto> => {
+    const response = await apiClient.post<never, OfferDto>(`/offers/${offerId}/accept`);
+    return response;
+  },
+
   withdrawOffer: async (offerId: number): Promise<void> => {
     await apiClient.post(`/offers/${offerId}/withdraw`);
   },

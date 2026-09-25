@@ -20,6 +20,7 @@ interface AuthStore {
   setUser: (user: AuthUser | null) => void;
   logout: () => void;
   login: (user: AuthUser, token: string) => void;
+  setToken: (token: string) => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -41,6 +42,8 @@ export const useAuthStore = create<AuthStore>()(
           token,
           isAuthenticated: true,
         }),
+
+      setToken: (token) => set({ token }),
 
       logout: () =>
         set({

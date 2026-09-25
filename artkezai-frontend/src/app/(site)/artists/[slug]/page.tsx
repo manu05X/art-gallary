@@ -1,5 +1,6 @@
 'use client';
 
+import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Instagram, Globe, ArrowLeft } from 'lucide-react';
@@ -24,7 +25,8 @@ function instagramHref(value: string): string {
   return `https://instagram.com/${value.replace(/^@/, '')}`;
 }
 
-export default function ArtistDetailPage({ params }: { params: { slug: string } }) {
+export default function ArtistDetailPage() {
+  const params = useParams<{ slug: string }>();
   const { data: artist, isLoading, isError } = useArtist(params.slug);
   const { data: worksPage, isLoading: worksLoading } = usePaintings(
     { artistId: artist?.id },

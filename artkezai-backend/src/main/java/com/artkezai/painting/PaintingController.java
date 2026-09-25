@@ -80,16 +80,16 @@ public class PaintingController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<ApiResponse<PaintingDetailDto>> getPainting(@PathVariable Long id) {
+	public ResponseEntity<ApiResponse<PaintingDetailDto>> getPainting(@PathVariable Long id, Authentication authentication) {
 		log.info("Get painting: {}", id);
-		PaintingDetailDto painting = paintingService.getPainting(id);
+		PaintingDetailDto painting = paintingService.getPainting(id, currentUser(authentication));
 		return ResponseEntity.ok(ApiResponse.ok(painting));
 	}
 
 	@GetMapping("/slug/{slug}")
-	public ResponseEntity<ApiResponse<PaintingDetailDto>> getPaintingBySlug(@PathVariable String slug) {
+	public ResponseEntity<ApiResponse<PaintingDetailDto>> getPaintingBySlug(@PathVariable String slug, Authentication authentication) {
 		log.info("Get painting by slug: {}", slug);
-		PaintingDetailDto painting = paintingService.getPaintingBySlug(slug);
+		PaintingDetailDto painting = paintingService.getPaintingBySlug(slug, currentUser(authentication));
 		return ResponseEntity.ok(ApiResponse.ok(painting));
 	}
 
@@ -157,6 +157,19 @@ public class PaintingController {
 				.body(ApiResponse.ok(PaintingImageResponse.from(image), "Image uploaded"));
 	}
 
+	@DeleteMapping("/{id}")
+	public ResponseEntity<ApiResponse<String>> deletePainting(
+			@PathVariable Long id,
+			Authentication authentication) {
+		User user = currentUser(authentication);
+		if (user == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Not authenticated"));
+		}
+		log.info("Delete painting: {} by: {}", id, user.getEmail());
+		paintingService.deletePainting(id, user);
+		return ResponseEntity.ok(ApiResponse.ok("Painting deleted"));
+	}
+
 	@DeleteMapping("/{id}/images/{imageId}")
 	public ResponseEntity<ApiResponse<String>> deleteImage(
 			@PathVariable Long id,
@@ -171,6 +184,15 @@ public class PaintingController {
 		log.info("Delete image: {} from painting: {} by artist: {}", imageId, id, artist.getEmail());
 		paintingService.deleteImage(id, imageId, artist);
 		return ResponseEntity.ok(ApiResponse.ok("Image deleted"));
+	}
+
+	// Public GET endpoints still run the JWT filter, so a signed-in caller is
+	// available here when a token was sent; anonymous callers get null.
+	private User currentUser(Authentication authentication) {
+		if (authentication != null && authentication.getPrincipal() instanceof User user) {
+			return user;
+		}
+		return null;
 	}
 
 }

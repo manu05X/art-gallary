@@ -1,5 +1,7 @@
 package com.artkezai.admin;
 
+import com.artkezai.admin.dto.AdminUserResponse;
+import com.artkezai.admin.dto.AuditLogResponse;
 import com.artkezai.common.response.ApiResponse;
 import com.artkezai.painting.dto.PaintingListDto;
 import com.artkezai.user.User;
@@ -9,11 +11,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -76,26 +81,38 @@ public class AdminController {
 	}
 
 	@GetMapping("/users")
-	public ResponseEntity<ApiResponse<Page<User>>> listUsers(
+	public ResponseEntity<ApiResponse<Page<AdminUserResponse>>> listUsers(
 			@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		log.info("List all users");
-		Page<User> users = adminService.listAllUsers(pageable);
+		Page<AdminUserResponse> users = adminService.listAllUsers(pageable);
 		return ResponseEntity.ok(ApiResponse.ok(users));
 	}
 
 	@GetMapping("/audit-logs")
-	public ResponseEntity<ApiResponse<Page<AdminAuditLog>>> getAuditLogs(
+	public ResponseEntity<ApiResponse<Page<AuditLogResponse>>> getAuditLogs(
 			@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 		log.info("Get audit logs");
-		Page<AdminAuditLog> logs = adminService.getAuditLogs(pageable);
+		Page<AuditLogResponse> logs = adminService.getAuditLogs(pageable);
 		return ResponseEntity.ok(ApiResponse.ok(logs));
 	}
 
 	@GetMapping("/export/orders")
 	public ResponseEntity<byte[]> exportOrders() {
 		log.info("Export orders as CSV");
-		// In a real implementation, this would generate a CSV and return it as a file
-		return ResponseEntity.ok(new byte[]{});
+		return csvFile("orders.csv", adminService.exportOrdersCsv());
+	}
+
+	@GetMapping("/export/offers")
+	public ResponseEntity<byte[]> exportOffers() {
+		log.info("Export offers as CSV");
+		return csvFile("offers.csv", adminService.exportOffersCsv());
+	}
+
+	private ResponseEntity<byte[]> csvFile(String filename, String csv) {
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+				.contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+				.body(csv.getBytes(StandardCharsets.UTF_8));
 	}
 
 }
