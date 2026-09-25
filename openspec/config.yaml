@@ -1,0 +1,36 @@
+schema: spec-driven
+
+context: |
+  Product: Artkezai — an art marketplace/gallery. Artists submit artworks with images,
+  admins review and approve them, approved artworks appear in the public gallery.
+
+  Repo layout:
+    artkezai-backend/   Spring Boot 3 (Java 17), Spring Security + JWT, Spring Data JPA/Hibernate,
+                        PostgreSQL, Flyway, MinIO, Redis, Stripe, WebSocket, Mail
+    artkezai-frontend/  Next.js 14, React 18, TypeScript, Tailwind CSS, React Query, Zustand, Framer Motion
+    docker-compose.yml  Local PostgreSQL, MinIO, Redis, MailHog
+
+  Conventions:
+    - Never expose JPA entities from controllers: Request DTO -> Controller -> Service ->
+      Entity/Repository -> Response DTO. Fix Hibernate serialization issues at the API boundary,
+      not with broad @JsonIgnore, eager loading, or disabling Jackson checks.
+    - Flyway owns the schema. Never edit an applied migration; add a new one.
+    - Never delete Docker volumes or reset the local database without explicit approval.
+    - MinIO uses configured minio.bucket and minio.public-base-url; no hardcoded URLs.
+    - Backend changes validated with `mvn test`; frontend changes with `npm run build`.
+
+  Current phase: Phase 1 — Foundation & Reliability (artist create -> upload images ->
+  My Listings -> admin review/approval -> public gallery -> artwork detail).
+  Premium UI redesign and later phases are out of scope unless explicitly requested.
+
+rules:
+  proposal:
+    - Always include a "Non-goals" section listing what must not be modified
+    - Keep scope to the smallest safe change; do not bundle unrelated fixes
+  design:
+    - State the root cause before proposing a fix
+    - Describe API contract changes as explicit request/response DTO field tables
+    - Note any required Flyway migration as a new migration file
+  tasks:
+    - Include validation tasks - backend `mvn test`, frontend `npm run build`, and real local API/browser checks where practical
+    - Include a final reporting task - files changed, validation results, remaining issues
