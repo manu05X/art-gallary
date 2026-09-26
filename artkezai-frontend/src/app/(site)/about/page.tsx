@@ -195,10 +195,7 @@ export default function AboutPage() {
             padding: '6rem 1.5rem',
           }}
         >
-          <div
-            className="lg:grid"
-            style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '4rem' }}
-          >
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-16">
             {/* Left */}
             <div style={{ position: 'relative' }}>
               <div
@@ -226,7 +223,7 @@ export default function AboutPage() {
             </div>
 
             {/* Right */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="lg:col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <p
                 style={{
                   fontFamily: 'Inter, sans-serif',
@@ -296,13 +293,12 @@ export default function AboutPage() {
             </h2>
           </div>
 
-          {/* 2x2 grid — gap-px with bg as grid lines */}
+          {/* 1 column on phones, 2x2 from sm — gap-px with bg as grid lines */}
           <div
+            className="grid grid-cols-1 sm:grid-cols-2"
             style={{
               maxWidth: '1280px',
               margin: '0 auto',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '1px',
               backgroundColor: 'var(--color-border)',
             }}
@@ -310,9 +306,9 @@ export default function AboutPage() {
             {values.map((value) => (
               <div
                 key={value.number}
+                className="p-6 sm:p-10"
                 style={{
                   backgroundColor: 'var(--color-surface)',
-                  padding: '2.5rem',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '1rem',
@@ -423,25 +419,20 @@ export default function AboutPage() {
             backgroundColor: 'var(--color-surface)',
           }}
         >
+          {/* 2x2 on phones, one row from md; dividers only in the single-row layout */}
           <div
+            className="grid grid-cols-2 gap-y-10 md:grid-cols-4 md:gap-y-0"
             style={{
               maxWidth: '1280px',
               margin: '0 auto',
-              display: 'flex',
-              flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'center',
             }}
           >
             {stats.map((stat, index) => (
               <div
                 key={stat.label}
-                style={{
-                  flex: 1,
-                  textAlign: 'center',
-                  borderLeft: index !== 0 ? '1px solid var(--color-border)' : 'none',
-                  padding: '1rem 2rem',
-                }}
+                className={`px-2 py-4 sm:px-8 ${index !== 0 ? 'md:border-l md:border-[var(--color-border)]' : ''}`}
+                style={{ textAlign: 'center' }}
               >
                 <div
                   style={{

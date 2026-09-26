@@ -143,8 +143,8 @@ export default function ModerationPage() {
       </div>
 
       {rejectingId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 flex justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full my-auto">
             <h2 className="font-playfair text-xl text-brand mb-4">Reject Painting</h2>
 
             <textarea

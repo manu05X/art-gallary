@@ -491,11 +491,11 @@ export default function PaintingPage() {
 
       {/* Make an Offer Modal */}
       {showOffer && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/70 z-50 flex justify-center p-4 overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-surface border border-border rounded-[var(--ios-radius-xl)] p-8 w-full max-w-md"
+            className="bg-surface border border-border rounded-[var(--ios-radius-xl)] p-6 sm:p-8 w-full max-w-md my-auto"
           >
             <h3 className="font-playfair text-2xl text-cream mb-2">Make an Offer</h3>
             <p className="font-inter text-sm text-muted mb-6">
@@ -536,11 +536,11 @@ export default function PaintingPage() {
 
       {/* Message Gallery Modal */}
       {showMessageModal && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/70 z-50 flex justify-center p-4 overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-surface border border-border rounded-[var(--ios-radius-xl)] p-8 w-full max-w-md"
+            className="bg-surface border border-border rounded-[var(--ios-radius-xl)] p-6 sm:p-8 w-full max-w-md my-auto"
           >
             <h3 className="font-playfair text-2xl text-cream mb-2">Message Gallery</h3>
             <p className="font-inter text-sm text-muted mb-6">
@@ -574,12 +574,12 @@ export default function PaintingPage() {
 
       {/* Buy Now Checkout Modal */}
       {showCheckout && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/70 z-50 flex justify-center p-4 overflow-y-auto">
           <motion.form
             onSubmit={handleCheckoutSubmit}
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-surface border border-border rounded-[var(--ios-radius-xl)] p-8 w-full max-w-2xl my-8"
+            className="bg-surface border border-border rounded-[var(--ios-radius-xl)] p-6 sm:p-8 w-full max-w-2xl my-auto"
           >
             <h3 className="font-playfair text-2xl text-cream mb-2">Checkout</h3>
             <p className="font-inter text-sm text-muted mb-6">
