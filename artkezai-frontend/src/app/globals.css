@@ -57,8 +57,8 @@
   --color-surface-hover: #202434;
   --color-border: #2d3347;
   /* Corrected: these were literal blue hex values (#8eb2ff/#5ab2ff), so the
-     entire "gold" accent system rendered blue by default (dark is the
-     ThemeProvider default). Now a genuine warm gold on dark surfaces. */
+     entire "gold" accent system rendered blue by default (dark was the
+     ThemeProvider default at the time). Now a genuine warm gold on dark surfaces. */
   --color-gold: #d4af37;
   --color-gold-hover: #e3c568;
   --color-cream: #eef2ff;
