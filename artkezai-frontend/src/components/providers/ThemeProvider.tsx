@@ -5,7 +5,9 @@ import { ReactNode } from 'react';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   return (
-    <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+    // New visitors start in the light theme. A visitor who switches with the
+    // theme toggle keeps their choice (next-themes stores it in localStorage).
+    <NextThemesProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
       {children}
     </NextThemesProvider>
   );
