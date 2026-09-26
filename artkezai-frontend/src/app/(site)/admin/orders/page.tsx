@@ -45,7 +45,7 @@ export default function AdminOrdersPage() {
         <div className="divide-y">
           {orders.map((order) => (
             <div key={order.id} className="p-6 hover:bg-gray-50 transition">
-              <div className="flex gap-6">
+              <div className="flex gap-4 sm:gap-6">
                 {order.paintingThumbnailUrl && (
                   <div className="flex-shrink-0 w-20 h-20 relative rounded-lg overflow-hidden bg-gray-100">
                     <Image
@@ -57,7 +57,7 @@ export default function AdminOrdersPage() {
                   </div>
                 )}
 
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <Link
                     href={order.paintingSlug ? `/painting/${order.paintingSlug}` : '/gallery'}
                     className="text-lg font-semibold text-brand hover:text-accent transition"
@@ -65,7 +65,7 @@ export default function AdminOrdersPage() {
                     {order.paintingTitle}
                   </Link>
 
-                  <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
+                  <div className="grid grid-cols-1 gap-3 mt-3 text-sm sm:grid-cols-3 sm:gap-4 [&>div]:min-w-0 [&_p]:break-words">
                     <div>
                       <p className="text-gray-600">Total</p>
                       <p className="font-semibold text-accent">

@@ -74,7 +74,7 @@ export function OrderAdminActions({ order }: { order: OrderDto }) {
 
   return (
     <form
-      className="mt-4 grid gap-3 sm:grid-cols-[auto_1fr_1fr_auto]"
+      className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto]"
       onSubmit={(e) => {
         e.preventDefault();
         action.mutate(() =>
@@ -89,7 +89,7 @@ export function OrderAdminActions({ order }: { order: OrderDto }) {
       <select
         value={shipStatus}
         onChange={(e) => setShipStatus(e.target.value as UpdateShippingRequest['status'])}
-        className="rounded-md border border-gray-300 p-2 text-sm"
+        className="w-full min-w-0 rounded-md border border-gray-300 p-2 text-sm"
       >
         {SHIPPING_STEPS.map((step) => (
           <option key={step} value={step}>
@@ -101,14 +101,14 @@ export function OrderAdminActions({ order }: { order: OrderDto }) {
         value={trackingNumber}
         onChange={(e) => setTrackingNumber(e.target.value)}
         placeholder="Tracking number"
-        className="rounded-md border border-gray-300 p-2 text-sm"
+        className="w-full min-w-0 rounded-md border border-gray-300 p-2 text-sm"
       />
       <input
         type="url"
         value={trackingUrl}
         onChange={(e) => setTrackingUrl(e.target.value)}
         placeholder="Tracking URL (optional)"
-        className="rounded-md border border-gray-300 p-2 text-sm"
+        className="w-full min-w-0 rounded-md border border-gray-300 p-2 text-sm"
       />
       <button type="submit" disabled={action.isPending} className="btn btn-primary text-sm disabled:opacity-50">
         Update Shipping
