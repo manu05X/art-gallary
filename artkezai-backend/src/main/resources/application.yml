@@ -166,6 +166,11 @@ spring:
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
+      # Without timeouts an unreachable SMTP host holds the request thread
+      # (e.g. forgot-password) indefinitely.
+      mail.smtp.connectiontimeout: 10000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
   thymeleaf:
     cache: true
 

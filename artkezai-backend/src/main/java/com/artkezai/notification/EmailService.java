@@ -5,6 +5,7 @@ import com.artkezai.order.Order;
 import com.artkezai.user.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -16,12 +17,17 @@ public class EmailService {
 
 	private final JavaMailSender mailSender;
 
-	private static final String FROM_EMAIL = "noreply@artkezai.com";
+	// Must be a sender the SMTP provider has verified, or it rejects the mail.
+	@Value("${app.mail-from}")
+	private String mailFrom;
+
+	@Value("${app.mail-from-name}")
+	private String mailFromName;
 
 	public void sendOfferSubmitted(Offer offer) {
 		try {
 			SimpleMailMessage message = new SimpleMailMessage();
-			message.setFrom(FROM_EMAIL);
+			message.setFrom(fromAddress());
 			message.setTo(offer.getPainting().getArtist().getUser().getEmail());
 			message.setSubject("New Offer Received: " + offer.getPainting().getTitle());
 			message.setText(String.format(
@@ -46,7 +52,7 @@ public class EmailService {
 	public void sendOfferResponse(Offer offer) {
 		try {
 			SimpleMailMessage message = new SimpleMailMessage();
-			message.setFrom(FROM_EMAIL);
+			message.setFrom(fromAddress());
 			message.setTo(offer.getBuyer().getEmail());
 			message.setSubject("Response to Your Offer: " + offer.getPainting().getTitle());
 			message.setText(String.format(
@@ -70,7 +76,7 @@ public class EmailService {
 	public void sendOrderCreated(Order order) {
 		try {
 			SimpleMailMessage message = new SimpleMailMessage();
-			message.setFrom(FROM_EMAIL);
+			message.setFrom(fromAddress());
 			message.setTo(order.getBuyer().getEmail());
 			message.setSubject("Order Created: " + order.getPainting().getTitle());
 			message.setText(String.format(
@@ -97,7 +103,7 @@ public class EmailService {
 	public void sendShippingUpdate(Order order) {
 		try {
 			SimpleMailMessage message = new SimpleMailMessage();
-			message.setFrom(FROM_EMAIL);
+			message.setFrom(fromAddress());
 			message.setTo(order.getBuyer().getEmail());
 			message.setSubject("Shipping Update: " + order.getPainting().getTitle());
 			message.setText(String.format(
@@ -124,7 +130,7 @@ public class EmailService {
 	public void sendPasswordReset(User user, String resetLink) {
 		try {
 			SimpleMailMessage message = new SimpleMailMessage();
-			message.setFrom(FROM_EMAIL);
+			message.setFrom(fromAddress());
 			message.setTo(user.getEmail());
 			message.setSubject("Password Reset Request");
 			message.setText(String.format(
@@ -141,6 +147,10 @@ public class EmailService {
 		} catch (Exception ex) {
 			log.error("Failed to send password reset email", ex);
 		}
+	}
+
+	private String fromAddress() {
+		return String.format("%s <%s>", mailFromName, mailFrom);
 	}
 
 }
