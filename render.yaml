@@ -8,30 +8,18 @@ services:
     plan: free
     healthCheckPath: /actuator/health
     envVars:
-      # The JDBC URL is assembled from these (see application.yml), so it
-      # always points at the linked database. Do not also set DB_URL here or
-      # in the dashboard: an explicit DB_URL overrides them and goes stale if
-      # the database is recreated.
-      - key: DB_HOST
-        fromDatabase:
-          name: artkezai-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: artkezai-db
-          property: port
-      - key: DB_NAME
-        fromDatabase:
-          name: artkezai-db
-          property: database
+      # Database is hosted on Neon (neon.tech), not Render. Set these in the
+      # Render dashboard from Neon → Connection details (direct, not pooled):
+      #   DB_URL  jdbc:postgresql://<neon-host>/<dbname>?sslmode=require
+      #   DB_USER / DB_PASS  Neon role and password
+      # The previous Render PostgreSQL setup is kept in
+      # render.render-postgres.reference.yaml.
+      - key: DB_URL
+        sync: false
       - key: DB_USER
-        fromDatabase:
-          name: artkezai-db
-          property: user
+        sync: false
       - key: DB_PASS
-        fromDatabase:
-          name: artkezai-db
-          property: password
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: FRONTEND_URL
@@ -68,10 +56,3 @@ services:
         sync: false
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-
-# ── Render PostgreSQL ────────────────────────────────────
-databases:
-  - name: artkezai-db
-    plan: free
-    databaseName: artkezai
-    user: artkezai_user

@@ -24,7 +24,7 @@ Artist:  elena@artkezai.com  / Artist@123
 |---|---|
 | Frontend | Next.js 14, TypeScript, Tailwind CSS, Framer Motion, Zustand, React Query |
 | Backend | Spring Boot 3.2, Java 17, Spring Security 6, JWT |
-| Database | PostgreSQL (Render free tier) + Flyway migrations |
+| Database | PostgreSQL (Neon free tier) + Flyway migrations |
 | Storage | MinIO (local) / disabled on free tier |
 | Payments | Stripe (test mode) |
 | Email | MailHog (local) / Gmail SMTP (prod) |
@@ -117,7 +117,7 @@ POST /api/auth/reset-password    Reset password with token
 
 **Backend → Render**
 - Docker web service (free tier)
-- PostgreSQL free tier database
+- PostgreSQL on Neon (free tier), connected through `DB_URL`
 - Auto-deploys on push to `main`
 
 **Frontend → Vercel**
@@ -129,9 +129,9 @@ POST /api/auth/reset-password    Reset password with token
 
 | Key | Value |
 |---|---|
-| DB_URL | jdbc:postgresql://\<host\>/artkezai_db |
-| DB_USER | (from Render DB) |
-| DB_PASS | (from Render DB) |
+| DB_URL | jdbc:postgresql://\<neon-host\>/\<dbname\>?sslmode=require |
+| DB_USER | (Neon role) |
+| DB_PASS | (Neon password) |
 | JWT_SECRET | (auto-generated) |
 | ALLOWED_ORIGINS | https://artkezai-frontend.vercel.app |
 | FRONTEND_URL | https://artkezai-frontend.vercel.app |

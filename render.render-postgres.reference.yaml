@@ -1,0 +1,80 @@
+# REFERENCE ONLY — not used by Render (Render reads render.yaml).
+# This is the earlier setup with a Render free PostgreSQL database, which
+# expires 30 days after creation. The live blueprint now uses Neon.
+services:
+  # ── Spring Boot Backend ────────────────────────────────
+  - type: web
+    name: artkezai-backend
+    runtime: docker
+    dockerfilePath: ./artkezai-backend/Dockerfile
+    dockerContext: ./artkezai-backend
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      # The JDBC URL is assembled from these (see application.yml), so it
+      # always points at the linked database. Do not also set DB_URL here or
+      # in the dashboard: an explicit DB_URL overrides them and goes stale if
+      # the database is recreated.
+      - key: DB_HOST
+        fromDatabase:
+          name: artkezai-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: artkezai-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: artkezai-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: artkezai-db
+          property: user
+      - key: DB_PASS
+        fromDatabase:
+          name: artkezai-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false          # set manually after Vercel deploy
+      - key: ALLOWED_ORIGINS
+        sync: false          # set manually after Vercel deploy
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USER
+        sync: false
+      - key: MAIL_PASS
+        sync: false
+      - key: MINIO_ENDPOINT
+        sync: false          # S3-compatible endpoint (MinIO, R2, S3); required for image upload
+      - key: MINIO_ACCESS_KEY
+        sync: false
+      - key: MINIO_SECRET_KEY
+        sync: false
+      - key: MINIO_BUCKET
+        sync: false
+      - key: MINIO_PUBLIC_URL
+        sync: false          # public base URL that serves objects from MINIO_BUCKET
+      - key: ADMIN_INITIAL_PASSWORD
+        sync: false          # 12+ chars; replaces the seed admin's published password on first start
+      - key: DEMO_ARTIST_PASSWORD
+        sync: false          # 12+ chars; keeps the demo artist logins working with a private password
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+# ── Render PostgreSQL ────────────────────────────────────
+databases:
+  - name: artkezai-db
+    plan: free
+    databaseName: artkezai
+    user: artkezai_user

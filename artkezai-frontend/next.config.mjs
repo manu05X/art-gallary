@@ -10,6 +10,8 @@ const nextConfig = {
       { protocol: 'https', hostname: '*.onrender.com' },
       // Production — Cloudinary / S3 / any CDN (add as needed)
       { protocol: 'https', hostname: '*.amazonaws.com' },
+      // Production — Neon Object Storage (branch-scoped endpoint)
+      { protocol: 'https', hostname: '*.storage.*.*.aws.neon.tech' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       // Stock images used in dev seed data
       { protocol: 'https', hostname: 'images.unsplash.com' },
